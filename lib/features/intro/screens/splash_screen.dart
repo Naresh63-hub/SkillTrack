@@ -4,8 +4,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/widgets/skilltrack_logo.dart';
+import '../../../repositories/profile_repository.dart';
 import '../../../app.dart';
 import 'onboarding_screen.dart';
+import 'student_setup_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -42,16 +44,27 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigateNext() async {
+    final profile = await ProfileRepository().getProfile();
+    final hasValidProfile = profile.name.trim().isNotEmpty &&
+        !profile.name.toLowerCase().contains('priya');
     final prefs = await SharedPreferences.getInstance();
     final hasOnboarded = prefs.getBool('has_onboarded') ?? false;
 
     if (!mounted) return;
 
+    Widget target;
+    if (hasValidProfile) {
+      target = const MainNavigationShell();
+    } else if (!hasOnboarded) {
+      target = const OnboardingScreen();
+    } else {
+      target = const StudentSetupScreen();
+    }
+
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 600),
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            hasOnboarded ? const MainNavigationShell() : const OnboardingScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) => target,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -102,64 +115,87 @@ class _SplashScreenState extends State<SplashScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SkillTrackLogo(size: 96),
-                const SizedBox(height: 24),
+                // Glowing Animated Logo Badge
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondaryBackground,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primaryAccent.withValues(alpha: 0.35),
+                        blurRadius: 36,
+                        spreadRadius: 4,
+                      ),
+                    ],
+                    border: Border.all(
+                      color: AppColors.primaryAccent.withValues(alpha: 0.4),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: const SkillTrackLogo(size: 80),
+                ),
+                const SizedBox(height: 28),
+
+                // Application Title
                 const Text(
                   AppStrings.appName,
                   style: TextStyle(
-                    fontSize: 34,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5,
                     color: AppColors.primaryText,
                   ),
                 ),
                 const SizedBox(height: 8),
+
+                // Tagline matching design sheet
                 const Text(
-                  AppStrings.appTagline,
+                  'Build Skills. Track Progress. Get Placement Ready.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.secondaryText,
                     letterSpacing: 0.2,
+                    color: AppColors.secondaryText,
                   ),
                 ),
               ],
             ),
           ),
 
-          // Bottom Progress Bar (Matching design sheet Screen 1)
+          // Bottom Loading Progress Bar
           Positioned(
             bottom: 48,
             left: 48,
             right: 48,
             child: Column(
               children: [
-                AnimatedBuilder(
-                  animation: _progressAnimation,
-                  builder: (context, child) {
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        height: 5,
-                        color: AppColors.border,
-                        alignment: Alignment.centerLeft,
-                        child: FractionallySizedBox(
-                          widthFactor: _progressAnimation.value,
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColors.primaryAccent,
-                                  AppColors.brightAccent,
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: AnimatedBuilder(
+                    animation: _progressAnimation,
+                    builder: (context, child) {
+                      return LinearProgressIndicator(
+                        value: _progressAnimation.value,
+                        minHeight: 5,
+                        backgroundColor:
+                            AppColors.primaryAccent.withValues(alpha: 0.15),
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                            AppColors.brightAccent),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'INITIALIZING SECURE LOCAL STORAGE',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                    color: AppColors.mutedText,
+                  ),
                 ),
               ],
             ),

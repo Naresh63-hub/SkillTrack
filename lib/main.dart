@@ -14,13 +14,15 @@ void main() async {
     databaseFactory = databaseFactoryFfiWebNoWebWorker;
   }
 
-  // Ensure the app starts completely fresh with zero mock data
+  // Ensure any lingering "Priya" mock data is completely deleted
   try {
-    final prefs = await SharedPreferences.getInstance();
-    final hasClearedMock = prefs.getBool('fresh_start_cleared_v1') ?? false;
-    if (!hasClearedMock) {
+    final db = await DatabaseHelper.instance.database;
+    final checkPriya = await db.query('student_profile',
+        where: 'LOWER(name) LIKE ?', whereArgs: ['%priya%']);
+    if (checkPriya.isNotEmpty) {
       await DatabaseHelper.instance.clearAllData();
-      await prefs.setBool('fresh_start_cleared_v1', true);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('has_setup_profile');
     }
   } catch (_) {
     // Graceful fallback
