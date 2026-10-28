@@ -1,0 +1,9 @@
+{
+  "name": "skilltrack-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SkillTrack — Student Skills & Placement Tracker",
+  "scripts": {
+    "build": "bash vercel-build.sh"
+  }
+}
