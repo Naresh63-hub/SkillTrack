@@ -15,17 +15,17 @@ class ProfileRepository {
     if (results.isNotEmpty) {
       return StudentProfile.fromMap(results.first);
     }
-    // Default initial profile matching mockup
+    // Clean initial profile
     return StudentProfile(
-      name: 'Priya Sharma',
-      email: 'priya.sharma@college.edu',
-      targetJobRole: 'Software Developer',
-      college: 'B.Tech - Tech Institute',
-      branch: 'Computer Science',
-      currentSemester: '6th Semester',
-      graduationYear: '2026',
-      githubUrl: 'https://github.com/priya',
-      linkedinUrl: 'https://linkedin.com/in/priya',
+      name: '',
+      email: '',
+      targetJobRole: '',
+      college: '',
+      branch: '',
+      currentSemester: '',
+      graduationYear: '',
+      githubUrl: '',
+      linkedinUrl: '',
     );
   }
 

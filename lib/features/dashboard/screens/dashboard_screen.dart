@@ -286,14 +286,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                       child: Center(
-                        child: Text(
-                          p.name.isNotEmpty ? p.name[0].toUpperCase() : 'P',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primaryAccent,
-                          ),
-                        ),
+                        child: p.name.trim().isNotEmpty
+                            ? Text(
+                                p.name.trim()[0].toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primaryAccent,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.person_outline_rounded,
+                                color: AppColors.primaryAccent,
+                                size: 22,
+                              ),
                       ),
                     ),
                   ),
@@ -303,7 +309,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Hello, ${p.name.split(" ").first} 👋',
+                          p.name.trim().isNotEmpty
+                              ? 'Hello, ${p.name.trim().split(" ").first} 👋'
+                              : 'Hello there! 👋',
                           style: const TextStyle(
                             color: AppColors.primaryText,
                             fontSize: 18,
@@ -312,9 +320,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
-                        const Text(
-                          'Keep going! Your future is bright...',
-                          style: TextStyle(
+                        Text(
+                          p.targetJobRole.trim().isNotEmpty
+                              ? p.targetJobRole
+                              : 'Tap your profile to get started',
+                          style: const TextStyle(
                             color: AppColors.mutedText,
                             fontSize: 12,
                             fontWeight: FontWeight.w400,

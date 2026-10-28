@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
-import 'auth_screen.dart';
+import '../../../app.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -44,10 +45,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     },
   ];
 
-  void _finishOnboarding() {
+  Future<void> _finishOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_onboarded', true);
+    if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, anim, secAnim) => const AuthScreen(),
+        pageBuilder: (context, anim, secAnim) => const MainNavigationShell(),
         transitionsBuilder: (context, anim, secAnim, child) =>
             FadeTransition(opacity: anim, child: child),
       ),
@@ -99,49 +103,49 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           height: 200,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.secondaryBackground,
-                            border: Border.all(
-                              color: (page['accent'] as Color).withValues(alpha: 0.3),
-                              width: 2,
+                            gradient: RadialGradient(
+                              colors: [
+                                (page['accent'] as Color)
+                                    .withValues(alpha: 0.28),
+                                AppColors.mainBackground,
+                              ],
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: (page['accent'] as Color).withValues(alpha: 0.2),
-                                blurRadius: 30,
-                                spreadRadius: 4,
-                              ),
-                            ],
+                            border: Border.all(
+                              color: (page['accent'] as Color)
+                                  .withValues(alpha: 0.35),
+                              width: 1.5,
+                            ),
                           ),
                           child: Center(
                             child: Icon(
                               page['icon'] as IconData,
-                              size: 80,
+                              size: 88,
                               color: page['accent'] as Color,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 48),
+                        const SizedBox(height: 38),
 
                         // Title
                         Text(
                           page['title'] as String,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 27,
+                            fontWeight: FontWeight.bold,
                             color: AppColors.primaryText,
                             height: 1.25,
+                            letterSpacing: -0.5,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 14),
 
-                        // Subtitle
+                        // Description
                         Text(
                           page['description'] as String,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 14,
-                            fontWeight: FontWeight.w400,
                             color: AppColors.secondaryText,
                             height: 1.5,
                           ),
@@ -153,30 +157,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // Dots indicator (4 dots, active dot is wide pill)
+            // Page Indicator Dots
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(_pages.length, (index) {
-                final isActive = index == _currentPage;
-                return AnimatedContainer(
+              children: List.generate(
+                _pages.length,
+                (index) => AnimatedContainer(
                   duration: const Duration(milliseconds: 250),
                   margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: isActive ? 24 : 8,
+                  width: _currentPage == index ? 24 : 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: isActive
+                    color: _currentPage == index
                         ? AppColors.primaryAccent
                         : AppColors.border,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                );
-              }),
+                ),
+              ),
             ),
-            const SizedBox(height: 36),
+            const SizedBox(height: 28),
 
-            // Get Started Button
+            // CTA Button
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
               child: SizedBox(
                 width: double.infinity,
                 height: 52,

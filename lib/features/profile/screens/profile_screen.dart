@@ -206,7 +206,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            p.name,
+                            p.name.isNotEmpty ? p.name : 'Your Name',
                             style: const TextStyle(
                                 color: AppColors.primaryText,
                                 fontSize: 18,
@@ -216,7 +216,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Text(
                             p.targetJobRole.isNotEmpty
                                 ? p.targetJobRole
-                                : 'Aspiring Software Engineer',
+                                : 'Set up your target role',
                             style: const TextStyle(
                                 color: AppColors.brightAccent,
                                 fontSize: 12.5,
