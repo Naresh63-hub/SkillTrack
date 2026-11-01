@@ -23,20 +23,20 @@ class SearchFilterBar extends StatelessWidget {
       children: [
         Expanded(
           child: Container(
-            height: 44,
+            height: 48,
             decoration: BoxDecoration(
-              color: AppColors.surfaceVariant,
-              borderRadius: BorderRadius.circular(10),
+              color: AppColors.secondaryCard,
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.border, width: 1),
             ),
             child: TextField(
               controller: controller,
               onChanged: onChanged,
               style:
-                  const TextStyle(color: AppColors.primaryText, fontSize: 13),
+                  const TextStyle(color: AppColors.primaryText, fontSize: 14),
               decoration: InputDecoration(
                 contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 hintText: hintText,
                 hintStyle:
                     const TextStyle(color: AppColors.mutedText, fontSize: 13),
@@ -56,12 +56,13 @@ class SearchFilterBar extends StatelessWidget {
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
+                filled: false,
               ),
             ),
           ),
         ),
         if (trailing != null) ...[
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           trailing!,
         ],
       ],

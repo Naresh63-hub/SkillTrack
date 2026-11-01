@@ -5,6 +5,7 @@ import '../../../core/widgets/custom_card.dart';
 import '../../../core/utils/validators.dart';
 import '../../../models/student_profile.dart';
 import '../../../repositories/profile_repository.dart';
+import '../../skills/screens/career_roadmaps_screen.dart';
 import 'settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -362,6 +363,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ] else ...[
                 // Read-only Display Mode
+                CustomCard(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(9),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryPurple.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.alt_route_rounded,
+                          color: AppColors.secondaryAccent,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Target Career Roadmap',
+                              style: TextStyle(
+                                color: AppColors.primaryText,
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              p.targetJobRole.isNotEmpty
+                                  ? 'Role: ${p.targetJobRole}'
+                                  : 'Explore roadmaps for Flutter, Python, etc.',
+                              style: const TextStyle(
+                                color: AppColors.secondaryText,
+                                fontSize: 11.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (ctx) => const CareerRoadmapsScreen()),
+                          );
+                        },
+                        child: const Text('View',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+
                 CustomCard(
                   padding: const EdgeInsets.all(16),
                   child: Column(

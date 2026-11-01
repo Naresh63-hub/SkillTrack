@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'core/constants/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'features/dashboard/screens/dashboard_screen.dart';
 import 'features/skills/screens/skills_screen.dart';
@@ -52,36 +53,44 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         index: _currentIndex,
         children: destinations,
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: _onTabSelected,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.cardBackground,
+          border: Border(
+            top: BorderSide(color: AppColors.border, width: 1),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.code_outlined),
-            selectedIcon: Icon(Icons.code),
-            label: 'Skills',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.folder_special_outlined),
-            selectedIcon: Icon(Icons.folder_special),
-            label: 'Portfolio',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.checklist_rtl_outlined),
-            selectedIcon: Icon(Icons.checklist_rtl),
-            label: 'Tasks',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.school_outlined),
-            selectedIcon: Icon(Icons.school),
-            label: 'Placement',
-          ),
-        ],
+        ),
+        child: NavigationBar(
+          selectedIndex: _currentIndex,
+          onDestinationSelected: _onTabSelected,
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home_rounded),
+              label: 'Home',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.code_outlined),
+              selectedIcon: Icon(Icons.code_rounded),
+              label: 'Skills',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.folder_special_outlined),
+              selectedIcon: Icon(Icons.folder_special_rounded),
+              label: 'Portfolio',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.checklist_rtl_outlined),
+              selectedIcon: Icon(Icons.checklist_rtl_rounded),
+              label: 'Tasks',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.school_outlined),
+              selectedIcon: Icon(Icons.school_rounded),
+              label: 'Placement',
+            ),
+          ],
+        ),
       ),
     );
   }

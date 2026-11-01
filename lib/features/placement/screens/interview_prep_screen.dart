@@ -107,6 +107,9 @@ class _InterviewPrepScreenState extends State<InterviewPrepScreen> {
         _questions.where((q) => q.status == 'Completed').length;
 
     return Scaffold(
+      appBar: ModalRoute.of(context)?.canPop == true
+          ? AppBar(title: const Text('Interview Questions'))
+          : null,
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppColors.brightAccent,
         foregroundColor: Colors.white,

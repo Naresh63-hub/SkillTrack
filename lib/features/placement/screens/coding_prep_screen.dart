@@ -106,6 +106,9 @@ class _CodingPrepScreenState extends State<CodingPrepScreen> {
         _topics.fold<int>(0, (sum, t) => sum + t.problemsAttempted);
 
     return Scaffold(
+      appBar: ModalRoute.of(context)?.canPop == true
+          ? AppBar(title: const Text('Coding Practice (DSA)'))
+          : null,
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppColors.brightAccent,
         foregroundColor: Colors.white,

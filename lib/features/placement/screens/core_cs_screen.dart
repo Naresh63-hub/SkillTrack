@@ -106,6 +106,9 @@ class _CoreCsScreenState extends State<CoreCsScreen> {
         _topics.isEmpty ? 0.0 : (completedCount / _topics.length) * 100.0;
 
     return Scaffold(
+      appBar: ModalRoute.of(context)?.canPop == true
+          ? AppBar(title: const Text('Core CS Subjects'))
+          : null,
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppColors.brightAccent,
         foregroundColor: Colors.white,

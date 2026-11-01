@@ -38,7 +38,8 @@ class SectionHeader extends StatelessWidget {
             TextButton(
               onPressed: onAction,
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
@@ -48,8 +49,8 @@ class SectionHeader extends StatelessWidget {
                   Text(
                     actionText!,
                     style: const TextStyle(
-                      color: AppColors.secondaryAccent,
-                      fontSize: 12,
+                      color: AppColors.lightPurple,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -57,7 +58,7 @@ class SectionHeader extends StatelessWidget {
                   const Icon(
                     Icons.arrow_forward_ios,
                     size: 11,
-                    color: AppColors.secondaryAccent,
+                    color: AppColors.lightPurple,
                   ),
                 ],
               ),

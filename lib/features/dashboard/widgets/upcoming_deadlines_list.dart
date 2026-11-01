@@ -19,6 +19,7 @@ class UpcomingDeadlinesList extends StatelessWidget {
     if (tasks.isEmpty) {
       return CustomCard(
         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        borderRadius: 20,
         child: const Center(
           child: Text(
             'No upcoming deadlines right now. You are all caught up!',
@@ -35,23 +36,24 @@ class UpcomingDeadlinesList extends StatelessWidget {
         final isToday = task.isToday;
         final badgeColor = isOverdue
             ? AppColors.error
-            : (isToday ? AppColors.warning : AppColors.secondaryAccent);
+            : (isToday ? AppColors.warning : AppColors.lightPurple);
 
         return CustomCard(
           onTap: () => onTaskTap?.call(task),
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          borderRadius: 18,
           child: Row(
             children: [
               Container(
                 width: 4,
-                height: 38,
+                height: 40,
                 decoration: BoxDecoration(
                   color: badgeColor,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(4),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,7 +62,7 @@ class UpcomingDeadlinesList extends StatelessWidget {
                       task.title,
                       style: const TextStyle(
                         color: AppColors.primaryText,
-                        fontSize: 13,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w600,
                       ),
                       maxLines: 1,
@@ -71,20 +73,22 @@ class UpcomingDeadlinesList extends StatelessWidget {
                       task.category,
                       style: const TextStyle(
                         color: AppColors.mutedText,
-                        fontSize: 11,
+                        fontSize: 11.5,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                 decoration: BoxDecoration(
                   color: badgeColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                      color: badgeColor.withValues(alpha: 0.4), width: 0.8),
+                    color: badgeColor.withValues(alpha: 0.35),
+                    width: 1,
+                  ),
                 ),
                 child: Text(
                   DateFormatter.relativeDueString(task.dueDate),

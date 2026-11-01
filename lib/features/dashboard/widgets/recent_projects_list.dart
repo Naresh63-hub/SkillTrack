@@ -18,6 +18,7 @@ class RecentProjectsList extends StatelessWidget {
     if (projects.isEmpty) {
       return CustomCard(
         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        borderRadius: 20,
         child: const Center(
           child: Text(
             'No projects added yet. Add your college or portfolio projects to track them!',
@@ -36,21 +37,22 @@ class RecentProjectsList extends StatelessWidget {
             statusColor = AppColors.success;
             break;
           case 'In Progress':
-            statusColor = AppColors.brightAccent;
+            statusColor = AppColors.gradientHighlight;
             break;
           case 'On Hold':
             statusColor = AppColors.warning;
             break;
           case 'Planned':
           default:
-            statusColor = AppColors.info;
+            statusColor = AppColors.lightPurple;
             break;
         }
 
         return CustomCard(
           onTap: () => onProjectTap?.call(project),
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(14),
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(16),
+          borderRadius: 18,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -62,7 +64,7 @@ class RecentProjectsList extends StatelessWidget {
                       project.name,
                       style: const TextStyle(
                         color: AppColors.primaryText,
-                        fontSize: 14,
+                        fontSize: 14.5,
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 1,
@@ -71,13 +73,14 @@ class RecentProjectsList extends StatelessWidget {
                   ),
                   Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                     decoration: BoxDecoration(
                       color: statusColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                          color: statusColor.withValues(alpha: 0.5),
-                          width: 0.8),
+                        color: statusColor.withValues(alpha: 0.4),
+                        width: 1,
+                      ),
                     ),
                     child: Text(
                       project.status,
@@ -96,29 +99,30 @@ class RecentProjectsList extends StatelessWidget {
                 style: const TextStyle(
                   color: AppColors.secondaryText,
                   fontSize: 12,
+                  height: 1.35,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               if (project.technologies.isNotEmpty) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Wrap(
                   spacing: 6,
                   runSpacing: 4,
                   children: project.technologies.take(3).map((tech) {
                     return Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 7, vertical: 2),
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceVariant,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: AppColors.border, width: 0.7),
+                        color: AppColors.secondaryCard,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: AppColors.border, width: 0.8),
                       ),
                       child: Text(
                         tech,
                         style: const TextStyle(
-                          color: AppColors.secondaryAccent,
-                          fontSize: 10,
+                          color: AppColors.lightPurple,
+                          fontSize: 10.5,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

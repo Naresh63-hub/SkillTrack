@@ -63,7 +63,8 @@ class CertificateViewerScreen extends StatelessWidget {
                                     size: 40, color: AppColors.mutedText),
                                 SizedBox(height: 8),
                                 Text('Image file moved or deleted',
-                                    style: TextStyle(color: AppColors.mutedText)),
+                                    style:
+                                        TextStyle(color: AppColors.mutedText)),
                               ],
                             ),
                           ),
@@ -80,7 +81,8 @@ class CertificateViewerScreen extends StatelessWidget {
                                       size: 40, color: AppColors.mutedText),
                                   SizedBox(height: 8),
                                   Text('Image file moved or deleted',
-                                      style: TextStyle(color: AppColors.mutedText)),
+                                      style: TextStyle(
+                                          color: AppColors.mutedText)),
                                 ],
                               ),
                             );

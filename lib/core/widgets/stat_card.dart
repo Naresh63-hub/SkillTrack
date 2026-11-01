@@ -16,7 +16,7 @@ class StatCard extends StatelessWidget {
     required this.value,
     this.subtitle,
     required this.icon,
-    this.iconColor = AppColors.brightAccent,
+    this.iconColor = AppColors.lightPurple,
     this.onTap,
   });
 
@@ -24,8 +24,10 @@ class StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomCard(
       onTap: onTap,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       margin: EdgeInsets.zero,
+      borderRadius: 20,
+      backgroundColor: AppColors.cardBackground,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -33,25 +35,32 @@ class StatCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: AppColors.mutedText,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppColors.mutedText,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.15),
+                  color: AppColors.secondaryCard,
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.border,
+                    width: 1,
+                  ),
                 ),
                 child: Icon(icon, color: iconColor, size: 16),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             value,
             style: const TextStyle(
@@ -69,6 +78,8 @@ class StatCard extends StatelessWidget {
                 color: AppColors.secondaryText,
                 fontSize: 11,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ],

@@ -54,8 +54,7 @@ class SampleData {
           'target_completion_date':
               now.add(const Duration(days: 30)).toIso8601String(),
           'learning_resource_url': 'https://docs.python.org',
-          'notes':
-              'Data structures, OOP, file handling, and algorithms.',
+          'notes': 'Data structures, OOP, file handling, and algorithms.',
           'created_at': now.toIso8601String(),
           'updated_at': now.toIso8601String(),
         },
@@ -185,8 +184,7 @@ class SampleData {
       final projectsData = [
         {
           'name': 'Student Portfolio Website',
-          'short_description':
-              'Responsive web development portfolio showcase.',
+          'short_description': 'Responsive web development portfolio showcase.',
           'detailed_description':
               'A modern web development portfolio showcasing student academic and personal projects, skills, and interactive resume viewer.',
           'category': 'Web Development',
@@ -377,26 +375,146 @@ class SampleData {
 
       // 7. Placement Topics (Coding: 12/20 completed matching Screen 11)
       final codingTopics = [
-        {'topic': 'Arrays & Two Pointers', 'solved': 35, 'att': 38, 'diff': 'Easy', 'status': 'Completed'},
-        {'topic': 'Strings & Sliding Window', 'solved': 28, 'att': 30, 'diff': 'Medium', 'status': 'Completed'},
-        {'topic': 'Linked Lists', 'solved': 22, 'att': 24, 'diff': 'Medium', 'status': 'Completed'},
-        {'topic': 'Stacks and Queues', 'solved': 18, 'att': 20, 'diff': 'Medium', 'status': 'Completed'},
-        {'topic': 'Searching and Sorting', 'solved': 25, 'att': 25, 'diff': 'Easy', 'status': 'Completed'},
-        {'topic': 'Hashing & HashMaps', 'solved': 20, 'att': 22, 'diff': 'Easy', 'status': 'Completed'},
-        {'topic': 'Binary Trees & BST', 'solved': 30, 'att': 35, 'diff': 'Medium', 'status': 'Completed'},
-        {'topic': 'Heaps & Priority Queues', 'solved': 18, 'att': 20, 'diff': 'Medium', 'status': 'Completed'},
-        {'topic': 'Greedy Algorithms', 'solved': 16, 'att': 18, 'diff': 'Medium', 'status': 'Completed'},
-        {'topic': 'Bit Manipulation', 'solved': 14, 'att': 16, 'diff': 'Easy', 'status': 'Completed'},
-        {'topic': 'Backtracking Patterns', 'solved': 15, 'att': 18, 'diff': 'Medium', 'status': 'Completed'},
-        {'topic': 'Time and Space Complexity Analysis', 'solved': 15, 'att': 15, 'diff': 'Easy', 'status': 'Completed'},
-        {'topic': 'Recursion Fundamentals', 'solved': 12, 'att': 18, 'diff': 'Medium', 'status': 'In Progress'},
-        {'topic': 'Graphs (BFS, DFS, Dijkstra)', 'solved': 19, 'att': 28, 'diff': 'Hard', 'status': 'In Progress'},
-        {'topic': 'Dynamic Programming 1D & 2D', 'solved': 14, 'att': 32, 'diff': 'Hard', 'status': 'Needs Revision'},
-        {'topic': 'Disjoint Set Union (Union-Find)', 'solved': 8, 'att': 14, 'diff': 'Medium', 'status': 'In Progress'},
-        {'topic': 'Tries & String Matching', 'solved': 6, 'att': 12, 'diff': 'Hard', 'status': 'Needs Revision'},
-        {'topic': 'Monotonic Stacks & Queues', 'solved': 10, 'att': 15, 'diff': 'Medium', 'status': 'In Progress'},
-        {'topic': 'Topological Sort & DAG', 'solved': 8, 'att': 12, 'diff': 'Medium', 'status': 'In Progress'},
-        {'topic': 'Segment Trees & Fenwick Trees', 'solved': 4, 'att': 10, 'diff': 'Hard', 'status': 'Needs Revision'},
+        {
+          'topic': 'Arrays & Two Pointers',
+          'solved': 35,
+          'att': 38,
+          'diff': 'Easy',
+          'status': 'Completed'
+        },
+        {
+          'topic': 'Strings & Sliding Window',
+          'solved': 28,
+          'att': 30,
+          'diff': 'Medium',
+          'status': 'Completed'
+        },
+        {
+          'topic': 'Linked Lists',
+          'solved': 22,
+          'att': 24,
+          'diff': 'Medium',
+          'status': 'Completed'
+        },
+        {
+          'topic': 'Stacks and Queues',
+          'solved': 18,
+          'att': 20,
+          'diff': 'Medium',
+          'status': 'Completed'
+        },
+        {
+          'topic': 'Searching and Sorting',
+          'solved': 25,
+          'att': 25,
+          'diff': 'Easy',
+          'status': 'Completed'
+        },
+        {
+          'topic': 'Hashing & HashMaps',
+          'solved': 20,
+          'att': 22,
+          'diff': 'Easy',
+          'status': 'Completed'
+        },
+        {
+          'topic': 'Binary Trees & BST',
+          'solved': 30,
+          'att': 35,
+          'diff': 'Medium',
+          'status': 'Completed'
+        },
+        {
+          'topic': 'Heaps & Priority Queues',
+          'solved': 18,
+          'att': 20,
+          'diff': 'Medium',
+          'status': 'Completed'
+        },
+        {
+          'topic': 'Greedy Algorithms',
+          'solved': 16,
+          'att': 18,
+          'diff': 'Medium',
+          'status': 'Completed'
+        },
+        {
+          'topic': 'Bit Manipulation',
+          'solved': 14,
+          'att': 16,
+          'diff': 'Easy',
+          'status': 'Completed'
+        },
+        {
+          'topic': 'Backtracking Patterns',
+          'solved': 15,
+          'att': 18,
+          'diff': 'Medium',
+          'status': 'Completed'
+        },
+        {
+          'topic': 'Time and Space Complexity Analysis',
+          'solved': 15,
+          'att': 15,
+          'diff': 'Easy',
+          'status': 'Completed'
+        },
+        {
+          'topic': 'Recursion Fundamentals',
+          'solved': 12,
+          'att': 18,
+          'diff': 'Medium',
+          'status': 'In Progress'
+        },
+        {
+          'topic': 'Graphs (BFS, DFS, Dijkstra)',
+          'solved': 19,
+          'att': 28,
+          'diff': 'Hard',
+          'status': 'In Progress'
+        },
+        {
+          'topic': 'Dynamic Programming 1D & 2D',
+          'solved': 14,
+          'att': 32,
+          'diff': 'Hard',
+          'status': 'Needs Revision'
+        },
+        {
+          'topic': 'Disjoint Set Union (Union-Find)',
+          'solved': 8,
+          'att': 14,
+          'diff': 'Medium',
+          'status': 'In Progress'
+        },
+        {
+          'topic': 'Tries & String Matching',
+          'solved': 6,
+          'att': 12,
+          'diff': 'Hard',
+          'status': 'Needs Revision'
+        },
+        {
+          'topic': 'Monotonic Stacks & Queues',
+          'solved': 10,
+          'att': 15,
+          'diff': 'Medium',
+          'status': 'In Progress'
+        },
+        {
+          'topic': 'Topological Sort & DAG',
+          'solved': 8,
+          'att': 12,
+          'diff': 'Medium',
+          'status': 'In Progress'
+        },
+        {
+          'topic': 'Segment Trees & Fenwick Trees',
+          'solved': 4,
+          'att': 10,
+          'diff': 'Hard',
+          'status': 'Needs Revision'
+        },
       ];
 
       for (final ct in codingTopics) {
@@ -441,21 +559,96 @@ class SampleData {
 
       // Aptitude Topics (10/15 completed matching Screen 11)
       final aptitudeTopics = [
-        {'topic': 'Percentages & Ratios', 'status': 'Completed', 'solved': 40, 'att': 42},
-        {'topic': 'Profit, Loss & Discount', 'status': 'Completed', 'solved': 35, 'att': 38},
-        {'topic': 'Simple & Compound Interest', 'status': 'Completed', 'solved': 30, 'att': 32},
-        {'topic': 'Time, Speed & Distance', 'status': 'Completed', 'solved': 28, 'att': 30},
-        {'topic': 'Time & Work', 'status': 'Completed', 'solved': 32, 'att': 35},
-        {'topic': 'Permutations & Combinations', 'status': 'Completed', 'solved': 25, 'att': 28},
-        {'topic': 'Probability & Statistics', 'status': 'Completed', 'solved': 24, 'att': 26},
-        {'topic': 'Blood Relations', 'status': 'Completed', 'solved': 30, 'att': 30},
-        {'topic': 'Syllogisms & Venn Diagrams', 'status': 'Completed', 'solved': 35, 'att': 36},
-        {'topic': 'Coding & Decoding', 'status': 'Completed', 'solved': 40, 'att': 40},
-        {'topic': 'Number & Letter Series', 'status': 'In Progress', 'solved': 18, 'att': 25},
-        {'topic': 'Direction Sense & Seating', 'status': 'In Progress', 'solved': 15, 'att': 22},
-        {'topic': 'Reading Comprehension', 'status': 'In Progress', 'solved': 20, 'att': 25},
-        {'topic': 'Sentence Correction & Grammar', 'status': 'Needs Revision', 'solved': 12, 'att': 20},
-        {'topic': 'Data Interpretation & Charts', 'status': 'Needs Revision', 'solved': 10, 'att': 18},
+        {
+          'topic': 'Percentages & Ratios',
+          'status': 'Completed',
+          'solved': 40,
+          'att': 42
+        },
+        {
+          'topic': 'Profit, Loss & Discount',
+          'status': 'Completed',
+          'solved': 35,
+          'att': 38
+        },
+        {
+          'topic': 'Simple & Compound Interest',
+          'status': 'Completed',
+          'solved': 30,
+          'att': 32
+        },
+        {
+          'topic': 'Time, Speed & Distance',
+          'status': 'Completed',
+          'solved': 28,
+          'att': 30
+        },
+        {
+          'topic': 'Time & Work',
+          'status': 'Completed',
+          'solved': 32,
+          'att': 35
+        },
+        {
+          'topic': 'Permutations & Combinations',
+          'status': 'Completed',
+          'solved': 25,
+          'att': 28
+        },
+        {
+          'topic': 'Probability & Statistics',
+          'status': 'Completed',
+          'solved': 24,
+          'att': 26
+        },
+        {
+          'topic': 'Blood Relations',
+          'status': 'Completed',
+          'solved': 30,
+          'att': 30
+        },
+        {
+          'topic': 'Syllogisms & Venn Diagrams',
+          'status': 'Completed',
+          'solved': 35,
+          'att': 36
+        },
+        {
+          'topic': 'Coding & Decoding',
+          'status': 'Completed',
+          'solved': 40,
+          'att': 40
+        },
+        {
+          'topic': 'Number & Letter Series',
+          'status': 'In Progress',
+          'solved': 18,
+          'att': 25
+        },
+        {
+          'topic': 'Direction Sense & Seating',
+          'status': 'In Progress',
+          'solved': 15,
+          'att': 22
+        },
+        {
+          'topic': 'Reading Comprehension',
+          'status': 'In Progress',
+          'solved': 20,
+          'att': 25
+        },
+        {
+          'topic': 'Sentence Correction & Grammar',
+          'status': 'Needs Revision',
+          'solved': 12,
+          'att': 20
+        },
+        {
+          'topic': 'Data Interpretation & Charts',
+          'status': 'Needs Revision',
+          'solved': 10,
+          'att': 18
+        },
       ];
 
       for (final ap in aptitudeTopics) {

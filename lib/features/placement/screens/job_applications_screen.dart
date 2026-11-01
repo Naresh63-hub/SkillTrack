@@ -98,6 +98,9 @@ class _JobApplicationsScreenState extends State<JobApplicationsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: ModalRoute.of(context)?.canPop == true
+          ? AppBar(title: const Text('Job Applications'))
+          : null,
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppColors.brightAccent,
         foregroundColor: Colors.white,

@@ -149,11 +149,13 @@ class _PlacementScreenState extends State<PlacementScreen>
                                 value: 1.0,
                                 strokeWidth: 8,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.primaryAccent.withValues(alpha: 0.15),
+                                  AppColors.primaryAccent
+                                      .withValues(alpha: 0.15),
                                 ),
                               ),
                               CircularProgressIndicator(
-                                value: (_overallPlacementPct / 100.0).clamp(0.0, 1.0),
+                                value: (_overallPlacementPct / 100.0)
+                                    .clamp(0.0, 1.0),
                                 strokeWidth: 8,
                                 strokeCap: StrokeCap.round,
                                 valueColor: const AlwaysStoppedAnimation<Color>(
@@ -235,8 +237,8 @@ class _PlacementScreenState extends State<PlacementScreen>
                           ),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: AppColors.primaryAccent
-                                .withValues(alpha: 0.35),
+                            color:
+                                AppColors.primaryAccent.withValues(alpha: 0.35),
                           ),
                         ),
                         child: Row(

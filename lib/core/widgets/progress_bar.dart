@@ -8,6 +8,7 @@ class CustomProgressBar extends StatelessWidget {
   final Color? backgroundColor;
   final bool showLabel;
   final String? labelText;
+  final Gradient? gradient;
 
   const CustomProgressBar({
     super.key,
@@ -17,13 +18,15 @@ class CustomProgressBar extends StatelessWidget {
     this.backgroundColor,
     this.showLabel = false,
     this.labelText,
+    this.gradient,
   });
 
   @override
   Widget build(BuildContext context) {
     final clamped = percentage.clamp(0.0, 100.0);
     final ratio = clamped / 100.0;
-    final barColor = color ?? AppColors.brightAccent;
+    final barColor = color ?? AppColors.primaryPurple;
+    final trackBg = backgroundColor ?? AppColors.progressTrack;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,7 +47,7 @@ class CustomProgressBar extends StatelessWidget {
               Text(
                 '${clamped.toStringAsFixed(0)}%',
                 style: TextStyle(
-                  color: barColor,
+                  color: color ?? AppColors.lightPurple,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
@@ -57,7 +60,7 @@ class CustomProgressBar extends StatelessWidget {
           height: height,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: backgroundColor ?? AppColors.surfaceVariant,
+            color: trackBg,
             borderRadius: BorderRadius.circular(height / 2),
           ),
           child: LayoutBuilder(
@@ -65,13 +68,17 @@ class CustomProgressBar extends StatelessWidget {
               return Stack(
                 children: [
                   AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
+                    duration: const Duration(milliseconds: 350),
                     curve: Curves.easeOutCubic,
                     width: constraints.maxWidth * ratio,
                     height: height,
                     decoration: BoxDecoration(
-                      color: barColor,
-                      gradient: color == null ? AppColors.accentGradient : null,
+                      color:
+                          gradient == null && color != null ? barColor : null,
+                      gradient: gradient ??
+                          (color == null
+                              ? AppColors.purpleProgressGradient
+                              : null),
                       borderRadius: BorderRadius.circular(height / 2),
                     ),
                   ),

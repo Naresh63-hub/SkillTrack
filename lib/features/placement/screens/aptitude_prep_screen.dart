@@ -136,6 +136,9 @@ class _AptitudePrepScreenState extends State<AptitudePrepScreen> {
         totalAttempted > 0 ? (totalSolved / totalAttempted) * 100.0 : 0.0;
 
     return Scaffold(
+      appBar: ModalRoute.of(context)?.canPop == true
+          ? AppBar(title: const Text('Aptitude Preparation'))
+          : null,
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppColors.brightAccent,
         foregroundColor: Colors.white,

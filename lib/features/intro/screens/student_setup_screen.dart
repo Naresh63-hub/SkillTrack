@@ -5,6 +5,7 @@ import '../../../core/widgets/custom_card.dart';
 import '../../../core/widgets/skilltrack_logo.dart';
 import '../../../models/student_profile.dart';
 import '../../../repositories/profile_repository.dart';
+import '../../../services/roadmap_service.dart';
 import '../../../app.dart';
 
 class StudentSetupScreen extends StatefulWidget {
@@ -29,6 +30,16 @@ class _StudentSetupScreenState extends State<StudentSetupScreen> {
   String _semester = '6th Semester';
   String _gradYear = '2026';
   bool _isSaving = false;
+  bool _autoImportRoadmap = true;
+
+  final List<String> _careerRoles = [
+    'Python Developer',
+    'Full Stack Developer',
+    'Flutter Developer',
+    'Data Analyst',
+    'AI/ML Engineer',
+    'Java Developer',
+  ];
 
   final List<String> _degreeOptions = [
     'B.Tech',
@@ -95,6 +106,20 @@ class _StudentSetupScreenState extends State<StudentSetupScreen> {
       );
 
       await _profileRepo.saveProfile(profile);
+
+      // Optionally auto-import recommended roadmap for target role
+      if (_autoImportRoadmap) {
+        final role = _targetRoleController.text.trim();
+        final roadmap = RoadmapService.getRoadmapByRoleName(role) ??
+            RoadmapService.getRoadmapByRoleName('Full Stack Developer');
+        if (roadmap != null) {
+          try {
+            await RoadmapService().importRoadmap(roadmap);
+          } catch (_) {
+            // Non-blocking fallback
+          }
+        }
+      }
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('has_onboarded', true);
@@ -263,7 +288,8 @@ class _StudentSetupScreenState extends State<StudentSetupScreen> {
                                         value: deg, child: Text(deg));
                                   }).toList(),
                                   onChanged: (val) {
-                                    if (val != null) setState(() => _degree = val);
+                                    if (val != null)
+                                      setState(() => _degree = val);
                                   },
                                 ),
                               ],
@@ -385,9 +411,89 @@ class _StudentSetupScreenState extends State<StudentSetupScreen> {
                         controller: _targetRoleController,
                         style: const TextStyle(color: AppColors.primaryText),
                         decoration: const InputDecoration(
-                          hintText: 'e.g. Software Developer / SDE',
+                          hintText: 'e.g. Flutter Developer',
                           prefixIcon: Icon(Icons.work_outline_rounded,
                               color: AppColors.secondaryAccent),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Quick role selection chips
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: _careerRoles.map((role) {
+                          final isSelected =
+                              _targetRoleController.text.trim() == role;
+                          return ChoiceChip(
+                            label: Text(role),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              if (selected) {
+                                setState(() {
+                                  _targetRoleController.text = role;
+                                });
+                              }
+                            },
+                            labelStyle: TextStyle(
+                              color: isSelected
+                                  ? Colors.white
+                                  : AppColors.secondaryText,
+                              fontSize: 11,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                            selectedColor: AppColors.primaryPurple,
+                            backgroundColor: AppColors.surfaceVariant,
+                            side: BorderSide(
+                              color: isSelected
+                                  ? AppColors.primaryPurple
+                                  : AppColors.border,
+                              width: 0.8,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Auto-import skill roadmap switch
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceVariant,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: AppColors.border.withValues(alpha: 0.6),
+                              width: 0.8),
+                        ),
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: _autoImportRoadmap,
+                              activeColor: AppColors.primaryPurple,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4)),
+                              onChanged: (val) {
+                                setState(() {
+                                  _autoImportRoadmap = val ?? true;
+                                });
+                              },
+                            ),
+                            const Expanded(
+                              child: Text(
+                                'Import recommended 8-step skill roadmap into tracker (0% progress)',
+                                style: TextStyle(
+                                  color: AppColors.secondaryText,
+                                  fontSize: 11.5,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -455,7 +561,8 @@ class _StudentSetupScreenState extends State<StudentSetupScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primaryAccent.withValues(alpha: 0.35),
+                          color:
+                              AppColors.primaryAccent.withValues(alpha: 0.35),
                           blurRadius: 16,
                           offset: const Offset(0, 4),
                         ),

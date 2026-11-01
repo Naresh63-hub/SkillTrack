@@ -10,6 +10,7 @@ import '../../../models/skill.dart';
 import '../../../repositories/skills_repository.dart';
 import 'add_edit_skill_dialog.dart';
 import 'skill_detail_screen.dart';
+import 'career_roadmaps_screen.dart';
 
 class SkillsScreen extends StatefulWidget {
   const SkillsScreen({super.key});
@@ -104,12 +105,26 @@ class _SkillsScreenState extends State<SkillsScreen> {
     }
   }
 
+  Future<void> _openRoadmaps() async {
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (context) => const CareerRoadmapsScreen()),
+    );
+    if (result == true || mounted) {
+      _loadSkills();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Technical Skills'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.alt_route_rounded, size: 22),
+            tooltip: 'Role Roadmaps',
+            onPressed: _openRoadmaps,
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort, size: 20),
             tooltip: 'Sort By',
@@ -152,6 +167,78 @@ class _SkillsScreenState extends State<SkillsScreen> {
       ),
       body: Column(
         children: [
+          // Career Roadmaps Discovery Banner
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 2),
+            child: InkWell(
+              onTap: _openRoadmaps,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColors.secondaryCard, AppColors.cardBackground],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: AppColors.primaryPurple.withValues(alpha: 0.35),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryPurple.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.alt_route_rounded,
+                        color: AppColors.secondaryAccent,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Explore Career Roadmaps',
+                            style: TextStyle(
+                              color: AppColors.primaryText,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Curated 8-step skill paths for Flutter, Python & more',
+                            style: TextStyle(
+                              color: AppColors.secondaryText,
+                              fontSize: 11,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: AppColors.secondaryAccent,
+                      size: 14,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
           // Search & Filter header
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),

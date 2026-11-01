@@ -18,17 +18,49 @@ class _DatabaseTablesScreenState extends State<DatabaseTablesScreen> {
   List<Map<String, dynamic>> _tablesInfo = [];
 
   final List<Map<String, dynamic>> _knownTables = [
-    {'name': 'student_profile', 'label': 'Student Profile', 'icon': Icons.person_rounded},
+    {
+      'name': 'student_profile',
+      'label': 'Student Profile',
+      'icon': Icons.person_rounded
+    },
     {'name': 'skills', 'label': 'Skills', 'icon': Icons.psychology_rounded},
-    {'name': 'certificates', 'label': 'Certificates', 'icon': Icons.verified_rounded},
+    {
+      'name': 'certificates',
+      'label': 'Certificates',
+      'icon': Icons.verified_rounded
+    },
     {'name': 'projects', 'label': 'Projects', 'icon': Icons.folder_rounded},
-    {'name': 'tasks', 'label': 'Tasks & To-Dos', 'icon': Icons.check_circle_rounded},
-    {'name': 'learning_goals', 'label': 'Learning Goals', 'icon': Icons.flag_rounded},
-    {'name': 'placement_topics', 'label': 'Placement Topics', 'icon': Icons.track_changes_rounded},
-    {'name': 'interview_questions', 'label': 'Interview Questions', 'icon': Icons.quiz_rounded},
-    {'name': 'job_applications', 'label': 'Job Applications', 'icon': Icons.business_center_rounded},
+    {
+      'name': 'tasks',
+      'label': 'Tasks & To-Dos',
+      'icon': Icons.check_circle_rounded
+    },
+    {
+      'name': 'learning_goals',
+      'label': 'Learning Goals',
+      'icon': Icons.flag_rounded
+    },
+    {
+      'name': 'placement_topics',
+      'label': 'Placement Topics',
+      'icon': Icons.track_changes_rounded
+    },
+    {
+      'name': 'interview_questions',
+      'label': 'Interview Questions',
+      'icon': Icons.quiz_rounded
+    },
+    {
+      'name': 'job_applications',
+      'label': 'Job Applications',
+      'icon': Icons.business_center_rounded
+    },
     {'name': 'education', 'label': 'Education', 'icon': Icons.school_rounded},
-    {'name': 'achievements', 'label': 'Achievements', 'icon': Icons.emoji_events_rounded},
+    {
+      'name': 'achievements',
+      'label': 'Achievements',
+      'icon': Icons.emoji_events_rounded
+    },
   ];
 
   @override
@@ -46,7 +78,8 @@ class _DatabaseTablesScreenState extends State<DatabaseTablesScreen> {
       final name = table['name'] as String;
       int count = 0;
       try {
-        final countResult = await db.rawQuery('SELECT COUNT(*) as count FROM $name');
+        final countResult =
+            await db.rawQuery('SELECT COUNT(*) as count FROM $name');
         count = Sqflite.firstIntValue(countResult) ?? 0;
       } catch (_) {}
 
@@ -112,7 +145,8 @@ class _DatabaseTablesScreenState extends State<DatabaseTablesScreen> {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: AppColors.primaryAccent.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
@@ -150,9 +184,11 @@ class _DatabaseTablesScreenState extends State<DatabaseTablesScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: row.entries.map((e) {
                                   return Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 2),
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 2),
                                     child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         SizedBox(
                                           width: 130,
@@ -222,7 +258,8 @@ class _DatabaseTablesScreenState extends State<DatabaseTablesScreen> {
                     onChanged: (val) => setState(() => _searchQuery = val),
                     decoration: InputDecoration(
                       hintText: 'Search database tables...',
-                      prefixIcon: const Icon(Icons.search_rounded, color: AppColors.mutedText),
+                      prefixIcon: const Icon(Icons.search_rounded,
+                          color: AppColors.mutedText),
                       filled: true,
                       fillColor: AppColors.cardBackground,
                       contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -240,7 +277,8 @@ class _DatabaseTablesScreenState extends State<DatabaseTablesScreen> {
 
                 Expanded(
                   child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
                       final table = filtered[index];
@@ -260,7 +298,8 @@ class _DatabaseTablesScreenState extends State<DatabaseTablesScreen> {
                                 color: AppColors.elevatedSurface,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: Icon(icon, color: AppColors.primaryAccent, size: 22),
+                              child: Icon(icon,
+                                  color: AppColors.primaryAccent, size: 22),
                             ),
                             const SizedBox(width: 14),
                             Expanded(
@@ -287,7 +326,8 @@ class _DatabaseTablesScreenState extends State<DatabaseTablesScreen> {
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: AppColors.secondaryBackground,
                                 borderRadius: BorderRadius.circular(10),
