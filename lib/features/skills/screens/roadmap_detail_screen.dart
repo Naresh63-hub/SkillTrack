@@ -355,18 +355,17 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [
-                          AppColors.roadmapSecondaryCard,
-                          AppColors.roadmapCard,
+                          Color(0xFF7C3AED),
+                          Color(0xFF6D28D9),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.border, width: 1),
                       boxShadow: [
                         BoxShadow(
                           color:
-                              AppColors.roadmapPrimary.withValues(alpha: 0.1),
+                              const Color(0xFF7C3AED).withValues(alpha: 0.25),
                           blurRadius: 16,
                           offset: const Offset(0, 4),
                         ),
@@ -380,18 +379,12 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: AppColors.roadmapPrimary
-                                    .withValues(alpha: 0.15),
+                                color: Colors.white.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: AppColors.roadmapPrimary
-                                      .withValues(alpha: 0.4),
-                                  width: 1,
-                                ),
                               ),
                               child: Icon(
                                 roadmap.icon,
-                                color: AppColors.roadmapSecondaryAccent,
+                                color: Colors.white,
                                 size: 26,
                               ),
                             ),
@@ -403,7 +396,7 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
                                   Text(
                                     roadmap.roleName,
                                     style: const TextStyle(
-                                      color: AppColors.roadmapText,
+                                      color: Colors.white,
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -411,8 +404,9 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
                                   const SizedBox(height: 3),
                                   Text(
                                     roadmap.tagline,
-                                    style: const TextStyle(
-                                      color: AppColors.roadmapSecondaryAccent,
+                                    style: TextStyle(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.85),
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -425,8 +419,8 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
                         const SizedBox(height: 14),
                         Text(
                           roadmap.description,
-                          style: const TextStyle(
-                            color: AppColors.roadmapSecondaryText,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 13,
                             height: 1.5,
                           ),
@@ -511,16 +505,8 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: highlight
-            ? AppColors.roadmapPrimary.withValues(alpha: 0.2)
-            : AppColors.roadmapBackground,
+        color: Colors.white.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: highlight
-              ? AppColors.roadmapPrimary
-              : AppColors.border.withValues(alpha: 0.6),
-          width: 0.8,
-        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -528,19 +514,15 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
           Icon(
             icon,
             size: 13,
-            color: highlight
-                ? AppColors.roadmapSecondaryAccent
-                : AppColors.roadmapSecondaryText,
+            color: Colors.white,
           ),
           const SizedBox(width: 5),
           Text(
             label,
-            style: TextStyle(
-              color: highlight
-                  ? AppColors.roadmapSecondaryAccent
-                  : AppColors.roadmapSecondaryText,
+            style: const TextStyle(
+              color: Colors.white,
               fontSize: 11,
-              fontWeight: highlight ? FontWeight.w600 : FontWeight.normal,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

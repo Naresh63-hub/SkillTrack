@@ -21,14 +21,14 @@ class OverallProgressCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomCard(
       gradient: const LinearGradient(
-        colors: [Color(0xFF261B32), Color(0xFF1C1722)],
+        colors: [Color(0xFF6D28D9), Color(0xFF7C3AED)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
       padding: const EdgeInsets.all(20),
       borderRadius: 22,
       border: Border.all(
-        color: AppColors.border,
+        color: Colors.white.withValues(alpha: 0.2),
         width: 1.2,
       ),
       child: Column(
@@ -42,12 +42,12 @@ class OverallProgressCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryPurple.withValues(alpha: 0.2),
+                      color: Colors.white.withValues(alpha: 0.18),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.auto_graph_rounded,
-                      color: AppColors.gradientHighlight,
+                      color: Colors.white,
                       size: 18,
                     ),
                   ),
@@ -55,7 +55,7 @@ class OverallProgressCard extends StatelessWidget {
                   const Text(
                     'Career Preparation Score',
                     style: TextStyle(
-                      color: AppColors.primaryText,
+                      color: Colors.white,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.1,
@@ -66,7 +66,7 @@ class OverallProgressCard extends StatelessWidget {
               IconButton(
                 icon: const Icon(
                   Icons.arrow_forward_ios_rounded,
-                  color: AppColors.lightPurple,
+                  color: Colors.white,
                   size: 16,
                 ),
                 tooltip: 'Calculation Details',
@@ -99,16 +99,16 @@ class OverallProgressCard extends StatelessWidget {
                       value:
                           (metrics.overallPercentage / 100.0).clamp(0.0, 1.0),
                       strokeWidth: 8,
-                      backgroundColor: AppColors.progressTrack,
+                      backgroundColor: Colors.white.withValues(alpha: 0.2),
                       valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.gradientHighlight,
+                        Colors.white,
                       ),
                     ),
                     Center(
                       child: Text(
                         '${metrics.overallPercentage.toStringAsFixed(0)}%',
                         style: const TextStyle(
-                          color: AppColors.primaryText,
+                          color: Colors.white,
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
@@ -125,25 +125,21 @@ class OverallProgressCard extends StatelessWidget {
                     _buildMiniRow(
                       'Technical Skills',
                       metrics.skillsPercentage,
-                      AppColors.primaryPurple,
                     ),
                     const SizedBox(height: 7),
                     _buildMiniRow(
                       'Project Portfolio',
                       metrics.projectsPercentage,
-                      AppColors.gradientHighlight,
                     ),
                     const SizedBox(height: 7),
                     _buildMiniRow(
                       'Tasks Execution',
                       metrics.tasksPercentage,
-                      AppColors.lightPurple,
                     ),
                     const SizedBox(height: 7),
                     _buildMiniRow(
                       'Placement Prep',
                       metrics.placementPercentage,
-                      const Color(0xFFC084FC),
                     ),
                   ],
                 ),
@@ -151,65 +147,103 @@ class OverallProgressCard extends StatelessWidget {
             ],
           ),
 
-          if (skillsCompleted != null || projectsCompleted != null) ...[
-            const SizedBox(height: 16),
-            const Divider(color: AppColors.border, height: 1),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                if (skillsCompleted != null)
-                  Expanded(
-                    child: Row(
-                      children: [
-                        const Icon(Icons.check_circle_outline,
-                            size: 15, color: AppColors.lightPurple),
-                        const SizedBox(width: 6),
-                        Text(
-                          '$skillsCompleted Skills Completed',
-                          style: const TextStyle(
-                            color: AppColors.secondaryText,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+          const SizedBox(height: 16),
+          Divider(color: Colors.white.withValues(alpha: 0.2), height: 1),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  if (skillsCompleted != null) ...[
+                    const Icon(Icons.check_circle_outline,
+                        size: 15, color: Colors.white),
+                    const SizedBox(width: 5),
+                    Text(
+                      '$skillsCompleted Skills',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                if (projectsCompleted != null)
-                  Expanded(
-                    child: Row(
-                      children: [
-                        const Icon(Icons.folder_outlined,
-                            size: 15, color: AppColors.gradientHighlight),
-                        const SizedBox(width: 6),
-                        Text(
-                          '$projectsCompleted Projects Done',
-                          style: const TextStyle(
-                            color: AppColors.secondaryText,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+                  ],
+                  if (skillsCompleted != null && projectsCompleted != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Text('•',
+                          style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.6))),
                     ),
+                  if (projectsCompleted != null) ...[
+                    const Icon(Icons.folder_outlined,
+                        size: 15, color: Colors.white),
+                    const SizedBox(width: 5),
+                    Text(
+                      '$projectsCompleted Projects',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              // View Details White Pill Button matching Screen 3
+              InkWell(
+                onTap: () {
+                  if (onFormulaTap != null) {
+                    onFormulaTap!();
+                  } else {
+                    _showFormulaDialog(context);
+                  }
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
                   ),
-              ],
-            ),
-          ],
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'View Details',
+                        style: TextStyle(
+                          color: Color(0xFF6D28D9),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(width: 4),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 12,
+                        color: Color(0xFF6D28D9),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildMiniRow(String label, double percentage, Color color) {
+  Widget _buildMiniRow(String label, double percentage) {
     return Row(
       children: [
         Expanded(
           flex: 5,
           child: Text(
             label,
-            style: const TextStyle(
-              color: AppColors.secondaryText,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.9),
               fontSize: 11.5,
               fontWeight: FontWeight.w400,
             ),
@@ -223,18 +257,15 @@ class OverallProgressCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: Container(
               height: 6,
-              color: AppColors.progressTrack,
+              color: Colors.white.withValues(alpha: 0.2),
               child: FractionallySizedBox(
                 alignment: Alignment.centerLeft,
                 widthFactor: (percentage / 100.0).clamp(0.0, 1.0),
                 child: Container(
-                  decoration: BoxDecoration(
-                    color: color,
-                    gradient: const LinearGradient(
-                      colors: [
-                        AppColors.primaryPurple,
-                        AppColors.gradientHighlight
-                      ],
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    gradient: LinearGradient(
+                      colors: [Color(0xFFA78BFA), Colors.white],
                     ),
                   ),
                 ),
@@ -248,8 +279,8 @@ class OverallProgressCard extends StatelessWidget {
           child: Text(
             '${percentage.toStringAsFixed(0)}%',
             textAlign: TextAlign.end,
-            style: TextStyle(
-              color: color,
+            style: const TextStyle(
+              color: Colors.white,
               fontSize: 11,
               fontWeight: FontWeight.w600,
             ),
@@ -265,7 +296,7 @@ class OverallProgressCard extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         title: const Row(
           children: [
-            Icon(Icons.insights, color: AppColors.gradientHighlight, size: 22),
+            Icon(Icons.calculate_outlined, color: AppColors.primaryPurple),
             SizedBox(width: 10),
             Text('Career Score Breakdown'),
           ],

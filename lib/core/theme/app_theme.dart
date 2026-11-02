@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
 class AppTheme {
-  static ThemeData get darkTheme {
+  /// Reference Image Lavender Light Theme
+  static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
       scaffoldBackgroundColor: AppColors.mainBackground,
-      colorScheme: const ColorScheme.dark(
+      colorScheme: const ColorScheme.light(
         primary: AppColors.primaryPurple,
-        onPrimary: AppColors.primaryText,
+        onPrimary: Colors.white,
         secondary: AppColors.lightPurple,
-        onSecondary: AppColors.primaryText,
+        onSecondary: Colors.white,
         tertiary: AppColors.gradientHighlight,
         surface: AppColors.cardBackground,
         onSurface: AppColors.primaryText,
@@ -72,7 +73,7 @@ class AppTheme {
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.cardBackground,
-        selectedItemColor: AppColors.lightPurple,
+        selectedItemColor: AppColors.primaryPurple,
         unselectedItemColor: AppColors.mutedText,
         type: BottomNavigationBarType.fixed,
         selectedLabelStyle:
@@ -91,14 +92,15 @@ class AppTheme {
         ),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: AppColors.lightPurple, size: 24);
+            return const IconThemeData(
+                color: AppColors.primaryPurple, size: 24);
           }
           return const IconThemeData(color: AppColors.mutedText, size: 22);
         }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return const TextStyle(
-              color: AppColors.primaryText,
+              color: AppColors.primaryPurple,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             );
@@ -112,7 +114,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryPurple,
-          foregroundColor: AppColors.primaryText,
+          foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
           shape: RoundedRectangleBorder(
@@ -127,8 +129,8 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.lightPurple,
-          side: const BorderSide(color: AppColors.border, width: 1.2),
+          foregroundColor: AppColors.primaryPurple,
+          side: const BorderSide(color: AppColors.primaryPurple, width: 1.2),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -141,13 +143,13 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.lightPurple,
+          foregroundColor: AppColors.primaryPurple,
           textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.secondaryCard,
+        fillColor: AppColors.cardBackground,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
         hintStyle: const TextStyle(color: AppColors.mutedText, fontSize: 14),
@@ -177,11 +179,10 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.secondaryCard,
-        disabledColor: AppColors.cardBackground,
-        selectedColor: AppColors.primaryPurple.withValues(alpha: 0.25),
+        disabledColor: AppColors.progressTrack,
+        selectedColor: AppColors.primaryPurple,
         labelStyle: const TextStyle(color: AppColors.primaryText, fontSize: 12),
-        secondaryLabelStyle:
-            const TextStyle(color: AppColors.primaryText, fontSize: 12),
+        secondaryLabelStyle: const TextStyle(color: Colors.white, fontSize: 12),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
@@ -199,14 +200,16 @@ class AppTheme {
         space: 24,
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.secondaryCard,
-        contentTextStyle: const TextStyle(color: AppColors.primaryText),
+        backgroundColor: AppColors.primaryText,
+        contentTextStyle: const TextStyle(color: Colors.white),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.border, width: 1),
         ),
         behavior: SnackBarBehavior.floating,
       ),
     );
   }
+
+  /// Alias to provide backwards compatibility with any darkTheme callers
+  static ThemeData get darkTheme => lightTheme;
 }

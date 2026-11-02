@@ -187,19 +187,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               // Avatar & Header Card
               CustomCard(
-                gradient: AppColors.elevatedGradient,
                 padding: const EdgeInsets.all(20),
                 child: Row(
                   children: [
-                    CircleAvatar(
-                      radius: 34,
-                      backgroundColor: AppColors.primaryAccent,
-                      child: Text(
-                        p.name.isNotEmpty ? p.name[0].toUpperCase() : 'S',
-                        style: const TextStyle(
+                    Container(
+                      width: 68,
+                      height: 68,
+                      decoration: BoxDecoration(
+                        color: AppColors.secondaryCard,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: AppColors.primaryPurple, width: 2),
+                      ),
+                      child: Center(
+                        child: Text(
+                          p.name.isNotEmpty ? p.name[0].toUpperCase() : 'S',
+                          style: const TextStyle(
                             fontSize: 26,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white),
+                            color: AppColors.primaryPurple,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -220,7 +228,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ? p.targetJobRole
                                 : 'Set up your target role',
                             style: const TextStyle(
-                                color: AppColors.brightAccent,
+                                color: AppColors.primaryPurple,
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w600),
                           ),

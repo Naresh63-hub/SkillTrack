@@ -664,16 +664,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             horizontal: 14, vertical: 12),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF2A173B), Color(0xFF1C1722)],
+                            colors: [Color(0xFFEDE9FE), Color(0xFFFAF5FF)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color:
-                                AppColors.primaryPurple.withValues(alpha: 0.45),
+                                AppColors.primaryPurple.withValues(alpha: 0.35),
                             width: 1,
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primaryPurple
+                                  .withValues(alpha: 0.08),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                         ),
                         child: Row(
                           children: [
