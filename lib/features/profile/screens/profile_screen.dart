@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/custom_card.dart';
+import '../../../core/widgets/celebration_dialog.dart';
 import '../../../core/utils/validators.dart';
 import '../../../models/student_profile.dart';
 import '../../../repositories/profile_repository.dart';
@@ -414,6 +415,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         },
                         child: const Text('View',
                             style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Milestones & Motivation (Matching Screen 10 of mockup)
+                CustomCard(
+                  onTap: () => CelebrationDialog.show(context),
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(9),
+                        decoration: BoxDecoration(
+                          color:
+                              const Color(0xFFF59E0B).withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.emoji_events_rounded,
+                          color: Color(0xFFFBBF24),
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Milestones & Motivation',
+                              style: TextStyle(
+                                color: AppColors.primaryText,
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'View career milestone celebration & encouragement',
+                              style: TextStyle(
+                                color: AppColors.secondaryText,
+                                fontSize: 11.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 13,
+                        color: AppColors.lightPurple,
                       ),
                     ],
                   ),

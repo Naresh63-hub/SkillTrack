@@ -4,6 +4,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../models/career_roadmap.dart';
 import '../../../models/skill.dart';
 import '../../../services/roadmap_service.dart';
+import '../../../repositories/skills_repository.dart';
+import 'skill_detail_screen.dart';
 
 /// The official Role-Based Skill Roadmap confirmation dialog.
 class RoadmapImportDialog extends StatelessWidget {
@@ -573,223 +575,430 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
     final bool isAdded = existingSkill != null;
     final double progress = existingSkill?.progressPercentage ?? 0.0;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.roadmapCard,
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isAdded
-              ? AppColors.roadmapPrimary.withValues(alpha: 0.45)
-              : AppColors.border,
-          width: isAdded ? 1.2 : 0.8,
-        ),
-      ),
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        onTap: () => _showMilestoneDetails(item, existingSkill),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.roadmapCard,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isAdded
+                  ? AppColors.roadmapPrimary.withValues(alpha: 0.45)
+                  : AppColors.border,
+              width: isAdded ? 1.2 : 0.8,
+            ),
+          ),
+          padding: const EdgeInsets.all(14),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Step number badge
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  gradient: isAdded
-                      ? const LinearGradient(
-                          colors: [
-                            AppColors.roadmapPrimary,
-                            AppColors.roadmapSecondaryAccent,
-                          ],
-                        )
-                      : LinearGradient(
-                          colors: [
-                            AppColors.roadmapSecondaryCard,
-                            AppColors.roadmapBackground,
-                          ],
-                        ),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isAdded
-                        ? AppColors.roadmapSecondaryAccent
-                        : AppColors.border,
-                    width: 1,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    '${item.order}',
-                    style: TextStyle(
-                      color: isAdded
-                          ? Colors.white
-                          : AppColors.roadmapSecondaryText,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-
-              // Title and category
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.name,
-                            style: const TextStyle(
-                              color: AppColors.roadmapText,
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        if (isAdded)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppColors.roadmapPrimary
-                                  .withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: AppColors.roadmapPrimary
-                                    .withValues(alpha: 0.5),
-                                width: 0.8,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.check_circle_rounded,
-                                  color: AppColors.roadmapSecondaryAccent,
-                                  size: 11,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${progress.toInt()}% Tracked',
-                                  style: const TextStyle(
-                                    color: AppColors.roadmapSecondaryAccent,
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Step number badge
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      gradient: isAdded
+                          ? const LinearGradient(
+                              colors: [
+                                AppColors.roadmapPrimary,
+                                AppColors.roadmapSecondaryAccent,
+                              ],
+                            )
+                          : LinearGradient(
+                              colors: [
+                                AppColors.roadmapSecondaryCard,
+                                AppColors.roadmapBackground,
                               ],
                             ),
-                          )
-                        else
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppColors.roadmapSecondaryCard,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: AppColors.border,
-                                width: 0.8,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isAdded
+                            ? AppColors.roadmapSecondaryAccent
+                            : AppColors.border,
+                        width: 1,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${item.order}',
+                        style: TextStyle(
+                          color: isAdded
+                              ? Colors.white
+                              : AppColors.roadmapSecondaryText,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Title and category
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                item.name,
+                                style: const TextStyle(
+                                  color: AppColors.roadmapText,
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                            child: const Text(
-                              'Recommended',
-                              style: TextStyle(
+                            const SizedBox(width: 6),
+                            if (isAdded)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: AppColors.roadmapPrimary
+                                      .withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: AppColors.roadmapPrimary
+                                        .withValues(alpha: 0.5),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.check_circle_rounded,
+                                      color: AppColors.roadmapSecondaryAccent,
+                                      size: 11,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${progress.toInt()}% Tracked',
+                                      style: const TextStyle(
+                                        color: AppColors.roadmapSecondaryAccent,
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            else
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: AppColors.roadmapSecondaryCard,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: AppColors.border,
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Recommended',
+                                  style: TextStyle(
+                                    color: AppColors.roadmapSecondaryText,
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        Row(
+                          children: [
+                            Text(
+                              item.category,
+                              style: const TextStyle(
                                 color: AppColors.roadmapSecondaryText,
-                                fontSize: 10.5,
+                                fontSize: 11.5,
+                              ),
+                            ),
+                            const Text(
+                              '  •  ',
+                              style: TextStyle(
+                                color: AppColors.border,
+                                fontSize: 11,
+                              ),
+                            ),
+                            Text(
+                              item.proficiencyLevel,
+                              style: const TextStyle(
+                                color: AppColors.roadmapSecondaryAccent,
+                                fontSize: 11.5,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    Row(
-                      children: [
-                        Text(
-                          item.category,
-                          style: const TextStyle(
-                            color: AppColors.roadmapSecondaryText,
-                            fontSize: 11.5,
-                          ),
-                        ),
-                        const Text(
-                          '  •  ',
-                          style: TextStyle(
-                            color: AppColors.border,
-                            fontSize: 11,
-                          ),
-                        ),
-                        Text(
-                          item.proficiencyLevel,
-                          style: const TextStyle(
-                            color: AppColors.roadmapSecondaryAccent,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          ],
                         ),
                       ],
                     ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.only(left: 44),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.description,
+                      style: const TextStyle(
+                        color: AppColors.roadmapSecondaryText,
+                        fontSize: 12.5,
+                        height: 1.45,
+                      ),
+                    ),
+                    if (item.learningResourceUrl.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: () => _openResourceUrl(item.learningResourceUrl),
+                        borderRadius: BorderRadius.circular(6),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.open_in_new_rounded,
+                                size: 13,
+                                color: AppColors.roadmapSecondaryAccent,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                'Learning Resource / Docs',
+                                style: TextStyle(
+                                  color: AppColors.roadmapSecondaryAccent,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w500,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: AppColors
+                                      .roadmapSecondaryAccent
+                                      .withValues(alpha: 0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.only(left: 44),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.description,
-                  style: const TextStyle(
-                    color: AppColors.roadmapSecondaryText,
-                    fontSize: 12.5,
-                    height: 1.45,
+        ),
+      ),
+    );
+  }
+
+  void _showMilestoneDetails(RoadmapSkillItem item, Skill? existingSkill) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final isTracked = existingSkill != null;
+        return Container(
+          padding: const EdgeInsets.all(22),
+          decoration: const BoxDecoration(
+            color: AppColors.roadmapCard,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border(
+              top: BorderSide(color: AppColors.border, width: 1.2),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.roadmapPrimary.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                          color:
+                              AppColors.roadmapPrimary.withValues(alpha: 0.5)),
+                    ),
+                    child: Text(
+                      'Milestone ${item.order} of 8',
+                      style: const TextStyle(
+                        color: AppColors.roadmapSecondaryAccent,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.close,
+                        color: AppColors.roadmapSecondaryText),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                item.name,
+                style: const TextStyle(
+                  color: AppColors.roadmapText,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
-                if (item.learningResourceUrl.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () => _openResourceUrl(item.learningResourceUrl),
-                    borderRadius: BorderRadius.circular(6),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${item.category} • ${item.proficiencyLevel}',
+                style: const TextStyle(
+                  color: AppColors.roadmapSecondaryAccent,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                item.description,
+                style: const TextStyle(
+                  color: AppColors.roadmapSecondaryText,
+                  fontSize: 13.5,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Hands-on Mini Project Idea
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.roadmapSecondaryCard,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.lightbulb_rounded,
+                        color: Color(0xFFFBBF24), size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
-                            Icons.open_in_new_rounded,
-                            size: 13,
-                            color: AppColors.roadmapSecondaryAccent,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            'Learning Resource / Docs',
+                          const Text(
+                            'Recommended Practice Project',
                             style: TextStyle(
-                              color: AppColors.roadmapSecondaryAccent,
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w500,
-                              decoration: TextDecoration.underline,
-                              decorationColor: AppColors.roadmapSecondaryAccent
-                                  .withValues(alpha: 0.7),
+                              color: AppColors.roadmapText,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'Build a mini-application implementing ${item.name} to reinforce this concept for placement interview discussions.',
+                            style: const TextStyle(
+                              color: AppColors.roadmapSecondaryText,
+                              fontSize: 12,
+                              height: 1.35,
                             ),
                           ),
                         ],
                       ),
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Resource Link & Actions
+              if (item.learningResourceUrl.isNotEmpty) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.roadmapSecondaryAccent,
+                      side: const BorderSide(color: AppColors.roadmapPrimary),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
+                    icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                    label: const Text('Open Official Documentation'),
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      _openResourceUrl(item.learningResourceUrl);
+                    },
                   ),
-                ],
+                ),
+                const SizedBox(height: 10),
               ],
-            ),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.roadmapPrimary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                  ),
+                  icon: Icon(isTracked ? Icons.edit_rounded : Icons.add_rounded,
+                      size: 18),
+                  label: Text(
+                    isTracked
+                        ? 'Tracked (${existingSkill.progressPercentage.toInt()}%) — Open Details'
+                        : 'Import Single Skill',
+                  ),
+                  onPressed: () async {
+                    Navigator.of(ctx).pop();
+                    if (isTracked) {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (c) =>
+                              SkillDetailScreen(initialSkill: existingSkill),
+                        ),
+                      );
+                      _loadExistingSkills();
+                    } else {
+                      final newSkill = Skill(
+                        name: item.name,
+                        category: item.category,
+                        proficiencyLevel: item.proficiencyLevel,
+                        progressPercentage: 0.0,
+                        learningResourceUrl: item.learningResourceUrl,
+                        notes:
+                            'Imported from ${widget.roadmap.roleName} roadmap.',
+                      );
+                      await SkillsRepository().addSkill(newSkill);
+                      _loadExistingSkills();
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content:
+                                  Text('Added "${item.name}" to your skills!')),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

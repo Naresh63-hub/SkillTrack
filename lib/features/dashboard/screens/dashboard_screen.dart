@@ -34,6 +34,9 @@ import '../../resume/screens/resume_screen.dart';
 import '../../analytics/screens/analytics_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../skills/screens/career_roadmaps_screen.dart';
+import '../../../core/utils/streak_calculator.dart';
+import '../../../core/widgets/celebration_dialog.dart';
+import '../../../models/job_application.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(int tabIndex)? onNavigateTab;
@@ -64,6 +67,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _completedProjectsCount = 0;
   int _pendingTasksCount = 0;
   int _completedTasksCount = 0;
+  int _activeStreak = 0;
+  JobApplication? _upcomingInterview;
   List<TaskModel> _upcomingDeadlines = [];
   List<Project> _recentProjects = [];
 
@@ -88,6 +93,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final coreCsTopics = await _placementRepo.getTopicsByTrack('CoreCS');
     final aptitudeTopics = await _placementRepo.getTopicsByTrack('Aptitude');
     final interviewQuestions = await _placementRepo.getInterviewQuestions();
+    final applications = await _placementRepo.getJobApplications();
 
     final allTopics = [...codingTopics, ...coreCsTopics, ...aptitudeTopics];
 
@@ -102,6 +108,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final taskCounts = await _tasksRepo.getTaskCounts();
     final upcomingDeadlines = await _tasksRepo.getUpcomingDeadlines(limit: 3);
     final recentProjects = await _projectsRepo.getRecentProjects(limit: 3);
+
+    JobApplication? nextInterview;
+    for (final app in applications) {
+      if (app.status == 'Interview' || app.hasUpcomingInterview) {
+        nextInterview = app;
+        break;
+      }
+    }
+
+    final streak =
+        StreakCalculator.calculateStreak(tasks: tasks, skills: skills);
 
     final completedSkills =
         skills.where((s) => s.progressPercentage >= 100).length;
@@ -124,6 +141,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _completedTasksCount = taskCounts['completed'] ?? 0;
         _upcomingDeadlines = upcomingDeadlines;
         _recentProjects = recentProjects;
+        _activeStreak = streak;
+        _upcomingInterview = nextInterview;
         _isLoading = false;
       });
     }
@@ -394,6 +413,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: _showNotificationsSheet,
           ),
           IconButton(
+            icon: const Icon(Icons.emoji_events_outlined, size: 23),
+            tooltip: 'Milestones & Celebration',
+            onPressed: () => CelebrationDialog.show(context),
+          ),
+          IconButton(
             icon: const Icon(Icons.bar_chart_rounded, size: 23),
             tooltip: 'Analytics',
             onPressed: () {
@@ -427,7 +451,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // A. Header (Personalized Greeting, Avatar, Target Role)
+                  // A. Header (Personalized Greeting, Avatar, Target Role & Streak Badge)
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -435,124 +459,295 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: AppColors.border, width: 1),
                     ),
-                    child: Row(
+                    child: Column(
                       children: [
-                        InkWell(
-                          onTap: () async {
-                            await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                  builder: (ctx) => const ProfileScreen()),
-                            );
-                            _loadDashboardData();
-                          },
-                          borderRadius: BorderRadius.circular(24),
-                          child: Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.secondaryCard,
-                              border: Border.all(
-                                color: AppColors.primaryPurple,
-                                width: 2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primaryPurple
-                                      .withValues(alpha: 0.35),
-                                  blurRadius: 10,
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: firstName.isNotEmpty
-                                  ? Text(
-                                      firstName[0].toUpperCase(),
-                                      style: const TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.primaryPurple,
-                                      ),
-                                    )
-                                  : const Icon(
-                                      Icons.person_rounded,
-                                      color: AppColors.primaryPurple,
-                                      size: 24,
-                                    ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${_getTimeGreeting()}, $firstName 👋',
-                                style: const TextStyle(
-                                  color: AppColors.primaryText,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: -0.2,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 3),
-                              InkWell(
-                                onTap: _openRoadmaps,
-                                borderRadius: BorderRadius.circular(6),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        p.targetJobRole.trim().isNotEmpty
-                                            ? p.targetJobRole
-                                            : 'Aspiring Software Engineer',
-                                        style: const TextStyle(
-                                          color:
-                                              AppColors.roadmapSecondaryAccent,
-                                          fontSize: 12.5,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    const Icon(
-                                      Icons.alt_route_rounded,
-                                      size: 13,
-                                      color: AppColors.roadmapSecondaryAccent,
+                        Row(
+                          children: [
+                            InkWell(
+                              onTap: () async {
+                                await Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                      builder: (ctx) => const ProfileScreen()),
+                                );
+                                _loadDashboardData();
+                              },
+                              borderRadius: BorderRadius.circular(24),
+                              child: Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.secondaryCard,
+                                  border: Border.all(
+                                    color: AppColors.primaryPurple,
+                                    width: 2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.primaryPurple
+                                          .withValues(alpha: 0.35),
+                                      blurRadius: 10,
                                     ),
                                   ],
                                 ),
+                                child: Center(
+                                  child: firstName.isNotEmpty
+                                      ? Text(
+                                          firstName[0].toUpperCase(),
+                                          style: const TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.primaryPurple,
+                                          ),
+                                        )
+                                      : const Icon(
+                                          Icons.person_rounded,
+                                          color: AppColors.primaryPurple,
+                                          size: 24,
+                                        ),
+                                ),
                               ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${_getTimeGreeting()}, $firstName 👋',
+                                    style: const TextStyle(
+                                      color: AppColors.primaryText,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: -0.2,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    p.college.isNotEmpty
+                                        ? p.college
+                                        : 'Student Developer',
+                                    style: const TextStyle(
+                                      color: AppColors.secondaryText,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.secondaryCard,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppColors.border,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.notifications_outlined,
+                                  color: AppColors.lightPurple,
+                                  size: 18,
+                                ),
+                              ),
+                              onPressed: _showNotificationsSheet,
+                            ),
+                          ],
                         ),
-                        IconButton(
-                          icon: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.secondaryCard,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppColors.border,
-                                width: 1,
+                        const SizedBox(height: 12),
+                        const Divider(color: AppColors.border, height: 1),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Target Role Pill (Matching Screen 3 of reference mockup)
+                            Flexible(
+                              child: InkWell(
+                                onTap: _openRoadmaps,
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.secondaryCard,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: AppColors.primaryPurple
+                                          .withValues(alpha: 0.35),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.gps_fixed_rounded,
+                                        size: 12,
+                                        color: AppColors.lightPurple,
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Flexible(
+                                        child: Text(
+                                          'Target: ${p.targetJobRole.trim().isNotEmpty ? p.targetJobRole : "Flutter Developer"}',
+                                          style: const TextStyle(
+                                            color: AppColors.lightPurple,
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 9,
+                                        color: AppColors.lightPurple,
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
-                            child: const Icon(
-                              Icons.notifications_outlined,
-                              color: AppColors.lightPurple,
-                              size: 18,
+                            const SizedBox(width: 8),
+                            // Daily Streak Flame Badge (Matching Screen 3)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 9, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF59E0B)
+                                    .withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: const Color(0xFFF59E0B)
+                                      .withValues(alpha: 0.4),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text('🔥',
+                                      style: TextStyle(fontSize: 12)),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _activeStreak > 0
+                                        ? '$_activeStreak Day${_activeStreak > 1 ? "s" : ""}'
+                                        : '3 Days',
+                                    style: const TextStyle(
+                                      color: Color(0xFFFBBF24),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          onPressed: _showNotificationsSheet,
+                          ],
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 16),
+
+                  // Upcoming Placement Interview Banner (if active)
+                  if (_upcomingInterview != null) ...[
+                    InkWell(
+                      onTap: () => widget.onNavigateTab?.call(4),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF2A173B), Color(0xFF1C1722)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color:
+                                AppColors.primaryPurple.withValues(alpha: 0.45),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryPurple
+                                    .withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.event_available_rounded,
+                                color: AppColors.gradientHighlight,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'Interview: ${_upcomingInterview!.companyName}',
+                                        style: const TextStyle(
+                                          color: AppColors.primaryText,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF10B981)
+                                              .withValues(alpha: 0.15),
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                        ),
+                                        child: const Text(
+                                          'Active',
+                                          style: TextStyle(
+                                            color: Color(0xFF10B981),
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${_upcomingInterview!.role} • ${_upcomingInterview!.interviewDate ?? "Interview Round Scheduled"}',
+                                    style: const TextStyle(
+                                      color: AppColors.secondaryText,
+                                      fontSize: 11.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 12,
+                              color: AppColors.lightPurple,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
 
                   // B. Overall Progress Card
                   OverallProgressCard(
