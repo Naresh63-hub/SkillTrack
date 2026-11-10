@@ -3,10 +3,12 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/custom_card.dart';
 import '../../../models/career_chat_models.dart';
 import '../../../repositories/career_assistant_repository.dart';
+import '../../../services/ai_service.dart';
 import '../../../services/career_assistant_service.dart';
 import '../../ai_roadmap/screens/ai_roadmap_screen.dart';
 import '../../github/screens/github_dashboard_screen.dart';
 import '../../mock_interview/screens/mock_interview_setup_screen.dart';
+import '../../profile/screens/settings_screen.dart';
 
 class CareerAssistantScreen extends StatefulWidget {
   const CareerAssistantScreen({super.key});
@@ -23,6 +25,7 @@ class _CareerAssistantScreenState extends State<CareerAssistantScreen> {
   List<CareerChatMessage> _messages = [];
   bool _isLoading = true;
   bool _isSending = false;
+  bool _hasAiKey = false;
 
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -37,7 +40,13 @@ class _CareerAssistantScreenState extends State<CareerAssistantScreen> {
   @override
   void initState() {
     super.initState();
+    _checkAiKey();
     _loadSession();
+  }
+
+  Future<void> _checkAiKey() async {
+    final hasKey = await AiService.instance.hasApiKey();
+    if (mounted) setState(() => _hasAiKey = hasKey);
   }
 
   @override
@@ -182,6 +191,8 @@ class _CareerAssistantScreenState extends State<CareerAssistantScreen> {
               child: CircularProgressIndicator(color: AppColors.primaryPurple))
           : Column(
               children: [
+                _buildStatusBanner(),
+
                 // Quick Suggestion Chips
                 _buildQuickPromptsBar(),
 
@@ -236,6 +247,49 @@ class _CareerAssistantScreenState extends State<CareerAssistantScreen> {
                 _buildInputBar(),
               ],
             ),
+    );
+  }
+
+  Widget _buildStatusBanner() {
+    if (_hasAiKey) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      color: AppColors.secondaryCard.withValues(alpha: 0.8),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline_rounded,
+              size: 15, color: AppColors.primaryPurple),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'Running offline heuristic mode. Add Gemini API key in Settings for cloud generative AI.',
+              style: TextStyle(
+                fontSize: 11,
+                color: AppColors.secondaryText,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          InkWell(
+            onTap: () {
+              Navigator.of(context)
+                  .push(
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                  )
+                  .then((_) => _checkAiKey());
+            },
+            child: const Text(
+              'Settings',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryPurple,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

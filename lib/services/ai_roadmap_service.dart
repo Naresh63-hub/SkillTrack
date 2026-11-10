@@ -216,6 +216,7 @@ Include exactly 9-12 balanced nodes (3-4 for Beginner, 3-4 for Intermediate, 3-4
             overallProgress: 0.0,
             summary: summary,
             skillGaps: skillGaps,
+            isAiGenerated: true,
             createdAt: DateTime.now().toIso8601String(),
             updatedAt: DateTime.now().toIso8601String(),
             nodes: nodes,
@@ -249,6 +250,7 @@ Include exactly 9-12 balanced nodes (3-4 for Beginner, 3-4 for Intermediate, 3-4
       overallProgress: 0.0,
       summary: summary,
       skillGaps: skillGaps,
+      isAiGenerated: false,
       createdAt: DateTime.now().toIso8601String(),
       updatedAt: DateTime.now().toIso8601String(),
       nodes: nodes,
@@ -650,5 +652,43 @@ Include exactly 9-12 balanced nodes (3-4 for Beginner, 3-4 for Intermediate, 3-4
 
     final createdId = await _tasksRepo.addTask(task);
     return task.copyWith(id: createdId);
+  }
+
+  /// Groups roadmap nodes into a 4-week structured schedule for daily and weekly targets
+  List<Map<String, dynamic>> organizeWeeklySchedule(List<AiRoadmapNode> nodes) {
+    if (nodes.isEmpty) return [];
+    final weeks = <Map<String, dynamic>>[
+      {
+        'week': 1,
+        'title': 'Week 1: Fundamentals & Core Architecture',
+        'targetDays': 'Days 1-7',
+        'nodes': <AiRoadmapNode>[]
+      },
+      {
+        'week': 2,
+        'title': 'Week 2: Frameworks & Real-World Building',
+        'targetDays': 'Days 8-14',
+        'nodes': <AiRoadmapNode>[]
+      },
+      {
+        'week': 3,
+        'title': 'Week 3: Advanced Patterns & Optimization',
+        'targetDays': 'Days 15-21',
+        'nodes': <AiRoadmapNode>[]
+      },
+      {
+        'week': 4,
+        'title': 'Week 4: Testing, Placement & Production',
+        'targetDays': 'Days 22-28',
+        'nodes': <AiRoadmapNode>[]
+      },
+    ];
+
+    for (int i = 0; i < nodes.length; i++) {
+      final node = nodes[i];
+      final weekIndex = (i * 4 / nodes.length).floor().clamp(0, 3);
+      (weeks[weekIndex]['nodes'] as List<AiRoadmapNode>).add(node);
+    }
+    return weeks;
   }
 }

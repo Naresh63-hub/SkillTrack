@@ -279,4 +279,34 @@ void main() {
       expect(fromMessageMap.content, equals(message.content));
     });
   });
+
+  group('Weekly Schedule & Security Unit Tests', () {
+    test('organizeWeeklySchedule organizes nodes into 4 structured weeks', () {
+      final now = DateTime.now().toIso8601String();
+      final nodes = List.generate(
+        8,
+        (i) => AiRoadmapNode(
+          roadmapId: 1,
+          level: i < 3 ? 'Beginner' : i < 6 ? 'Intermediate' : 'Advanced',
+          topicTitle: 'Topic ${i + 1}',
+          description: 'Description $i',
+          category: 'Category',
+          estimatedDays: 3,
+          resourceTitle: 'Resource',
+          resourceUrl: 'https://example.com',
+          orderIndex: i,
+          createdAt: now,
+        ),
+      );
+
+      final service = AiRoadmapService();
+      final schedule = service.organizeWeeklySchedule(nodes);
+
+      expect(schedule.length, equals(4));
+      expect(schedule[0]['week'], equals(1));
+      expect(schedule[0]['targetDays'], equals('Days 1-7'));
+      expect((schedule[0]['nodes'] as List).isNotEmpty, isTrue);
+      expect(schedule[3]['week'], equals(4));
+    });
+  });
 }

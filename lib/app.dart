@@ -16,7 +16,9 @@ class SkillTrackApp extends StatelessWidget {
     return MaterialApp(
       title: 'SkillTrack',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.light,
       home: const SplashScreen(),
     );
   }

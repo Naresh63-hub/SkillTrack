@@ -112,6 +112,7 @@ class MockInterviewRepository {
     required List<String> strengths,
     required List<String> weaknesses,
     required List<String> recommendedTopics,
+    bool isAiEvaluated = false,
   }) async {
     final db = await _dbHelper.database;
     await db.update(
@@ -123,6 +124,7 @@ class MockInterviewRepository {
         'strengths': strengths.join('|||'),
         'weaknesses': weaknesses.join('|||'),
         'recommended_topics': recommendedTopics.join('|||'),
+        'is_ai_evaluated': isAiEvaluated ? 1 : 0,
         'completed_at': DateTime.now().toIso8601String(),
       },
       where: 'id = ?',

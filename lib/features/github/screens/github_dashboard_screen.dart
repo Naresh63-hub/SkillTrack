@@ -24,6 +24,8 @@ class _GithubDashboardScreenState extends State<GithubDashboardScreen> {
   List<GithubCommit> _commits = [];
   bool _isLoading = true;
   bool _isSyncing = false;
+  bool _obscureToken = true;
+  String _selectedLanguage = 'All';
 
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _tokenController = TextEditingController();
@@ -309,11 +311,40 @@ class _GithubDashboardScreenState extends State<GithubDashboardScreen> {
                 const SizedBox(height: 8),
                 TextField(
                   controller: _tokenController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
+                  obscureText: _obscureToken,
+                  decoration: InputDecoration(
                     hintText: 'ghp_xxxxxxxxxxxxxxxxxxxx',
-                    prefixIcon: Icon(Icons.key_rounded, size: 20),
+                    prefixIcon: const Icon(Icons.key_rounded, size: 20),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureToken
+                            ? Icons.visibility_off_rounded
+                            : Icons.visibility_rounded,
+                        size: 20,
+                        color: AppColors.mutedText,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscureToken = !_obscureToken),
+                    ),
                   ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.shield_outlined,
+                        size: 14, color: Color(0xFF059669)),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        'Stored using HMAC-SHA256 authenticated encrypted vault.',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          color: Colors.green.shade700,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -395,6 +426,10 @@ class _GithubDashboardScreenState extends State<GithubDashboardScreen> {
               ),
             ],
           ),
+          if (GithubService.lastRateLimitInfo != null) ...[
+            const SizedBox(height: 12),
+            _buildRateLimitBanner(GithubService.lastRateLimitInfo!),
+          ],
           const SizedBox(height: 20),
 
           // Recent Commit Activity Timeline
@@ -410,8 +445,77 @@ class _GithubDashboardScreenState extends State<GithubDashboardScreen> {
           _buildSectionHeader(
               'Public Repositories', '${_repos.length} repos available'),
           const SizedBox(height: 10),
+          _buildLanguageFilters(),
+          const SizedBox(height: 10),
           _buildReposList(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRateLimitBanner(GithubRateLimitInfo info) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.secondaryCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.speed_rounded,
+              size: 16, color: AppColors.primaryPurple),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'GitHub API Quota: ${info.remaining}/${info.limit} requests remaining (Resets in ${info.minutesUntilReset})',
+              style: const TextStyle(
+                fontSize: 11.5,
+                color: AppColors.secondaryText,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLanguageFilters() {
+    final languages = <String>{'All'};
+    for (final r in _repos) {
+      if (r.language != null && r.language!.isNotEmpty) {
+        languages.add(r.language!);
+      }
+    }
+    if (languages.length <= 1) return const SizedBox.shrink();
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: languages.map((lang) {
+          final isSelected = _selectedLanguage == lang;
+          return Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: ChoiceChip(
+              label: Text(lang),
+              selected: isSelected,
+              selectedColor: AppColors.primaryPurple,
+              backgroundColor: AppColors.cardBackground,
+              labelStyle: TextStyle(
+                color: isSelected ? Colors.white : AppColors.secondaryText,
+                fontSize: 11.5,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              ),
+              side: BorderSide(
+                color: isSelected ? AppColors.primaryPurple : AppColors.border,
+              ),
+              onSelected: (val) {
+                if (val) setState(() => _selectedLanguage = lang);
+              },
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -611,12 +715,20 @@ class _GithubDashboardScreenState extends State<GithubDashboardScreen> {
   }
 
   Widget _buildReposList() {
-    if (_repos.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
+    final filteredRepos = _selectedLanguage == 'All'
+        ? _repos
+        : _repos.where((r) => r.language == _selectedLanguage).toList();
+
+    if (filteredRepos.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
         child: Center(
-          child: Text('No public repositories found for this account.',
-              style: TextStyle(color: AppColors.mutedText)),
+          child: Text(
+            _selectedLanguage == 'All'
+                ? 'No public repositories found for this account.'
+                : 'No $_selectedLanguage repositories found.',
+            style: const TextStyle(color: AppColors.mutedText),
+          ),
         ),
       );
     }
@@ -624,9 +736,9 @@ class _GithubDashboardScreenState extends State<GithubDashboardScreen> {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: _repos.length,
+      itemCount: filteredRepos.length,
       itemBuilder: (context, index) {
-        final r = _repos[index];
+        final r = filteredRepos[index];
         return _buildRepoCard(r);
       },
     );

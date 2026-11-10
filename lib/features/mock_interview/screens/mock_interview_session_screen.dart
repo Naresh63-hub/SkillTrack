@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/custom_card.dart';
 import '../../../models/mock_interview.dart';
@@ -29,7 +30,8 @@ class _MockInterviewSessionScreenState extends State<MockInterviewSessionScreen>
   int _currentIndex = 0;
   bool _isEvaluating = false;
   bool _isListening = false;
-  Timer? _listeningTimer;
+  final stt.SpeechToText _speechToText = stt.SpeechToText();
+  bool _speechInitialized = false;
 
   final TextEditingController _answerController = TextEditingController();
   late AnimationController _micAnimController;
@@ -47,43 +49,61 @@ class _MockInterviewSessionScreenState extends State<MockInterviewSessionScreen>
   @override
   void dispose() {
     _answerController.dispose();
-    _listeningTimer?.cancel();
+    _speechToText.stop();
     _micAnimController.dispose();
     super.dispose();
   }
 
-  void _toggleVoiceDictation() {
-    setState(() => _isListening = !_isListening);
-
+  Future<void> _toggleVoiceDictation() async {
     if (_isListening) {
-      // Simulate real-time speech dictation prompt for verbal practice
-      _listeningTimer?.cancel();
-      _listeningTimer = Timer(const Duration(seconds: 4), () {
-        if (mounted && _isListening) {
-          final sampleSpokenText = _getSimulatedSpeechSample(_currentQuestion);
-          if (_answerController.text.isEmpty) {
-            _answerController.text = sampleSpokenText;
-          } else {
-            _answerController.text += ' $sampleSpokenText';
-          }
-          setState(() => _isListening = false);
-        }
-      });
-    } else {
-      _listeningTimer?.cancel();
+      await _speechToText.stop();
+      if (mounted) setState(() => _isListening = false);
+      return;
     }
-  }
 
-  String _getSimulatedSpeechSample(String question) {
-    if (question.toLowerCase().contains('python')) {
-      return 'In Python, memory is managed via reference counting and a cyclic garbage collector. Mutable objects like lists can be modified in place, while immutable types like tuples create new references.';
-    } else if (question.toLowerCase().contains('java')) {
-      return 'Java enforces strong type safety. Interfaces define contracts with abstract methods, whereas abstract classes can provide base implementations and hold instance state.';
-    } else if (question.toLowerCase().contains('sql') ||
-        question.toLowerCase().contains('join')) {
-      return 'An Inner Join matches corresponding rows across tables, whereas a Left Join retains all rows from the primary table even when foreign matches are absent.';
+    if (!_speechInitialized) {
+      _speechInitialized = await _speechToText.initialize(
+        onError: (err) {
+          debugPrint('Speech recognition error: ${err.errorMsg}');
+          if (mounted) setState(() => _isListening = false);
+        },
+        onStatus: (status) {
+          if (status == 'done' || status == 'notListening') {
+            if (mounted && _isListening) {
+              setState(() => _isListening = false);
+            }
+          }
+        },
+      );
     }
-    return 'From an architectural perspective, we decouple the components using clean abstractions to optimize time complexity, ensure idempotence, and handle edge cases.';
+
+    if (!_speechInitialized) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Microphone access is not supported on this browser/device, or was blocked. Please type your answer directly.'),
+            backgroundColor: AppColors.primaryPurple,
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() => _isListening = true);
+
+    await _speechToText.listen(
+      onResult: (result) {
+        if (mounted) {
+          setState(() {
+            _answerController.text = result.recognizedWords;
+          });
+        }
+      },
+      listenFor: const Duration(seconds: 45),
+      pauseFor: const Duration(seconds: 4),
+      localeId: 'en_US',
+    );
   }
 
   String get _currentQuestion {

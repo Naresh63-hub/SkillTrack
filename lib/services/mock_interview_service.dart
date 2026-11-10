@@ -245,6 +245,7 @@ Respond ONLY in valid JSON:
           'score': score.clamp(0.0, 100.0),
           'feedback': feedback,
           'improvement_tips': tips,
+          'is_ai': true,
         };
       }
     } catch (e) {
@@ -252,7 +253,11 @@ Respond ONLY in valid JSON:
     }
 
     // Heuristic Fallback Evaluation
-    return _evaluateAnswerHeuristic(question, cleanAnswer, category);
+    final heuristic = _evaluateAnswerHeuristic(question, cleanAnswer, category);
+    return {
+      ...heuristic,
+      'is_ai': false,
+    };
   }
 
   Map<String, dynamic> _evaluateAnswerHeuristic(
@@ -366,6 +371,8 @@ Respond ONLY in valid JSON:
             ? 'Solid foundational performance. Focusing on structured technical explanations will elevate your placement readiness.'
             : 'Good initial practice. Target the recommended review topics to build confidence for technical interview rounds.';
 
+    final hasAi = await AiService.instance.hasApiKey();
+
     await _repository.completeInterview(
       interviewId: interviewId,
       overallScore: avgScore,
@@ -373,6 +380,7 @@ Respond ONLY in valid JSON:
       strengths: strengths,
       weaknesses: weaknesses,
       recommendedTopics: recommendedTopics,
+      isAiEvaluated: hasAi,
     );
 
     return (await _repository.getInterviewById(interviewId))!;

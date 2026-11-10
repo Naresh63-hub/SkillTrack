@@ -278,6 +278,7 @@ class DatabaseHelper {
         overall_progress REAL NOT NULL DEFAULT 0.0,
         summary TEXT,
         skill_gaps TEXT,
+        is_ai_generated INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
       )
@@ -367,6 +368,7 @@ class DatabaseHelper {
         strengths TEXT,
         weaknesses TEXT,
         recommended_topics TEXT,
+        is_ai_evaluated INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         completed_at TEXT
       )
@@ -427,6 +429,14 @@ class DatabaseHelper {
 
   Future<void> _ensureV2Tables(Database db) async {
     await _executeCreateV2(db);
+    try {
+      await db.execute(
+          'ALTER TABLE ai_roadmaps ADD COLUMN is_ai_generated INTEGER DEFAULT 0;');
+    } catch (_) {}
+    try {
+      await db.execute(
+          'ALTER TABLE mock_interviews ADD COLUMN is_ai_evaluated INTEGER DEFAULT 0;');
+    } catch (_) {}
   }
 
   /// Clears all application data from the SQLite tables.

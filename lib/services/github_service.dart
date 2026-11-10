@@ -2,22 +2,41 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../core/utils/secure_token_storage.dart';
 import '../models/github_models.dart';
 import '../models/project.dart';
 import '../repositories/github_repository.dart';
 import '../repositories/projects_repository.dart';
 
+class GithubRateLimitInfo {
+  final int limit;
+  final int remaining;
+  final DateTime resetTime;
+
+  const GithubRateLimitInfo({
+    required this.limit,
+    required this.remaining,
+    required this.resetTime,
+  });
+
+  String get minutesUntilReset {
+    final diff = resetTime.difference(DateTime.now()).inMinutes;
+    return diff > 0 ? '${diff}m' : 'shortly';
+  }
+}
+
 class GithubService {
   final GithubRepository _repository = GithubRepository();
   final ProjectsRepository _projectsRepo = ProjectsRepository();
 
-  static const String _prefTokenKey = 'github_access_token';
+  static const String _tokenVaultKey = 'github_pat_vault';
   static const String _prefUsernameKey = 'github_saved_username';
+
+  static GithubRateLimitInfo? lastRateLimitInfo;
 
   Future<String?> getAccessToken() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_prefTokenKey);
+      return await SecureTokenStorage.getSecureToken(_tokenVaultKey);
     } catch (_) {
       return null;
     }
@@ -35,12 +54,35 @@ class GithubService {
   Map<String, String> _buildHeaders(String? token) {
     final headers = {
       'Accept': 'application/vnd.github.v3+json',
-      'User-Agent': 'SkillTrack-Career-App',
+      'User-Agent': 'SkillTrack-Career-Platform',
     };
     if (token != null && token.isNotEmpty) {
       headers['Authorization'] = 'Bearer $token';
     }
     return headers;
+  }
+
+  void _extractRateLimit(http.Response response) {
+    try {
+      final limitStr = response.headers['x-ratelimit-limit'];
+      final remStr = response.headers['x-ratelimit-remaining'];
+      final resetStr = response.headers['x-ratelimit-reset'];
+
+      if (limitStr != null && remStr != null && resetStr != null) {
+        final limit = int.tryParse(limitStr) ?? 60;
+        final rem = int.tryParse(remStr) ?? 60;
+        final resetEpoch = int.tryParse(resetStr);
+        final resetTime = resetEpoch != null
+            ? DateTime.fromMillisecondsSinceEpoch(resetEpoch * 1000)
+            : DateTime.now().add(const Duration(hours: 1));
+
+        lastRateLimitInfo = GithubRateLimitInfo(
+          limit: limit,
+          remaining: rem,
+          resetTime: resetTime,
+        );
+      }
+    } catch (_) {}
   }
 
   /// Connects or syncs a GitHub user profile, repositories, and recent events
@@ -52,7 +94,9 @@ class GithubService {
     final prefs = await SharedPreferences.getInstance();
 
     if (personalAccessToken != null && personalAccessToken.isNotEmpty) {
-      await prefs.setString(_prefTokenKey, personalAccessToken.trim());
+      // Securely store encrypted token
+      await SecureTokenStorage.saveSecureToken(
+          _tokenVaultKey, personalAccessToken.trim());
     }
     await prefs.setString(_prefUsernameKey, cleanUsername);
 
@@ -65,16 +109,23 @@ class GithubService {
           const Duration(seconds: 15),
         );
 
+    _extractRateLimit(userRes);
+
+    if (userRes.statusCode == 401) {
+      throw Exception(
+          'GitHub Token invalid or expired. Please check your Personal Access Token.');
+    }
     if (userRes.statusCode == 404) {
       throw Exception('GitHub user "$cleanUsername" was not found.');
     }
     if (userRes.statusCode == 403 && userRes.body.contains('rate limit')) {
+      final resetMins = lastRateLimitInfo?.minutesUntilReset ?? '60m';
       throw Exception(
-          'GitHub API rate limit exceeded. Provide a personal access token in settings to increase limits.');
+          'GitHub API rate limit reached. Limit resets in $resetMins. Add a Personal Access Token in connection settings for 5,000 requests/hr.');
     }
     if (userRes.statusCode != 200) {
       throw Exception(
-          'Failed to fetch GitHub profile (HTTP ${userRes.statusCode})');
+          'Failed to connect to GitHub (HTTP ${userRes.statusCode}).');
     }
 
     final userJson = jsonDecode(userRes.body) as Map<String, dynamic>;
@@ -89,6 +140,8 @@ class GithubService {
             const Duration(seconds: 15),
           );
 
+      _extractRateLimit(reposRes);
+
       if (reposRes.statusCode == 200) {
         final reposList = jsonDecode(reposRes.body) as List;
         final repos = reposList
@@ -101,13 +154,15 @@ class GithubService {
       debugPrint('Error syncing GitHub repos: $e');
     }
 
-    // 3. Fetch Recent Commit Activity from Events
+    // 3. Fetch Recent Commit Activity from Public Events
     try {
       final eventsUrl = Uri.parse(
           'https://api.github.com/users/$cleanUsername/events/public?per_page=30');
       final eventsRes = await http.get(eventsUrl, headers: headers).timeout(
             const Duration(seconds: 15),
           );
+
+      _extractRateLimit(eventsRes);
 
       if (eventsRes.statusCode == 200) {
         final eventsList = jsonDecode(eventsRes.body) as List;
@@ -148,12 +203,13 @@ class GithubService {
     return profile;
   }
 
-  /// Disconnects the GitHub account, wiping cached data and local auth tokens
+  /// Disconnects the GitHub account, wiping cached data and local auth tokens securely
   Future<void> disconnect() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_prefTokenKey);
+    await SecureTokenStorage.removeSecureToken(_tokenVaultKey);
     await prefs.remove(_prefUsernameKey);
     await _repository.disconnect();
+    lastRateLimitInfo = null;
   }
 
   /// 1-Tap import from a GitHub repository into SkillTrack portfolio projects

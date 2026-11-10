@@ -45,8 +45,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _navigateNext() async {
     final profile = await ProfileRepository().getProfile();
-    final hasValidProfile = profile.name.trim().isNotEmpty &&
-        !profile.name.toLowerCase().contains('priya');
+    final hasValidProfile = profile.name.trim().isNotEmpty;
     final prefs = await SharedPreferences.getInstance();
     final hasOnboarded = prefs.getBool('has_onboarded') ?? false;
 

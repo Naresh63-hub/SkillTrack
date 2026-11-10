@@ -16,6 +16,7 @@ class MockInterview {
   final List<String> recommendedTopics;
   final String createdAt;
   final String? completedAt;
+  final bool isAiEvaluated;
   final List<MockInterviewAnswer> answers;
 
   const MockInterview({
@@ -33,6 +34,7 @@ class MockInterview {
     this.recommendedTopics = const [],
     required this.createdAt,
     this.completedAt,
+    this.isAiEvaluated = false,
     this.answers = const [],
   });
 
@@ -50,6 +52,7 @@ class MockInterview {
       'strengths': jsonEncode(strengths),
       'weaknesses': jsonEncode(weaknesses),
       'recommended_topics': jsonEncode(recommendedTopics),
+      'is_ai_evaluated': isAiEvaluated ? 1 : 0,
       'created_at': createdAt,
       'completed_at': completedAt,
     };
@@ -82,6 +85,7 @@ class MockInterview {
       createdAt:
           map['created_at'] as String? ?? DateTime.now().toIso8601String(),
       completedAt: map['completed_at'] as String?,
+      isAiEvaluated: (map['is_ai_evaluated'] as int? ?? 0) == 1,
       answers: answers,
     );
   }
@@ -101,6 +105,7 @@ class MockInterview {
     List<String>? recommendedTopics,
     String? createdAt,
     String? completedAt,
+    bool? isAiEvaluated,
     List<MockInterviewAnswer>? answers,
   }) {
     return MockInterview(
@@ -118,6 +123,7 @@ class MockInterview {
       recommendedTopics: recommendedTopics ?? this.recommendedTopics,
       createdAt: createdAt ?? this.createdAt,
       completedAt: completedAt ?? this.completedAt,
+      isAiEvaluated: isAiEvaluated ?? this.isAiEvaluated,
       answers: answers ?? this.answers,
     );
   }

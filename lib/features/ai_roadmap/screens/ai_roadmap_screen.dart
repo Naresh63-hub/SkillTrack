@@ -24,6 +24,7 @@ class _AiRoadmapScreenState extends State<AiRoadmapScreen> {
   AiRoadmap? _roadmap;
   bool _isLoading = true;
   bool _isGenerating = false;
+  bool _showWeeklySchedule = false;
   String _selectedRole = 'Flutter Developer';
   String _selectedTierFilter = 'All';
 
@@ -285,12 +286,21 @@ class _AiRoadmapScreenState extends State<AiRoadmapScreen> {
                         const SizedBox(height: 14),
                       ],
 
-                      // Level Filter Tabs
-                      _buildTierFilterChips(),
+                      // View Mode Toggle
+                      _buildViewModeToggle(),
                       const SizedBox(height: 14),
 
-                      // Roadmap Milestone Nodes
-                      _buildNodesList(roadmap),
+                      if (!_showWeeklySchedule) ...[
+                        // Level Filter Tabs
+                        _buildTierFilterChips(),
+                        const SizedBox(height: 14),
+
+                        // Roadmap Milestone Nodes
+                        _buildNodesList(roadmap),
+                      ] else ...[
+                        // Structured 4-Week Daily & Weekly Schedule
+                        _buildWeeklyScheduleList(roadmap),
+                      ],
                     ],
                   ),
                 ),
@@ -439,6 +449,48 @@ class _AiRoadmapScreenState extends State<AiRoadmapScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: roadmap.isAiGenerated
+                      ? Colors.white.withValues(alpha: 0.25)
+                      : Colors.black.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.35),
+                    width: 0.8,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      roadmap.isAiGenerated
+                          ? Icons.auto_awesome
+                          : Icons.offline_bolt_rounded,
+                      size: 13,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      roadmap.isAiGenerated
+                          ? 'Gemini Live AI Generated'
+                          : 'Curated Offline Engine',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -518,6 +570,292 @@ class _AiRoadmapScreenState extends State<AiRoadmapScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildViewModeToggle() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.secondaryCard,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _showWeeklySchedule = false),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: !_showWeeklySchedule
+                      ? AppColors.cardBackground
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: !_showWeeklySchedule
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.layers_outlined,
+                      size: 16,
+                      color: !_showWeeklySchedule
+                          ? AppColors.primaryPurple
+                          : AppColors.mutedText,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Curriculum Tiers',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: !_showWeeklySchedule
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        color: !_showWeeklySchedule
+                            ? AppColors.primaryPurple
+                            : AppColors.secondaryText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _showWeeklySchedule = true),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: _showWeeklySchedule
+                      ? AppColors.cardBackground
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: _showWeeklySchedule
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.calendar_month_outlined,
+                      size: 16,
+                      color: _showWeeklySchedule
+                          ? AppColors.primaryPurple
+                          : AppColors.mutedText,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '4-Week Schedule',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: _showWeeklySchedule
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        color: _showWeeklySchedule
+                            ? AppColors.primaryPurple
+                            : AppColors.secondaryText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeeklyScheduleList(AiRoadmap roadmap) {
+    final weeklyPlan = _service.organizeWeeklySchedule(roadmap.nodes);
+
+    if (weeklyPlan.isEmpty) {
+      return const Center(
+        child: Text(
+          'No scheduled targets available.',
+          style: TextStyle(color: AppColors.mutedText),
+        ),
+      );
+    }
+
+    return Column(
+      children: weeklyPlan.map((week) {
+        final weekNodes = week['nodes'] as List<AiRoadmapNode>;
+        final completed = weekNodes.where((n) => n.isCompleted).length;
+        final total = weekNodes.length;
+        final weekPct = total > 0 ? (completed / total) : 0.0;
+
+        return CustomCard(
+          margin: const EdgeInsets.only(bottom: 14),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondaryCard,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          week['targetDays'] as String,
+                          style: const TextStyle(
+                            color: AppColors.primaryPurple,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Week ${week['week']}',
+                        style: const TextStyle(
+                          color: AppColors.primaryText,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    '$completed / $total Done',
+                    style: const TextStyle(
+                      color: AppColors.mutedText,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                week['title'] as String,
+                style: const TextStyle(
+                  color: AppColors.secondaryText,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: weekPct,
+                  minHeight: 5,
+                  backgroundColor: AppColors.progressTrack,
+                  color: AppColors.primaryPurple,
+                ),
+              ),
+              const SizedBox(height: 14),
+              ...weekNodes.asMap().entries.map((entry) {
+                final idx = entry.key;
+                final node = entry.value;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: node.isCompleted
+                          ? const Color(0xFF10B981).withValues(alpha: 0.05)
+                          : AppColors.secondaryCard.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: node.isCompleted
+                            ? const Color(0xFF10B981).withValues(alpha: 0.3)
+                            : AppColors.border,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        InkWell(
+                          onTap: () => _toggleNodeCompletion(node),
+                          borderRadius: BorderRadius.circular(6),
+                          child: Icon(
+                            node.isCompleted
+                                ? Icons.check_circle_rounded
+                                : Icons.radio_button_unchecked_rounded,
+                            size: 20,
+                            color: node.isCompleted
+                                ? const Color(0xFF10B981)
+                                : AppColors.mutedText,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                node.topicTitle,
+                                style: TextStyle(
+                                  color: AppColors.primaryText,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  decoration: node.isCompleted
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Day ${idx * 2 + 1}-${idx * 2 + 2} • ${node.category} • ${node.estimatedDays} days',
+                                style: const TextStyle(
+                                  color: AppColors.mutedText,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add_task_rounded,
+                              size: 18, color: AppColors.primaryPurple),
+                          tooltip: 'Add to Tasks',
+                          onPressed: () => _addNodeToTasks(node),
+                        ),
+                        if (node.resourceUrl.isNotEmpty)
+                          IconButton(
+                            icon: const Icon(Icons.open_in_new_rounded,
+                                size: 16, color: AppColors.secondaryText),
+                            tooltip: 'Open Guide',
+                            onPressed: () => _openResourceUrl(node.resourceUrl),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 

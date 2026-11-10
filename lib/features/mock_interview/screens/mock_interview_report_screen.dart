@@ -123,6 +123,51 @@ class MockInterviewReportScreen extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 12),
+
+            // Evaluation Engine Verification Badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: interview.isAiEvaluated
+                    ? const Color(0xFF7C3AED).withValues(alpha: 0.1)
+                    : const Color(0xFFD97706).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: interview.isAiEvaluated
+                      ? AppColors.primaryPurple.withValues(alpha: 0.4)
+                      : const Color(0xFFD97706).withValues(alpha: 0.4),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    interview.isAiEvaluated
+                        ? Icons.auto_awesome
+                        : Icons.info_outline_rounded,
+                    size: 16,
+                    color: interview.isAiEvaluated
+                        ? AppColors.primaryPurple
+                        : const Color(0xFFD97706),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      interview.isAiEvaluated
+                          ? 'Evaluated via Live Google Gemini AI based on your technical responses.'
+                          : 'Evaluated via SkillTrack Intelligent Heuristic Engine (Offline Fallback). Add your Gemini key in Settings for live cloud model grading.',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w500,
+                        color: interview.isAiEvaluated
+                            ? AppColors.primaryPurple
+                            : const Color(0xFFB45309),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 16),
 
             // Strengths & Weaknesses

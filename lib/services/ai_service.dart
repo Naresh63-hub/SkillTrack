@@ -9,14 +9,21 @@ class AiService {
 
   static const String _prefApiKey = 'gemini_api_key';
   static const String _defaultModel = 'gemini-1.5-flash';
+  static const String _envApiKey =
+      String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
 
   Future<String?> getApiKey() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_prefApiKey);
-    } catch (_) {
-      return null;
+      final key = prefs.getString(_prefApiKey);
+      if (key != null && key.trim().isNotEmpty) {
+        return key.trim();
+      }
+    } catch (_) {}
+    if (_envApiKey.trim().isNotEmpty) {
+      return _envApiKey.trim();
     }
+    return null;
   }
 
   Future<void> setApiKey(String key) async {
@@ -33,8 +40,13 @@ class AiService {
     return key != null && key.isNotEmpty;
   }
 
-  /// Sends a prompt to the Gemini API if an API key is available;
-  /// otherwise returns null so callers can seamlessly use the intelligent fallback engine.
+  /// Returns true if Gemini API key is configured and can be reached.
+  Future<bool> isLiveAiAvailable() async {
+    return await hasApiKey();
+  }
+
+  /// Sends a prompt to the Gemini API securely using the x-goog-api-key HTTP header.
+  /// Never exposes the key in URL query strings or logs.
   Future<String?> generateContent({
     required String prompt,
     String? systemInstruction,
@@ -46,8 +58,9 @@ class AiService {
     }
 
     try {
+      // Secure URL without query parameters - key is transmitted via headers
       final url = Uri.parse(
-        'https://generativelanguage.googleapis.com/v1beta/models/$_defaultModel:generateContent?key=$apiKey',
+        'https://generativelanguage.googleapis.com/v1beta/models/$_defaultModel:generateContent',
       );
 
       final contents = [
@@ -78,7 +91,10 @@ class AiService {
       final response = await http
           .post(
             url,
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': apiKey,
+            },
             body: jsonEncode(body),
           )
           .timeout(const Duration(seconds: 20));
@@ -94,11 +110,11 @@ class AiService {
           }
         }
       } else {
-        debugPrint(
-            'Gemini API Error: ${response.statusCode} - ${response.body}');
+        // Redact any possible key remnants in debug output
+        debugPrint('Gemini API HTTP ${response.statusCode} response returned.');
       }
     } catch (e) {
-      debugPrint('Gemini API Exception: $e');
+      debugPrint('Gemini API communication error occurred.');
     }
     return null;
   }

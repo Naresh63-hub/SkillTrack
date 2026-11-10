@@ -9,6 +9,7 @@ class AiRoadmap {
   final List<String> skillGaps;
   final String createdAt;
   final String updatedAt;
+  final bool isAiGenerated;
   final List<AiRoadmapNode> nodes;
 
   const AiRoadmap({
@@ -20,6 +21,7 @@ class AiRoadmap {
     this.skillGaps = const [],
     required this.createdAt,
     required this.updatedAt,
+    this.isAiGenerated = false,
     this.nodes = const [],
   });
 
@@ -31,6 +33,7 @@ class AiRoadmap {
       'overall_progress': overallProgress,
       'summary': summary,
       'skill_gaps': jsonEncode(skillGaps),
+      'is_ai_generated': isAiGenerated ? 1 : 0,
       'created_at': createdAt,
       'updated_at': updatedAt,
     };
@@ -59,6 +62,7 @@ class AiRoadmap {
           map['created_at'] as String? ?? DateTime.now().toIso8601String(),
       updatedAt:
           map['updated_at'] as String? ?? DateTime.now().toIso8601String(),
+      isAiGenerated: (map['is_ai_generated'] as int? ?? 0) == 1,
       nodes: nodes,
     );
   }
@@ -72,6 +76,7 @@ class AiRoadmap {
     List<String>? skillGaps,
     String? createdAt,
     String? updatedAt,
+    bool? isAiGenerated,
     List<AiRoadmapNode>? nodes,
   }) {
     return AiRoadmap(
@@ -83,6 +88,7 @@ class AiRoadmap {
       skillGaps: skillGaps ?? this.skillGaps,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isAiGenerated: isAiGenerated ?? this.isAiGenerated,
       nodes: nodes ?? this.nodes,
     );
   }
