@@ -7,6 +7,7 @@ import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/database/database_helper.dart';
 import '../../../core/database/sample_data.dart';
 import '../../../services/export_import_service.dart';
+import '../../../services/ai_service.dart';
 import 'database_tables_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -21,6 +22,94 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   bool _notificationsEnabled = true;
   bool _isProcessing = false;
+  bool _hasAiKey = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAiKey();
+  }
+
+  Future<void> _checkAiKey() async {
+    final hasKey = await AiService.instance.hasApiKey();
+    if (mounted) setState(() => _hasAiKey = hasKey);
+  }
+
+  Future<void> _configureAiKey() async {
+    final currentKey = await AiService.instance.getApiKey() ?? '';
+    final controller = TextEditingController(text: currentKey);
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.auto_awesome_rounded,
+                color: AppColors.primaryPurple, size: 20),
+            SizedBox(width: 8),
+            Text('Gemini AI Configuration'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Enter your Google Gemini API key to enable live cloud model generation for roadmaps, mock interviews, and career assistant chats.',
+              style: TextStyle(fontSize: 12.5, color: AppColors.secondaryText),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Gemini API Key',
+                hintText: 'AIzaSy...',
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'If left blank, SkillTrack uses its built-in offline intelligence engine with zero API latency.',
+              style: TextStyle(fontSize: 11, color: AppColors.mutedText),
+            ),
+          ],
+        ),
+        actions: [
+          if (currentKey.isNotEmpty)
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: AppColors.error),
+              onPressed: () => Navigator.of(ctx).pop('CLEAR'),
+              child: const Text('Clear Key'),
+            ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null) {
+      if (result == 'CLEAR') {
+        await AiService.instance.setApiKey('');
+      } else {
+        await AiService.instance.setApiKey(result);
+      }
+      _checkAiKey();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('AI configuration updated!'),
+            backgroundColor: AppColors.primaryPurple,
+          ),
+        );
+      }
+    }
+  }
 
   Future<void> _exportData() async {
     setState(() => _isProcessing = true);
@@ -258,14 +347,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Divider(),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Theme Direction',
+                    leading: const Icon(Icons.auto_awesome_rounded,
+                        color: AppColors.primaryPurple),
+                    title: const Text('Gemini AI Engine',
                         style: TextStyle(
                             color: AppColors.primaryText, fontSize: 13.5)),
-                    subtitle: const Text('Dark Purple Developer Theme (Active)',
+                    subtitle: Text(
+                      _hasAiKey
+                          ? 'Google Gemini Cloud API Connected'
+                          : 'Built-in Offline Intelligence Engine (Active)',
+                      style: const TextStyle(
+                          color: AppColors.secondaryText, fontSize: 11.5),
+                    ),
+                    trailing: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        minimumSize: Size.zero,
+                      ),
+                      onPressed: _configureAiKey,
+                      child: Text(_hasAiKey ? 'Edit Key' : 'Add Key',
+                          style: const TextStyle(fontSize: 11)),
+                    ),
+                  ),
+                  const Divider(),
+                  const ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text('Theme Direction',
                         style: TextStyle(
-                            color: AppColors.secondaryAccent, fontSize: 11.5)),
-                    trailing: const Icon(Icons.palette,
-                        color: AppColors.brightAccent),
+                            color: AppColors.primaryText, fontSize: 13.5)),
+                    subtitle: Text(
+                        'Lavender Light Aesthetic (Default & Active)',
+                        style: TextStyle(
+                            color: AppColors.primaryPurple, fontSize: 11.5)),
+                    trailing:
+                        Icon(Icons.palette, color: AppColors.primaryPurple),
                   ),
                 ],
               ),

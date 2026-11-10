@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/custom_card.dart';
 import '../../../core/widgets/section_header.dart';
 import '../../../core/widgets/skilltrack_logo.dart';
 import '../../../core/utils/progress_calculator.dart';
@@ -37,6 +38,16 @@ import '../../skills/screens/career_roadmaps_screen.dart';
 import '../../../core/utils/streak_calculator.dart';
 import '../../../core/widgets/celebration_dialog.dart';
 import '../../../models/job_application.dart';
+import '../../../models/ai_roadmap.dart';
+import '../../../models/github_models.dart';
+import '../../../models/mock_interview.dart';
+import '../../../repositories/ai_roadmap_repository.dart';
+import '../../../repositories/github_repository.dart';
+import '../../../repositories/mock_interview_repository.dart';
+import '../../ai_roadmap/screens/ai_roadmap_screen.dart';
+import '../../github/screens/github_dashboard_screen.dart';
+import '../../mock_interview/screens/mock_interview_setup_screen.dart';
+import '../../career_assistant/screens/career_assistant_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(int tabIndex)? onNavigateTab;
@@ -69,6 +80,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _completedTasksCount = 0;
   int _activeStreak = 0;
   JobApplication? _upcomingInterview;
+  AiRoadmap? _activeAiRoadmap;
+  GithubProfile? _githubProfile;
+  MockInterview? _lastMockInterview;
   List<TaskModel> _upcomingDeadlines = [];
   List<Project> _recentProjects = [];
 
@@ -125,6 +139,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final completedProjects =
         projects.where((p) => p.status == 'Completed').length;
 
+    final activeAiRoadmap = await AiRoadmapRepository().getActiveRoadmap();
+    final githubProfile = await GithubRepository().getProfile();
+    final pastInterviews = await MockInterviewRepository().getAllInterviews();
+
     if (mounted) {
       setState(() {
         _profile = profile;
@@ -143,6 +161,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _recentProjects = recentProjects;
         _activeStreak = streak;
         _upcomingInterview = nextInterview;
+        _activeAiRoadmap = activeAiRoadmap;
+        _githubProfile = githubProfile;
+        _lastMockInterview =
+            pastInterviews.isNotEmpty ? pastInterviews.first : null;
         _isLoading = false;
       });
     }
@@ -836,7 +858,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // F. Placement Preparation Modules
+                  // F. AI Career Development Section
+                  _buildAiCareerDevelopmentSection(),
+                  const SizedBox(height: 20),
+
+                  // G. Placement Preparation Modules
                   PlacementPrepModulesSection(
                     onOpenPlacementHub: () =>
                         widget.onNavigateTab?.call(4), // Placement tab
@@ -881,6 +907,368 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAiCareerDevelopmentSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryPurple.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: AppColors.primaryPurple,
+                    size: 16,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'AI CAREER DEVELOPMENT',
+                  style: TextStyle(
+                    color: AppColors.primaryText,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.secondaryCard,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                'AI Powered',
+                style: TextStyle(
+                  color: AppColors.primaryPurple,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth > 500;
+            if (isWide) {
+              return Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(child: _buildAiRoadmapCard()),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildGithubActivityCard()),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(child: _buildMockInterviewCard()),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildCareerAssistantCard()),
+                    ],
+                  ),
+                ],
+              );
+            }
+            return Column(
+              children: [
+                _buildAiRoadmapCard(),
+                const SizedBox(height: 10),
+                _buildGithubActivityCard(),
+                const SizedBox(height: 10),
+                _buildMockInterviewCard(),
+                const SizedBox(height: 10),
+                _buildCareerAssistantCard(),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAiRoadmapCard() {
+    final hasRoadmap = _activeAiRoadmap != null;
+    final progress = _activeAiRoadmap?.overallProgress.clamp(0.0, 100.0) ?? 0.0;
+
+    return CustomCard(
+      margin: EdgeInsets.zero,
+      padding: const EdgeInsets.all(14),
+      onTap: () {
+        Navigator.of(context)
+            .push(
+              MaterialPageRoute(builder: (ctx) => const AiRoadmapScreen()),
+            )
+            .then((_) => _loadDashboardData());
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryPurple.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.route_rounded,
+                    color: AppColors.primaryPurple, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'AI Learning Roadmap',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryText,
+                      ),
+                    ),
+                    Text(
+                      hasRoadmap
+                          ? '${_activeAiRoadmap!.targetRole} (${progress.toInt()}%)'
+                          : 'Personalized 3-tier skill path',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.secondaryText,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios_rounded,
+                  size: 13, color: AppColors.mutedText),
+            ],
+          ),
+          if (hasRoadmap) ...[
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progress / 100.0,
+                minHeight: 5,
+                backgroundColor: AppColors.progressTrack,
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                    AppColors.primaryPurple),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGithubActivityCard() {
+    final isConnected = _githubProfile != null;
+
+    return CustomCard(
+      margin: EdgeInsets.zero,
+      padding: const EdgeInsets.all(14),
+      onTap: () {
+        Navigator.of(context)
+            .push(
+              MaterialPageRoute(
+                  builder: (ctx) => const GithubDashboardScreen()),
+            )
+            .then((_) => _loadDashboardData());
+      },
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2563EB).withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.code_rounded,
+                color: Color(0xFF2563EB), size: 18),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'GitHub Activity',
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryText,
+                  ),
+                ),
+                Text(
+                  isConnected
+                      ? '@${_githubProfile!.username} • ${_githubProfile!.publicRepos} Repos'
+                      : 'Connect repo & contribution stream',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.secondaryText,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+            decoration: BoxDecoration(
+              color: isConnected
+                  ? const Color(0xFF059669).withValues(alpha: 0.12)
+                  : AppColors.secondaryCard,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              isConnected ? 'Connected' : 'Connect',
+              style: TextStyle(
+                color: isConnected
+                    ? const Color(0xFF059669)
+                    : AppColors.primaryPurple,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          const Icon(Icons.arrow_forward_ios_rounded,
+              size: 13, color: AppColors.mutedText),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMockInterviewCard() {
+    final hasPast = _lastMockInterview != null;
+
+    return CustomCard(
+      margin: EdgeInsets.zero,
+      padding: const EdgeInsets.all(14),
+      onTap: () {
+        Navigator.of(context)
+            .push(
+              MaterialPageRoute(
+                  builder: (ctx) => const MockInterviewSetupScreen()),
+            )
+            .then((_) => _loadDashboardData());
+      },
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFD97706).withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.record_voice_over_rounded,
+                color: Color(0xFFD97706), size: 18),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'AI Mock Interview',
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryText,
+                  ),
+                ),
+                Text(
+                  hasPast
+                      ? 'Last Score: ${_lastMockInterview!.overallScore.toInt()}% (${_lastMockInterview!.category})'
+                      : 'Practice 5 dynamic interview questions',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.secondaryText,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.arrow_forward_ios_rounded,
+              size: 13, color: AppColors.mutedText),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCareerAssistantCard() {
+    return CustomCard(
+      margin: EdgeInsets.zero,
+      padding: const EdgeInsets.all(14),
+      onTap: () {
+        Navigator.of(context)
+            .push(
+              MaterialPageRoute(
+                  builder: (ctx) => const CareerAssistantScreen()),
+            )
+            .then((_) => _loadDashboardData());
+      },
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primaryPurple.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.smart_toy_rounded,
+                color: AppColors.primaryPurple, size: 18),
+          ),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'AI Career Assistant',
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryText,
+                  ),
+                ),
+                Text(
+                  'Placement advice & resume coaching',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.secondaryText,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.arrow_forward_ios_rounded,
+              size: 13, color: AppColors.mutedText),
+        ],
       ),
     );
   }
