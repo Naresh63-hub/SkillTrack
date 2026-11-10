@@ -21,7 +21,13 @@ flutter pub get
 
 # 5. Build Flutter Web release
 echo "[*] Compiling Flutter Web..."
-flutter build web --release
+if [ -n "$GEMINI_API_KEY" ]; then
+  echo "[+] Building with injected GEMINI_API_KEY environment variable..."
+  flutter build web --release --dart-define=GEMINI_API_KEY="$GEMINI_API_KEY"
+else
+  echo "[*] Building with default settings (offline intelligence enabled)..."
+  flutter build web --release
+fi
 
 # 6. Ensure sqlite3.wasm is in build/web
 if [ -f "web/sqlite3.wasm" ]; then
