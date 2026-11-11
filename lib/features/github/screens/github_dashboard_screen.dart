@@ -305,7 +305,7 @@ class _GithubDashboardScreenState extends State<GithubDashboardScreen> {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'Recommended for higher rate limits (starts with ghp_...)',
+                  'Recommended for higher rate limits. Minimum scope: public_repo or no scopes.',
                   style: TextStyle(fontSize: 11, color: AppColors.mutedText),
                 ),
                 const SizedBox(height: 8),
@@ -336,7 +336,7 @@ class _GithubDashboardScreenState extends State<GithubDashboardScreen> {
                     const SizedBox(width: 5),
                     Expanded(
                       child: Text(
-                        'Stored using HMAC-SHA256 authenticated encrypted vault.',
+                        'Protected locally using AES-256-GCM authenticated encryption.',
                         style: TextStyle(
                           fontSize: 10.5,
                           color: Colors.green.shade700,

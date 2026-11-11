@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
@@ -55,7 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Enter your Google Gemini API key to enable live cloud model generation for roadmaps, mock interviews, and career assistant chats.',
+              'SkillTrack connects to a secure serverless AI proxy by default. Optionally enter a personal Google Gemini API key if you wish to override the proxy.',
               style: TextStyle(fontSize: 12.5, color: AppColors.secondaryText),
             ),
             const SizedBox(height: 12),
@@ -354,8 +355,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             color: AppColors.primaryText, fontSize: 13.5)),
                     subtitle: Text(
                       _hasAiKey
-                          ? 'Google Gemini Cloud API Connected'
-                          : 'Built-in Offline Intelligence Engine (Active)',
+                          ? 'Personal Gemini API Key (Direct)'
+                          : (kIsWeb
+                              ? 'Secure Serverless AI Proxy (Active)'
+                              : 'Built-in Offline Intelligence Engine (Active)'),
                       style: const TextStyle(
                           color: AppColors.secondaryText, fontSize: 11.5),
                     ),

@@ -3,15 +3,26 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Secure AI Service for SkillTrack
+///
+/// Security Architecture:
+/// 1. Backend Proxy First: In web deployments, calls are proxied through `/api/gemini`
+///    where `GEMINI_API_KEY` is maintained exclusively in server-side environment variables.
+/// 2. Zero Client Secret Exposure: Never bakes API keys into Flutter Web JavaScript via `--dart-define`.
+/// 3. Developer Personal Key Override: Allows developers to optionally store their own personal
+///    Gemini key locally in Settings.
+/// 4. Graceful Fallback: If network, proxy, or upstream service fails, returns null so all modules
+///    transparently fall back to offline heuristic engines without crashing.
 class AiService {
   static final AiService instance = AiService._internal();
   AiService._internal();
 
   static const String _prefApiKey = 'gemini_api_key';
   static const String _defaultModel = 'gemini-1.5-flash';
-  static const String _envApiKey =
-      String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
+  static const String _defaultMobileProxyUrl =
+      'https://skilltrack-tan.vercel.app/api/gemini';
 
+  /// Retrieves user-supplied personal API key if configured in local app Settings
   Future<String?> getApiKey() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -20,12 +31,10 @@ class AiService {
         return key.trim();
       }
     } catch (_) {}
-    if (_envApiKey.trim().isNotEmpty) {
-      return _envApiKey.trim();
-    }
     return null;
   }
 
+  /// Saves or removes user's personal API key in local app Settings
   Future<void> setApiKey(String key) async {
     final prefs = await SharedPreferences.getInstance();
     if (key.trim().isEmpty) {
@@ -35,30 +44,101 @@ class AiService {
     }
   }
 
+  /// Returns true if user has saved a personal key in Settings
   Future<bool> hasApiKey() async {
     final key = await getApiKey();
     return key != null && key.isNotEmpty;
   }
 
-  /// Returns true if Gemini API key is configured and can be reached.
+  /// Determines whether live AI service is available (via personal key or secure backend proxy)
   Future<bool> isLiveAiAvailable() async {
-    return await hasApiKey();
+    if (await hasApiKey()) return true;
+    // On web, the serverless proxy /api/gemini is available by default
+    if (kIsWeb) return true;
+    return false;
   }
 
-  /// Sends a prompt to the Gemini API securely using the x-goog-api-key HTTP header.
-  /// Never exposes the key in URL query strings or logs.
+  /// Sends a prompt to Gemini AI either via secure backend proxy or direct developer key
   Future<String?> generateContent({
     required String prompt,
     String? systemInstruction,
     bool forceJson = false,
   }) async {
-    final apiKey = await getApiKey();
-    if (apiKey == null || apiKey.isEmpty) {
-      return null;
+    final personalKey = await getApiKey();
+
+    if (personalKey != null && personalKey.isNotEmpty) {
+      // Developer direct call using personal API key via HTTP header
+      return _generateDirect(
+        apiKey: personalKey,
+        prompt: prompt,
+        systemInstruction: systemInstruction,
+        forceJson: forceJson,
+      );
     }
 
+    // Default Production Path: Secure Backend Proxy
+    return _generateViaProxy(
+      prompt: prompt,
+      systemInstruction: systemInstruction,
+      forceJson: forceJson,
+    );
+  }
+
+  /// Calls the secure serverless backend proxy (/api/gemini)
+  /// Keeps GEMINI_API_KEY 100% on the server; client never touches the secret.
+  Future<String?> _generateViaProxy({
+    required String prompt,
+    String? systemInstruction,
+    bool forceJson = false,
+  }) async {
     try {
-      // Secure URL without query parameters - key is transmitted via headers
+      Uri proxyUri;
+      if (kIsWeb) {
+        // Resolve relative to current web origin: e.g. https://domain.com/api/gemini
+        proxyUri = Uri.base.resolve('/api/gemini');
+      } else {
+        proxyUri = Uri.parse(_defaultMobileProxyUrl);
+      }
+
+      final payload = {
+        'prompt': prompt,
+        if (systemInstruction != null && systemInstruction.isNotEmpty)
+          'systemInstruction': systemInstruction,
+        'forceJson': forceJson,
+      };
+
+      final response = await http
+          .post(
+            proxyUri,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(payload),
+          )
+          .timeout(const Duration(seconds: 22));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map && data.containsKey('text')) {
+          return data['text'] as String?;
+        }
+      } else {
+        debugPrint(
+            'AI backend proxy responded with status ${response.statusCode}. Falling back to offline engine.');
+      }
+    } catch (e) {
+      debugPrint(
+          'AI proxy communication unavailable. Operating in offline heuristic mode.');
+    }
+    return null;
+  }
+
+  /// Direct upstream call using developer-provided personal key
+  Future<String?> _generateDirect({
+    required String apiKey,
+    required String prompt,
+    String? systemInstruction,
+    bool forceJson = false,
+  }) async {
+    try {
       final url = Uri.parse(
         'https://generativelanguage.googleapis.com/v1beta/models/$_defaultModel:generateContent',
       );
@@ -110,11 +190,12 @@ class AiService {
           }
         }
       } else {
-        // Redact any possible key remnants in debug output
-        debugPrint('Gemini API HTTP ${response.statusCode} response returned.');
+        debugPrint(
+            'Direct Gemini API responded with status ${response.statusCode}. Falling back to offline engine.');
       }
-    } catch (e) {
-      debugPrint('Gemini API communication error occurred.');
+    } catch (_) {
+      debugPrint(
+          'Direct Gemini API communication error. Operating in offline heuristic mode.');
     }
     return null;
   }

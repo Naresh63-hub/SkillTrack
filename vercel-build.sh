@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "=== SkillTrack Vercel Web Build ==="
+echo "=== SkillTrack Secure Vercel Web Build ==="
 
 # 1. Download Flutter SDK if not cached
 if [ ! -d "_flutter/bin" ]; then
@@ -20,18 +20,14 @@ flutter --version
 flutter pub get
 
 # 5. Build Flutter Web release
-echo "[*] Compiling Flutter Web..."
-if [ -n "$GEMINI_API_KEY" ]; then
-  echo "[+] Building with injected GEMINI_API_KEY environment variable..."
-  flutter build web --release --dart-define=GEMINI_API_KEY="$GEMINI_API_KEY"
-else
-  echo "[*] Building with default settings (offline intelligence enabled)..."
-  flutter build web --release
-fi
+# Security Hardening: Never inject GEMINI_API_KEY into client JS binaries via --dart-define.
+# Serverless function /api/gemini.js securely handles API keys server-side.
+echo "[*] Compiling hardened Flutter Web release (no embedded secrets)..."
+flutter build web --release
 
 # 6. Ensure sqlite3.wasm is in build/web
 if [ -f "web/sqlite3.wasm" ]; then
   cp web/sqlite3.wasm build/web/sqlite3.wasm
 fi
 
-echo "=== Build Complete! Output directory: build/web ==="
+echo "=== Build Complete! Hardened output directory: build/web ==="
