@@ -123,6 +123,8 @@ class DatabaseHelper {
           completion_date TEXT,
           github_url TEXT,
           live_demo_url TEXT,
+          vercel_url TEXT,
+          render_url TEXT,
           image_path TEXT,
           key_features TEXT,
           problems_solved TEXT,
@@ -436,6 +438,12 @@ class DatabaseHelper {
     try {
       await db.execute(
           'ALTER TABLE mock_interviews ADD COLUMN is_ai_evaluated INTEGER DEFAULT 0;');
+    } catch (_) {}
+    try {
+      await db.execute('ALTER TABLE projects ADD COLUMN vercel_url TEXT;');
+    } catch (_) {}
+    try {
+      await db.execute('ALTER TABLE projects ADD COLUMN render_url TEXT;');
     } catch (_) {}
   }
 

@@ -55,22 +55,35 @@ void main() {
       expect(onTrackSkill.isOverdue, isFalse);
     });
 
-    test('Project serialization handles technology list correctly', () {
+    test('Project serialization handles technology list and deployment links correctly', () {
       final project = Project(
         name: 'SkillTrack',
         shortDescription: 'Student Career Tracker',
         category: 'Mobile',
         technologies: ['Flutter', 'Dart', 'SQLite'],
         status: 'Completed',
+        githubUrl: 'https://github.com/user/skilltrack',
+        vercelUrl: 'https://skilltrack.vercel.app',
+        renderUrl: 'https://skilltrack-api.onrender.com',
+        liveDemoUrl: 'https://skilltrack.app',
       );
+
+      expect(project.hasLinks, isTrue);
+      expect(project.deploymentLinks.length, 4);
+      expect(project.deploymentLinks.any((l) => l.type == 'vercel'), isTrue);
+      expect(project.deploymentLinks.any((l) => l.type == 'render'), isTrue);
 
       final map = project.toMap();
       expect(map['technologies'], 'Flutter,Dart,SQLite');
+      expect(map['vercel_url'], 'https://skilltrack.vercel.app');
+      expect(map['render_url'], 'https://skilltrack-api.onrender.com');
 
       final revived = Project.fromMap(map);
       expect(revived.technologies.length, 3);
       expect(revived.technologies, contains('Flutter'));
       expect(revived.isCompleted, isTrue);
+      expect(revived.vercelUrl, 'https://skilltrack.vercel.app');
+      expect(revived.renderUrl, 'https://skilltrack-api.onrender.com');
     });
 
     test('PlacementTopic completion percentage calculation', () {

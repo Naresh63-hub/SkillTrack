@@ -22,6 +22,8 @@ class _AddEditProjectScreenState extends State<AddEditProjectScreen> {
   late TextEditingController _techInputController;
   late TextEditingController _githubController;
   late TextEditingController _demoController;
+  late TextEditingController _vercelController;
+  late TextEditingController _renderController;
   late TextEditingController _featuresController;
   late TextEditingController _problemsController;
   late TextEditingController _learnedController;
@@ -45,6 +47,8 @@ class _AddEditProjectScreenState extends State<AddEditProjectScreen> {
     _techInputController = TextEditingController();
     _githubController = TextEditingController(text: p?.githubUrl ?? '');
     _demoController = TextEditingController(text: p?.liveDemoUrl ?? '');
+    _vercelController = TextEditingController(text: p?.vercelUrl ?? '');
+    _renderController = TextEditingController(text: p?.renderUrl ?? '');
     _featuresController = TextEditingController(text: p?.keyFeatures ?? '');
     _problemsController = TextEditingController(text: p?.problemsSolved ?? '');
     _learnedController = TextEditingController(text: p?.whatLearned ?? '');
@@ -74,6 +78,8 @@ class _AddEditProjectScreenState extends State<AddEditProjectScreen> {
     _techInputController.dispose();
     _githubController.dispose();
     _demoController.dispose();
+    _vercelController.dispose();
+    _renderController.dispose();
     _featuresController.dispose();
     _problemsController.dispose();
     _learnedController.dispose();
@@ -288,31 +294,101 @@ class _AddEditProjectScreenState extends State<AddEditProjectScreen> {
               ),
               const SizedBox(height: 14),
 
-              // URLs
-              TextFormField(
-                controller: _githubController,
-                validator: Validators.optionalUrl,
-                style: const TextStyle(
-                    color: AppColors.primaryText, fontSize: 13.5),
-                decoration: const InputDecoration(
-                  labelText: 'GitHub Repository URL',
-                  hintText: 'https://github.com/username/project',
-                  prefixIcon:
-                      Icon(Icons.code, size: 20, color: AppColors.mutedText),
+              // Deployment & Project Links Section
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceVariant.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border, width: 0.9),
                 ),
-              ),
-              const SizedBox(height: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.link_rounded,
+                            size: 18, color: AppColors.brightAccent),
+                        SizedBox(width: 8),
+                        Text(
+                          'Deployment & Repository Links',
+                          style: TextStyle(
+                            color: AppColors.primaryText,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Include your source repository and cloud deployment links (Vercel, Render, or Live Demo).',
+                      style: TextStyle(
+                        color: AppColors.secondaryText,
+                        fontSize: 11.5,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
 
-              TextFormField(
-                controller: _demoController,
-                validator: Validators.optionalUrl,
-                style: const TextStyle(
-                    color: AppColors.primaryText, fontSize: 13.5),
-                decoration: const InputDecoration(
-                  labelText: 'Live Demo URL (Optional)',
-                  hintText: 'https://project-demo.web.app',
-                  prefixIcon:
-                      Icon(Icons.launch, size: 20, color: AppColors.mutedText),
+                    // GitHub
+                    TextFormField(
+                      controller: _githubController,
+                      validator: Validators.optionalUrl,
+                      style: const TextStyle(
+                          color: AppColors.primaryText, fontSize: 13),
+                      decoration: const InputDecoration(
+                        labelText: 'GitHub Repository URL',
+                        hintText: 'https://github.com/username/project',
+                        prefixIcon: Icon(Icons.code,
+                            size: 19, color: AppColors.mutedText),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Vercel Deployment Link
+                    TextFormField(
+                      controller: _vercelController,
+                      validator: Validators.optionalUrl,
+                      style: const TextStyle(
+                          color: AppColors.primaryText, fontSize: 13),
+                      decoration: const InputDecoration(
+                        labelText: 'Vercel Deployment URL',
+                        hintText: 'https://your-project.vercel.app',
+                        prefixIcon: Icon(Icons.change_history_rounded,
+                            size: 19, color: AppColors.brightAccent),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Render Deployment Link
+                    TextFormField(
+                      controller: _renderController,
+                      validator: Validators.optionalUrl,
+                      style: const TextStyle(
+                          color: AppColors.primaryText, fontSize: 13),
+                      decoration: const InputDecoration(
+                        labelText: 'Render Deployment URL',
+                        hintText: 'https://your-api.onrender.com',
+                        prefixIcon: Icon(Icons.cloud_queue_rounded,
+                            size: 19, color: Color(0xFF10B981)),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Live Demo URL
+                    TextFormField(
+                      controller: _demoController,
+                      validator: Validators.optionalUrl,
+                      style: const TextStyle(
+                          color: AppColors.primaryText, fontSize: 13),
+                      decoration: const InputDecoration(
+                        labelText: 'Live Demo URL (Optional)',
+                        hintText: 'https://project-demo.web.app',
+                        prefixIcon: Icon(Icons.launch_rounded,
+                            size: 19, color: AppColors.info),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 14),
@@ -413,6 +489,12 @@ class _AddEditProjectScreenState extends State<AddEditProjectScreen> {
       liveDemoUrl: _demoController.text.trim().isEmpty
           ? null
           : _demoController.text.trim(),
+      vercelUrl: _vercelController.text.trim().isEmpty
+          ? null
+          : _vercelController.text.trim(),
+      renderUrl: _renderController.text.trim().isEmpty
+          ? null
+          : _renderController.text.trim(),
       keyFeatures: _featuresController.text.trim().isEmpty
           ? null
           : _featuresController.text.trim(),

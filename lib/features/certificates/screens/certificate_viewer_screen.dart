@@ -110,9 +110,13 @@ class CertificateViewerScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'PDF Certificate Document',
-                            style: TextStyle(
+                          Text(
+                            certificate.category.contains('Offer Letter')
+                                ? 'PDF Offer Letter Document'
+                                : (certificate.category.contains('Completion')
+                                    ? 'PDF Completion Certificate'
+                                    : 'PDF Credential Document'),
+                            style: const TextStyle(
                                 color: AppColors.primaryText,
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold),

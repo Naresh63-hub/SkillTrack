@@ -156,7 +156,7 @@ module.exports = async (req, res) => {
 
   try {
     const upstreamUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent';
 
     const upstreamResponse = await fetch(upstreamUrl, {
       method: 'POST',
@@ -191,7 +191,7 @@ module.exports = async (req, res) => {
 
     return res.status(200).json({
       text: text,
-      model: 'gemini-1.5-flash',
+      model: 'gemini-3.8-flash',
       finishReason: firstCandidate.finishReason || 'STOP'
     });
   } catch (err) {

@@ -376,22 +376,40 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                       icon: const Icon(Icons.code,
                           size: 18, color: AppColors.secondaryText),
                       tooltip: 'Open GitHub',
-                      padding: EdgeInsets.zero,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
                       constraints: const BoxConstraints(),
                       onPressed: () => _launchUrl(project.githubUrl!),
                     ),
-                  if (project.liveDemoUrl != null &&
-                      project.liveDemoUrl!.isNotEmpty) ...[
-                    const SizedBox(width: 10),
+                  if (project.vercelUrl != null &&
+                      project.vercelUrl!.isNotEmpty)
                     IconButton(
-                      icon: const Icon(Icons.launch,
-                          size: 18, color: AppColors.brightAccent),
+                      icon: const Icon(Icons.change_history_rounded,
+                          size: 17, color: AppColors.brightAccent),
+                      tooltip: 'Open Vercel App',
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      constraints: const BoxConstraints(),
+                      onPressed: () => _launchUrl(project.vercelUrl!),
+                    ),
+                  if (project.renderUrl != null &&
+                      project.renderUrl!.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.cloud_queue_rounded,
+                          size: 18, color: Color(0xFF10B981)),
+                      tooltip: 'Open Render Service',
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      constraints: const BoxConstraints(),
+                      onPressed: () => _launchUrl(project.renderUrl!),
+                    ),
+                  if (project.liveDemoUrl != null &&
+                      project.liveDemoUrl!.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.launch_rounded,
+                          size: 18, color: AppColors.info),
                       tooltip: 'Open Live Demo',
-                      padding: EdgeInsets.zero,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
                       constraints: const BoxConstraints(),
                       onPressed: () => _launchUrl(project.liveDemoUrl!),
                     ),
-                  ],
                 ],
               ),
             ],

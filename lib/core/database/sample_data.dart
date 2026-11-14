@@ -124,8 +124,32 @@ class SampleData {
         await txn.insert('skills', s);
       }
 
-      // 3. Certifications (Matching design mockup Screen 7 & 8)
+      // 3. Certifications & Achievements
       final certsData = [
+        {
+          'name': 'Software Engineering Intern — Offer Letter',
+          'issuing_organization': 'Microsoft',
+          'category': 'Internship Offer Letter',
+          'completion_date': '2024-05-01',
+          'expiration_date': '2024-11-01',
+          'credential_id': 'MSFT-INT-2024-092',
+          'verification_url': 'https://careers.microsoft.com',
+          'description':
+              'Software Engineering Internship offer for the Cloud & AI platform team. Stipend: ₹45,000/month.',
+          'created_at': now.toIso8601String(),
+        },
+        {
+          'name': 'Data Analytics Intern — Completion Certificate',
+          'issuing_organization': 'Infosys Springboard',
+          'category': 'Internship Completion Certificate',
+          'completion_date': '2024-04-15',
+          'expiration_date': null,
+          'credential_id': 'INF-SP-INT-8831',
+          'verification_url': 'https://infyspringboard.onwingspan.com',
+          'description':
+              'Successfully completed 12-week virtual internship focusing on SQL analytics, Power BI dashboards, and Python automation.',
+          'created_at': now.toIso8601String(),
+        },
         {
           'name': 'Java Programming',
           'issuing_organization': 'Infosys',
@@ -194,6 +218,8 @@ class SampleData {
           'completion_date': '2024-03-20',
           'github_url': 'https://github.com/priya/portfolio',
           'live_demo_url': 'https://priyasharma.dev',
+          'vercel_url': 'https://skill-track-ashy.vercel.app',
+          'render_url': 'https://priyasharma-api.onrender.com',
           'key_features':
               '1. Interactive project gallery\n2. Responsive layout for mobile and desktop\n3. Contact form with email notification',
           'problems_solved':
@@ -264,6 +290,8 @@ class SampleData {
           'completion_date': '2023-12-15',
           'github_url': 'https://github.com/priya/ecommerce-store',
           'live_demo_url': 'https://priya-store.demo.app',
+          'vercel_url': 'https://priya-store.vercel.app',
+          'render_url': 'https://priya-store-backend.onrender.com',
           'key_features':
               '1. Dynamic shopping cart state\n2. Filter by category, price, and ratings\n3. Responsive grid layout',
           'problems_solved':

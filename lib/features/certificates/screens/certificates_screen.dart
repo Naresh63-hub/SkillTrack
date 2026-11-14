@@ -132,7 +132,8 @@ class _CertificatesScreenState extends State<CertificatesScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
                 _buildCategoryChip('All'),
-                ...AppStrings.skillCategories.map((c) => _buildCategoryChip(c)),
+                ...AppStrings.certificateCategories
+                    .map((c) => _buildCategoryChip(c)),
               ],
             ),
           ),
@@ -147,13 +148,13 @@ class _CertificatesScreenState extends State<CertificatesScreen> {
                         icon: Icons.workspace_premium_outlined,
                         title: _searchController.text.isNotEmpty ||
                                 _selectedCategory != 'All'
-                            ? 'No Matching Certificates'
-                            : 'No Certifications Recorded',
+                            ? 'No Matching Documents'
+                            : 'No Achievements Recorded',
                         description: _searchController.text.isNotEmpty ||
                                 _selectedCategory != 'All'
                             ? 'Try different search keywords or category filters.'
-                            : 'Upload and organize your AWS, Google, Coursera, and college credentials with verification links.',
-                        actionLabel: 'Add Certificate',
+                            : 'Upload and organize your internship offer letters, completion certificates, and credentials with verification links and document files.',
+                        actionLabel: 'Add Achievement / Document',
                         onAction: _addCertificate,
                       )
                     : RefreshIndicator(
@@ -204,6 +205,36 @@ class _CertificatesScreenState extends State<CertificatesScreen> {
   }
 
   Widget _buildCertificateCard(Certificate cert) {
+    IconData cardIcon;
+    Color accentColor;
+    String badgeLabel;
+
+    if (cert.category.contains('Offer Letter')) {
+      cardIcon = Icons.mark_email_read_rounded;
+      accentColor = const Color(0xFF2563EB); // Royal Blue
+      badgeLabel = 'Offer Letter';
+    } else if (cert.category.contains('Completion Certificate')) {
+      cardIcon = Icons.military_tech_rounded;
+      accentColor = const Color(0xFF059669); // Emerald Green
+      badgeLabel = 'Internship';
+    } else if (cert.category.contains('Hackathon')) {
+      cardIcon = Icons.emoji_events_rounded;
+      accentColor = const Color(0xFFD97706); // Amber
+      badgeLabel = 'Hackathon';
+    } else if (cert.category.contains('Recommendation')) {
+      cardIcon = Icons.description_rounded;
+      accentColor = const Color(0xFF7C3AED); // Purple
+      badgeLabel = 'LOR';
+    } else if (cert.category.contains('Academic')) {
+      cardIcon = Icons.school_rounded;
+      accentColor = const Color(0xFFDB2777); // Pink/Rose
+      badgeLabel = 'Award';
+    } else {
+      cardIcon = Icons.verified_rounded;
+      accentColor = AppColors.primaryPurple;
+      badgeLabel = cert.category;
+    }
+
     return CustomCard(
       onTap: () {
         Navigator.of(context).push(
@@ -223,13 +254,12 @@ class _CertificatesScreenState extends State<CertificatesScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.brightAccent.withValues(alpha: 0.12),
+                  color: accentColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                      color: AppColors.brightAccent.withValues(alpha: 0.3)),
+                      color: accentColor.withValues(alpha: 0.3)),
                 ),
-                child: const Icon(Icons.verified,
-                    color: AppColors.brightAccent, size: 24),
+                child: Icon(cardIcon, color: accentColor, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -247,13 +277,39 @@ class _CertificatesScreenState extends State<CertificatesScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 3),
-                    Text(
-                      cert.issuingOrganization,
-                      style: const TextStyle(
-                        color: AppColors.secondaryAccent,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            cert.issuingOrganization,
+                            style: const TextStyle(
+                              color: AppColors.secondaryAccent,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 1.5),
+                          decoration: BoxDecoration(
+                            color: accentColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                                color: accentColor.withValues(alpha: 0.3)),
+                          ),
+                          child: Text(
+                            badgeLabel,
+                            style: TextStyle(
+                              color: accentColor,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

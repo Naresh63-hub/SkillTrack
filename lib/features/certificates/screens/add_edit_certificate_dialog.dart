@@ -38,7 +38,10 @@ class _AddEditCertificateDialogState extends State<AddEditCertificateDialog> {
     _credIdController = TextEditingController(text: c?.credentialId ?? '');
     _urlController = TextEditingController(text: c?.verificationUrl ?? '');
     _descController = TextEditingController(text: c?.description ?? '');
-    _category = c?.category ?? AppStrings.skillCategories.first;
+    final initialCat = c?.category ?? AppStrings.certificateCategories.first;
+    _category = AppStrings.certificateCategories.contains(initialCat)
+        ? initialCat
+        : AppStrings.certificateCategories.first;
     _localFilePath = c?.localFilePath;
 
     if (c?.completionDate != null && c!.completionDate.isNotEmpty) {
@@ -111,7 +114,9 @@ class _AddEditCertificateDialogState extends State<AddEditCertificateDialog> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      isEditing ? 'Edit Certificate' : 'Add Certificate',
+                      isEditing
+                          ? 'Edit Achievement / Credential'
+                          : 'Add Achievement & Credential',
                       style: const TextStyle(
                         color: AppColors.primaryText,
                         fontSize: 18,
@@ -132,12 +137,12 @@ class _AddEditCertificateDialogState extends State<AddEditCertificateDialog> {
                 TextFormField(
                   controller: _nameController,
                   validator: (v) =>
-                      Validators.requiredField(v, 'Certificate name'),
+                      Validators.requiredField(v, 'Certificate or document name'),
                   style: const TextStyle(
                       color: AppColors.primaryText, fontSize: 14),
                   decoration: const InputDecoration(
-                    labelText: 'Certificate Title *',
-                    hintText: 'e.g. AWS Certified Cloud Practitioner',
+                    labelText: 'Title / Role *',
+                    hintText: 'e.g. Flutter Developer Intern — Offer Letter',
                     prefixIcon:
                         Icon(Icons.badge, size: 20, color: AppColors.mutedText),
                   ),
@@ -148,12 +153,12 @@ class _AddEditCertificateDialogState extends State<AddEditCertificateDialog> {
                 TextFormField(
                   controller: _orgController,
                   validator: (v) =>
-                      Validators.requiredField(v, 'Issuing organization'),
+                      Validators.requiredField(v, 'Company or organization'),
                   style: const TextStyle(
                       color: AppColors.primaryText, fontSize: 14),
                   decoration: const InputDecoration(
-                    labelText: 'Issuing Organization *',
-                    hintText: 'e.g. Amazon Web Services, Google, Coursera',
+                    labelText: 'Company / Organization *',
+                    hintText: 'e.g. Google, Microsoft, Infosys, Tech Startup',
                     prefixIcon: Icon(Icons.business,
                         size: 20, color: AppColors.mutedText),
                   ),
@@ -167,14 +172,36 @@ class _AddEditCertificateDialogState extends State<AddEditCertificateDialog> {
                   style: const TextStyle(
                       color: AppColors.primaryText, fontSize: 13),
                   decoration: const InputDecoration(
-                    labelText: 'Domain / Category *',
-                    prefixIcon: Icon(Icons.category,
-                        size: 20, color: AppColors.mutedText),
+                    labelText: 'Achievement Type *',
+                    prefixIcon: Icon(Icons.workspace_premium_rounded,
+                        size: 20, color: AppColors.primaryPurple),
                   ),
-                  items: AppStrings.skillCategories.map((cat) {
+                  items: AppStrings.certificateCategories.map((cat) {
+                    IconData catIcon;
+                    if (cat.contains('Offer Letter')) {
+                      catIcon = Icons.mark_email_read_rounded;
+                    } else if (cat.contains('Completion Certificate')) {
+                      catIcon = Icons.military_tech_rounded;
+                    } else if (cat.contains('Hackathon')) {
+                      catIcon = Icons.emoji_events_rounded;
+                    } else if (cat.contains('Recommendation')) {
+                      catIcon = Icons.description_rounded;
+                    } else if (cat.contains('Academic')) {
+                      catIcon = Icons.school_rounded;
+                    } else {
+                      catIcon = Icons.verified_rounded;
+                    }
                     return DropdownMenuItem(
-                        value: cat,
-                        child: Text(cat, overflow: TextOverflow.ellipsis));
+                      value: cat,
+                      child: Row(
+                        children: [
+                          Icon(catIcon,
+                              size: 16, color: AppColors.primaryPurple),
+                          const SizedBox(width: 8),
+                          Text(cat, overflow: TextOverflow.ellipsis),
+                        ],
+                      ),
+                    );
                   }).toList(),
                   onChanged: (v) {
                     if (v != null) setState(() => _category = v);

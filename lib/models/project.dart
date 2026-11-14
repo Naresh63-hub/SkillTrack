@@ -1,3 +1,15 @@
+class ProjectDeploymentLink {
+  final String label;
+  final String url;
+  final String type; // 'github', 'vercel', 'render', 'demo'
+
+  const ProjectDeploymentLink({
+    required this.label,
+    required this.url,
+    required this.type,
+  });
+}
+
 class Project {
   final int? id;
   final String name;
@@ -10,6 +22,8 @@ class Project {
   final String? completionDate;
   final String? githubUrl;
   final String? liveDemoUrl;
+  final String? vercelUrl;
+  final String? renderUrl;
   final String? imagePath;
   final String? keyFeatures;
   final String? problemsSolved;
@@ -30,6 +44,8 @@ class Project {
     this.completionDate,
     this.githubUrl,
     this.liveDemoUrl,
+    this.vercelUrl,
+    this.renderUrl,
     this.imagePath,
     this.keyFeatures,
     this.problemsSolved,
@@ -41,6 +57,45 @@ class Project {
         updatedAt = updatedAt ?? DateTime.now().toIso8601String();
 
   bool get isCompleted => status == 'Completed';
+
+  bool get hasLinks =>
+      (githubUrl != null && githubUrl!.trim().isNotEmpty) ||
+      (vercelUrl != null && vercelUrl!.trim().isNotEmpty) ||
+      (renderUrl != null && renderUrl!.trim().isNotEmpty) ||
+      (liveDemoUrl != null && liveDemoUrl!.trim().isNotEmpty);
+
+  List<ProjectDeploymentLink> get deploymentLinks {
+    final list = <ProjectDeploymentLink>[];
+    if (githubUrl != null && githubUrl!.trim().isNotEmpty) {
+      list.add(ProjectDeploymentLink(
+        label: 'GitHub Repo',
+        url: githubUrl!.trim(),
+        type: 'github',
+      ));
+    }
+    if (vercelUrl != null && vercelUrl!.trim().isNotEmpty) {
+      list.add(ProjectDeploymentLink(
+        label: 'Vercel App',
+        url: vercelUrl!.trim(),
+        type: 'vercel',
+      ));
+    }
+    if (renderUrl != null && renderUrl!.trim().isNotEmpty) {
+      list.add(ProjectDeploymentLink(
+        label: 'Render API',
+        url: renderUrl!.trim(),
+        type: 'render',
+      ));
+    }
+    if (liveDemoUrl != null && liveDemoUrl!.trim().isNotEmpty) {
+      list.add(ProjectDeploymentLink(
+        label: 'Live Demo',
+        url: liveDemoUrl!.trim(),
+        type: 'demo',
+      ));
+    }
+    return list;
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -55,6 +110,8 @@ class Project {
       'completion_date': completionDate,
       'github_url': githubUrl,
       'live_demo_url': liveDemoUrl,
+      'vercel_url': vercelUrl,
+      'render_url': renderUrl,
       'image_path': imagePath,
       'key_features': keyFeatures,
       'problems_solved': problemsSolved,
@@ -87,6 +144,8 @@ class Project {
       completionDate: map['completion_date'] as String?,
       githubUrl: map['github_url'] as String?,
       liveDemoUrl: map['live_demo_url'] as String?,
+      vercelUrl: map['vercel_url'] as String?,
+      renderUrl: map['render_url'] as String?,
       imagePath: map['image_path'] as String?,
       keyFeatures: map['key_features'] as String?,
       problemsSolved: map['problems_solved'] as String?,
@@ -109,6 +168,8 @@ class Project {
     String? completionDate,
     String? githubUrl,
     String? liveDemoUrl,
+    String? vercelUrl,
+    String? renderUrl,
     String? imagePath,
     String? keyFeatures,
     String? problemsSolved,
@@ -129,6 +190,8 @@ class Project {
       completionDate: completionDate ?? this.completionDate,
       githubUrl: githubUrl ?? this.githubUrl,
       liveDemoUrl: liveDemoUrl ?? this.liveDemoUrl,
+      vercelUrl: vercelUrl ?? this.vercelUrl,
+      renderUrl: renderUrl ?? this.renderUrl,
       imagePath: imagePath ?? this.imagePath,
       keyFeatures: keyFeatures ?? this.keyFeatures,
       problemsSolved: problemsSolved ?? this.problemsSolved,

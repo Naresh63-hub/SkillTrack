@@ -18,9 +18,9 @@ class AiService {
   AiService._internal();
 
   static const String _prefApiKey = 'gemini_api_key';
-  static const String _defaultModel = 'gemini-1.5-flash';
+  static const String _defaultModel = 'gemini-3.8-flash';
   static const String _defaultMobileProxyUrl =
-      'https://skilltrack-tan.vercel.app/api/gemini';
+      'https://skill-track-ashy.vercel.app/api/gemini';
 
   /// Retrieves user-supplied personal API key if configured in local app Settings
   Future<String?> getApiKey() async {

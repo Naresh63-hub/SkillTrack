@@ -11,6 +11,20 @@ class AppStrings {
   static const String navPlacement = 'Placement';
 
   // Categories
+  static const List<String> certificateCategories = [
+    'Internship Offer Letter',
+    'Internship Completion Certificate',
+    'Course Certification',
+    'Hackathon & Contest Award',
+    'Letter of Recommendation (LOR)',
+    'Academic Honor / Award',
+    'Cloud & DevOps',
+    'Web & Mobile Development',
+    'AI & Machine Learning',
+    'Programming Languages',
+    'Other Achievement',
+  ];
+
   static const List<String> skillCategories = [
     'Programming Languages',
     'Web Development',

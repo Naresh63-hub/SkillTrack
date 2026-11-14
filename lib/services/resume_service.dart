@@ -220,6 +220,20 @@ class ResumeService {
               _buildSectionTitle('KEY PROJECTS', accentColor),
               pw.SizedBox(height: 6),
               ...data.projects.map((proj) {
+                final links = <String>[];
+                if (proj.githubUrl != null && proj.githubUrl!.isNotEmpty) {
+                  links.add('GitHub: ${proj.githubUrl}');
+                }
+                if (proj.vercelUrl != null && proj.vercelUrl!.isNotEmpty) {
+                  links.add('Vercel: ${proj.vercelUrl}');
+                }
+                if (proj.renderUrl != null && proj.renderUrl!.isNotEmpty) {
+                  links.add('Render: ${proj.renderUrl}');
+                }
+                if (proj.liveDemoUrl != null && proj.liveDemoUrl!.isNotEmpty) {
+                  links.add('Demo: ${proj.liveDemoUrl}');
+                }
+
                 return pw.Padding(
                   padding: const pw.EdgeInsets.only(bottom: 8),
                   child: pw.Column(
@@ -253,6 +267,16 @@ class ResumeService {
                             color: textMuted,
                           ),
                         ),
+                      if (links.isNotEmpty) ...[
+                        pw.SizedBox(height: 2),
+                        pw.Text(
+                          links.join('  •  '),
+                          style: pw.TextStyle(
+                            fontSize: 8,
+                            color: PdfColor.fromHex('#2563EB'),
+                          ),
+                        ),
+                      ],
                       pw.SizedBox(height: 3),
                       pw.Text(
                         proj.shortDescription,
@@ -279,12 +303,13 @@ class ResumeService {
               }),
             ],
 
-            // Certifications
+            // Certifications & Credentials
             if (data.certificates.isNotEmpty) ...[
               pw.SizedBox(height: 14),
-              _buildSectionTitle('CERTIFICATIONS', accentColor),
+              _buildSectionTitle('CERTIFICATIONS & CREDENTIALS', accentColor),
               pw.SizedBox(height: 6),
               ...data.certificates.map((cert) {
+                final isInternship = cert.category.contains('Internship');
                 return pw.Padding(
                   padding: const pw.EdgeInsets.only(bottom: 5),
                   child: pw.Row(
@@ -294,13 +319,28 @@ class ResumeService {
                         child: pw.Column(
                           crossAxisAlignment: pw.CrossAxisAlignment.start,
                           children: [
-                            pw.Text(
-                              cert.name,
-                              style: pw.TextStyle(
-                                fontSize: 9.5,
-                                fontWeight: pw.FontWeight.bold,
-                                color: textDark,
-                              ),
+                            pw.Row(
+                              children: [
+                                pw.Text(
+                                  cert.name,
+                                  style: pw.TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: pw.FontWeight.bold,
+                                    color: textDark,
+                                  ),
+                                ),
+                                if (isInternship) ...[
+                                  pw.SizedBox(width: 4),
+                                  pw.Text(
+                                    '[Internship]',
+                                    style: pw.TextStyle(
+                                      fontSize: 7.5,
+                                      fontWeight: pw.FontWeight.bold,
+                                      color: accentColor,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                             pw.Text(
                               cert.issuingOrganization,

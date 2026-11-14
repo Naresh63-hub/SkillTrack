@@ -217,35 +217,96 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             ),
             const SizedBox(height: 14),
 
-            // Links (GitHub / Demo)
-            Row(
-              children: [
-                if (_project.githubUrl != null &&
-                    _project.githubUrl!.isNotEmpty)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.code, size: 18),
-                      label: const Text('GitHub Repo'),
-                      onPressed: () => _launchUrl(_project.githubUrl!),
+            // Deployment & Project Links
+            if (_project.hasLinks) ...[
+              CustomCard(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.link_rounded,
+                            size: 17, color: AppColors.brightAccent),
+                        SizedBox(width: 6),
+                        Text(
+                          'Project & Deployment Links',
+                          style: TextStyle(
+                            color: AppColors.primaryText,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                if (_project.githubUrl != null &&
-                    _project.githubUrl!.isNotEmpty &&
-                    _project.liveDemoUrl != null &&
-                    _project.liveDemoUrl!.isNotEmpty)
-                  const SizedBox(width: 10),
-                if (_project.liveDemoUrl != null &&
-                    _project.liveDemoUrl!.isNotEmpty)
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.launch, size: 18),
-                      label: const Text('Live Demo'),
-                      onPressed: () => _launchUrl(_project.liveDemoUrl!),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _project.deploymentLinks.map((link) {
+                        IconData iconData;
+                        Color btnColor;
+                        switch (link.type) {
+                          case 'github':
+                            iconData = Icons.code;
+                            btnColor = AppColors.secondaryText;
+                            break;
+                          case 'vercel':
+                            iconData = Icons.change_history_rounded;
+                            btnColor = AppColors.brightAccent;
+                            break;
+                          case 'render':
+                            iconData = Icons.cloud_queue_rounded;
+                            btnColor = const Color(0xFF10B981);
+                            break;
+                          case 'demo':
+                          default:
+                            iconData = Icons.launch_rounded;
+                            btnColor = AppColors.info;
+                            break;
+                        }
+
+                        return InkWell(
+                          onTap: () => _launchUrl(link.url),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: btnColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: btnColor.withValues(alpha: 0.4),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(iconData, size: 16, color: btnColor),
+                                const SizedBox(width: 7),
+                                Text(
+                                  link.label,
+                                  style: TextStyle(
+                                    color: btnColor,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Icon(Icons.arrow_outward_rounded,
+                                    size: 13, color: btnColor),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 14),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
 
             // Key Features
             if (_project.keyFeatures != null &&

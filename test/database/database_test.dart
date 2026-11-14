@@ -68,6 +68,8 @@ void main() {
         category: 'Mobile Development',
         technologies: ['Flutter', 'SQLite'],
         status: 'Completed',
+        vercelUrl: 'https://skill-track-ashy.vercel.app',
+        renderUrl: 'https://skilltrack-api.onrender.com',
       );
       final p2 = Project(
         name: 'Web Store',
@@ -83,6 +85,10 @@ void main() {
       final completedProjects =
           await projectsRepo.getAllProjects(status: 'Completed');
       expect(completedProjects.any((p) => p.name == 'SkillTrack App'), isTrue);
+      final retrievedSkillTrack =
+          completedProjects.firstWhere((p) => p.name == 'SkillTrack App');
+      expect(retrievedSkillTrack.vercelUrl, 'https://skill-track-ashy.vercel.app');
+      expect(retrievedSkillTrack.renderUrl, 'https://skilltrack-api.onrender.com');
 
       final searchResults =
           await projectsRepo.getAllProjects(searchQuery: 'Store');
