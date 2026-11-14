@@ -13,33 +13,42 @@ class SkillTrackLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final content = CustomPaint(
-      size: Size(size, size),
-      painter: _LightningBoltPainter(),
+    final image = ClipRRect(
+      borderRadius: BorderRadius.circular(size * 0.22),
+      child: Image.asset(
+        'assets/images/app_logo.png',
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => CustomPaint(
+          size: Size(size, size),
+          painter: _LightningBoltPainter(),
+        ),
+      ),
     );
 
-    if (!showBadge) return content;
+    if (!showBadge) return image;
 
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(size * 0.26),
+        borderRadius: BorderRadius.circular(size * 0.24),
         border: Border.all(
           color: AppColors.primaryAccent.withValues(alpha: 0.35),
-          width: 1.5,
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryAccent.withValues(alpha: 0.25),
-            blurRadius: size * 0.3,
-            spreadRadius: 2,
+            color: AppColors.primaryAccent.withValues(alpha: 0.2),
+            blurRadius: size * 0.25,
+            spreadRadius: 1,
           ),
         ],
       ),
-      padding: EdgeInsets.all(size * 0.18),
-      child: content,
+      clipBehavior: Clip.antiAlias,
+      child: image,
     );
   }
 }
