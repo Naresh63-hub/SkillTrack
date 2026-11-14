@@ -94,6 +94,18 @@ class SupabaseAuthService {
     return response;
   }
 
+  /// Helper to get the canonical OAuth / auth redirect URL
+  String _getAuthRedirectUrl() {
+    if (kIsWeb) {
+      final origin = Uri.base.origin;
+      if (origin.isNotEmpty && !origin.contains('localhost')) {
+        return origin;
+      }
+      return 'https://skill-track-ashy.vercel.app';
+    }
+    return 'io.supabase.skilltrack://login-callback/';
+  }
+
   /// Signs in with Google OAuth provider
   Future<bool> signInWithGoogle() async {
     final client = _client;
@@ -103,7 +115,7 @@ class SupabaseAuthService {
 
     return await client.auth.signInWithOAuth(
       OAuthProvider.google,
-      redirectTo: kIsWeb ? null : 'io.supabase.skilltrack://login-callback/',
+      redirectTo: _getAuthRedirectUrl(),
     );
   }
 
@@ -114,7 +126,10 @@ class SupabaseAuthService {
       throw const AuthException('Supabase client is not initialized.');
     }
 
-    await client.auth.resetPasswordForEmail(email.trim());
+    await client.auth.resetPasswordForEmail(
+      email.trim(),
+      redirectTo: _getAuthRedirectUrl(),
+    );
   }
 
   /// Signs out the current user and clears session
