@@ -136,8 +136,8 @@ class _AddEditCertificateDialogState extends State<AddEditCertificateDialog> {
                 // Certificate Name
                 TextFormField(
                   controller: _nameController,
-                  validator: (v) =>
-                      Validators.requiredField(v, 'Certificate or document name'),
+                  validator: (v) => Validators.requiredField(
+                      v, 'Certificate or document name'),
                   style: const TextStyle(
                       color: AppColors.primaryText, fontSize: 14),
                   decoration: const InputDecoration(

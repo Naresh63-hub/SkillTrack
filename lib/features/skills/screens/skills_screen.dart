@@ -11,6 +11,7 @@ import '../../../repositories/skills_repository.dart';
 import 'add_edit_skill_dialog.dart';
 import 'skill_detail_screen.dart';
 import 'career_roadmaps_screen.dart';
+import '../../notes_planner/screens/notes_planner_hub_screen.dart';
 
 class SkillsScreen extends StatefulWidget {
   const SkillsScreen({super.key});
@@ -114,12 +115,25 @@ class _SkillsScreenState extends State<SkillsScreen> {
     }
   }
 
+  void _openNotes() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const NotesPlannerHubScreen(initialTabIndex: 0),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Technical Skills'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.note_alt_outlined, size: 21),
+            tooltip: 'Notes & Cheatsheets',
+            onPressed: _openNotes,
+          ),
           IconButton(
             icon: const Icon(Icons.alt_route_rounded, size: 22),
             tooltip: 'Role Roadmaps',

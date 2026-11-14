@@ -186,7 +186,8 @@ void main() {
         strengths: const ['Good grasp of OOP', 'decorators'],
         weaknesses: const ['Need improvement in asyncio'],
         recommendedTopics: const ['Concurrency', 'Generators'],
-        feedbackSummary: 'Strong technical foundation with great syntax clarity.',
+        feedbackSummary:
+            'Strong technical foundation with great syntax clarity.',
         createdAt: now.toIso8601String(),
       );
 
@@ -287,7 +288,11 @@ void main() {
         8,
         (i) => AiRoadmapNode(
           roadmapId: 1,
-          level: i < 3 ? 'Beginner' : i < 6 ? 'Intermediate' : 'Advanced',
+          level: i < 3
+              ? 'Beginner'
+              : i < 6
+                  ? 'Intermediate'
+                  : 'Advanced',
           topicTitle: 'Topic ${i + 1}',
           description: 'Description $i',
           category: 'Category',

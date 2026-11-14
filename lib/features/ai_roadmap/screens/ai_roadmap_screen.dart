@@ -779,8 +779,8 @@ class _AiRoadmapScreenState extends State<AiRoadmapScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
                       color: node.isCompleted
                           ? const Color(0xFF10B981).withValues(alpha: 0.05)

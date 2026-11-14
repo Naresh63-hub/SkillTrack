@@ -87,8 +87,10 @@ void main() {
       expect(completedProjects.any((p) => p.name == 'SkillTrack App'), isTrue);
       final retrievedSkillTrack =
           completedProjects.firstWhere((p) => p.name == 'SkillTrack App');
-      expect(retrievedSkillTrack.vercelUrl, 'https://skill-track-ashy.vercel.app');
-      expect(retrievedSkillTrack.renderUrl, 'https://skilltrack-api.onrender.com');
+      expect(
+          retrievedSkillTrack.vercelUrl, 'https://skill-track-ashy.vercel.app');
+      expect(
+          retrievedSkillTrack.renderUrl, 'https://skilltrack-api.onrender.com');
 
       final searchResults =
           await projectsRepo.getAllProjects(searchQuery: 'Store');

@@ -55,7 +55,9 @@ void main() {
       expect(onTrackSkill.isOverdue, isFalse);
     });
 
-    test('Project serialization handles technology list and deployment links correctly', () {
+    test(
+        'Project serialization handles technology list and deployment links correctly',
+        () {
       final project = Project(
         name: 'SkillTrack',
         shortDescription: 'Student Career Tracker',

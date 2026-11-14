@@ -256,8 +256,7 @@ class _CertificatesScreenState extends State<CertificatesScreen> {
                 decoration: BoxDecoration(
                   color: accentColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                      color: accentColor.withValues(alpha: 0.3)),
+                  border: Border.all(color: accentColor.withValues(alpha: 0.3)),
                 ),
                 child: Icon(cardIcon, color: accentColor, size: 24),
               ),

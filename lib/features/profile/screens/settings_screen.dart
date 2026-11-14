@@ -9,6 +9,8 @@ import '../../../core/database/database_helper.dart';
 import '../../../core/database/sample_data.dart';
 import '../../../services/export_import_service.dart';
 import '../../../services/ai_service.dart';
+import '../../../services/supabase_auth_service.dart';
+import '../../auth/screens/auth_screen.dart';
 import 'database_tables_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -314,6 +316,111 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     label: const Text('Load Comprehensive Demo Data'),
                     onPressed: _isProcessing ? null : _loadDemoData,
                   ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Supabase Cloud Account
+            CustomCard(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Account & Cloud Authentication',
+                      style: TextStyle(
+                          color: AppColors.primaryText,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  Builder(builder: (context) {
+                    final user = SupabaseAuthService.instance.currentUser;
+                    final isAuth = user != null;
+
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: CircleAvatar(
+                        radius: 20,
+                        backgroundColor: isAuth
+                            ? AppColors.brightAccent.withValues(alpha: 0.15)
+                            : AppColors.surfaceVariant,
+                        child: Icon(
+                          isAuth
+                              ? Icons.verified_user_rounded
+                              : Icons.person_outline_rounded,
+                          color: isAuth
+                              ? AppColors.brightAccent
+                              : AppColors.mutedText,
+                          size: 20,
+                        ),
+                      ),
+                      title: Text(
+                        isAuth
+                            ? (user.email ?? 'Authenticated Student')
+                            : 'Guest / Offline Mode',
+                        style: const TextStyle(
+                          color: AppColors.primaryText,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      subtitle: Text(
+                        isAuth
+                            ? 'Supabase Cloud Connected'
+                            : 'Working offline on local database',
+                        style: TextStyle(
+                          color:
+                              isAuth ? AppColors.success : AppColors.mutedText,
+                          fontSize: 11.5,
+                        ),
+                      ),
+                      trailing: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isAuth
+                              ? AppColors.error.withValues(alpha: 0.15)
+                              : AppColors.brightAccent,
+                          foregroundColor:
+                              isAuth ? AppColors.error : Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          minimumSize: Size.zero,
+                        ),
+                        onPressed: () async {
+                          if (isAuth) {
+                            final confirmed = await ConfirmDialog.show(
+                              context,
+                              title: 'Sign Out',
+                              content:
+                                  'Are you sure you want to sign out of your Supabase account?',
+                              confirmText: 'Sign Out',
+                              confirmColor: AppColors.error,
+                            );
+                            if (confirmed && context.mounted) {
+                              await SupabaseAuthService.instance.signOut();
+                              if (context.mounted) {
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                      builder: (_) => const AuthScreen()),
+                                  (route) => false,
+                                );
+                              }
+                            }
+                          } else {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                  builder: (_) => const AuthScreen()),
+                            );
+                          }
+                        },
+                        child: Text(
+                          isAuth ? 'Sign Out' : 'Sign In',
+                          style: const TextStyle(
+                              fontSize: 11.5, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),

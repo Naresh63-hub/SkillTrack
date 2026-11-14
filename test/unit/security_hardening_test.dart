@@ -16,8 +16,7 @@ void main() {
       const originalToken = 'ghp_SkillTrackSuperSecretToken1234567890';
       await SecureTokenStorage.saveSecureToken('github_token', originalToken);
 
-      final decrypted =
-          await SecureTokenStorage.getSecureToken('github_token');
+      final decrypted = await SecureTokenStorage.getSecureToken('github_token');
       expect(decrypted, equals(originalToken));
     });
 

@@ -8,6 +8,7 @@ import '../../../core/utils/date_formatter.dart';
 import '../../../models/skill.dart';
 import '../../../repositories/skills_repository.dart';
 import 'add_edit_skill_dialog.dart';
+import '../../notes_planner/screens/notes_planner_hub_screen.dart';
 
 class SkillDetailScreen extends StatefulWidget {
   final Skill initialSkill;
@@ -382,7 +383,73 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 12),
             ],
+
+            // Dedicated Revision Notes & Cheatsheets Card
+            CustomCard(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryPurple.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.note_alt_rounded,
+                        color: AppColors.secondaryAccent, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Skill Cheatsheets & Code Notes',
+                          style: TextStyle(
+                            color: AppColors.primaryText,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Save code snippets & tricks for ${_skill.name}',
+                          style: const TextStyle(
+                            color: AppColors.secondaryText,
+                            fontSize: 11.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (ctx) => NotesPlannerHubScreen(
+                            initialTabIndex: 0,
+                            preselectedSkillFilter: _skill.name,
+                          ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryPurple,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Open Notes',
+                        style: TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

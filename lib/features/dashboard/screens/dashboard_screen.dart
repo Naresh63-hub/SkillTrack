@@ -48,6 +48,7 @@ import '../../ai_roadmap/screens/ai_roadmap_screen.dart';
 import '../../github/screens/github_dashboard_screen.dart';
 import '../../mock_interview/screens/mock_interview_setup_screen.dart';
 import '../../career_assistant/screens/career_assistant_screen.dart';
+import '../../notes_planner/screens/notes_planner_hub_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(int tabIndex)? onNavigateTab;
@@ -358,6 +359,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .then((_) => _loadDashboardData());
   }
 
+  void _openNotesPlanner({int tabIndex = 0}) {
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (ctx) => NotesPlannerHubScreen(initialTabIndex: tabIndex),
+          ),
+        )
+        .then((_) => _loadDashboardData());
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -384,6 +395,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           icon: Icons.alt_route_rounded,
           color: AppColors.secondaryAccent,
           onTap: _openRoadmaps),
+      QuickActionItem(
+          label: 'Notes & Planner',
+          icon: Icons.event_note_rounded,
+          color: const Color(0xFF38BDF8),
+          onTap: () => _openNotesPlanner()),
       QuickActionItem(
           label: 'Add Certificate',
           icon: Icons.verified_rounded,
@@ -447,6 +463,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 MaterialPageRoute(builder: (ctx) => const AnalyticsScreen()),
               );
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.event_note_rounded, size: 23),
+            tooltip: 'Notes & Study Planner',
+            onPressed: () => _openNotesPlanner(),
           ),
           IconButton(
             icon: const Icon(Icons.person_outline_rounded, size: 23),

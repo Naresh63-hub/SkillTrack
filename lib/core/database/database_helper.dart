@@ -10,7 +10,7 @@ class DatabaseHelper {
   DatabaseHelper._internal();
 
   static const String _dbName = 'skilltrack_app.db';
-  static const int _dbVersion = 2;
+  static const int _dbVersion = 3;
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -27,6 +27,7 @@ class DatabaseHelper {
         onUpgrade: _onUpgrade,
       );
       await _ensureV2Tables(db);
+      await _ensureV3Tables(db);
       return db;
     }
 
@@ -47,6 +48,7 @@ class DatabaseHelper {
       },
     );
     await _ensureV2Tables(db);
+    await _ensureV3Tables(db);
     return db;
   }
 
@@ -261,12 +263,18 @@ class DatabaseHelper {
 
       // Create v2 tables (AI modules)
       await _executeCreateV2(txn);
+
+      // Create v3 tables (Notes & Study Planner)
+      await _executeCreateV3(txn);
     });
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
       await _ensureV2Tables(db);
+    }
+    if (oldVersion < 3) {
+      await _ensureV3Tables(db);
     }
   }
 
@@ -447,10 +455,67 @@ class DatabaseHelper {
     } catch (_) {}
   }
 
+  static Future<void> _executeCreateV3(dynamic executor) async {
+    // 21. notes table
+    await executor.execute('''
+      CREATE TABLE IF NOT EXISTS notes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        category TEXT NOT NULL,
+        linked_skill_name TEXT,
+        is_pinned INTEGER NOT NULL DEFAULT 0,
+        color_tag TEXT NOT NULL DEFAULT 'purple',
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // 22. planner_events table
+    await executor.execute('''
+      CREATE TABLE IF NOT EXISTS planner_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT,
+        event_type TEXT NOT NULL,
+        target_date TEXT NOT NULL,
+        start_time TEXT,
+        end_time TEXT,
+        is_completed INTEGER NOT NULL DEFAULT 0,
+        priority TEXT NOT NULL DEFAULT 'Medium',
+        reminder_minutes_before INTEGER,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // V3 Indexes
+    await executor.execute(
+        'CREATE INDEX IF NOT EXISTS idx_notes_category ON notes (category);');
+    await executor.execute(
+        'CREATE INDEX IF NOT EXISTS idx_notes_is_pinned ON notes (is_pinned);');
+    await executor.execute(
+        'CREATE INDEX IF NOT EXISTS idx_planner_target_date ON planner_events (target_date);');
+    await executor.execute(
+        'CREATE INDEX IF NOT EXISTS idx_planner_event_type ON planner_events (event_type);');
+    await executor.execute(
+        'CREATE INDEX IF NOT EXISTS idx_planner_is_completed ON planner_events (is_completed);');
+  }
+
+  Future<void> _ensureV3Tables(Database db) async {
+    await _executeCreateV3(db);
+    try {
+      await db.execute(
+          'ALTER TABLE planner_events ADD COLUMN reminder_minutes_before INTEGER;');
+    } catch (_) {}
+  }
+
   /// Clears all application data from the SQLite tables.
   Future<void> clearAllData() async {
     final db = await database;
     await db.transaction((txn) async {
+      await txn.delete('planner_events');
+      await txn.delete('notes');
       await txn.delete('career_chat_messages');
       await txn.delete('career_chat_sessions');
       await txn.delete('mock_interview_answers');

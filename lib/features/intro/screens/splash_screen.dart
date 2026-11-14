@@ -5,7 +5,9 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/widgets/skilltrack_logo.dart';
 import '../../../repositories/profile_repository.dart';
+import '../../../services/supabase_auth_service.dart';
 import '../../../app.dart';
+import '../../auth/screens/auth_screen.dart';
 import 'onboarding_screen.dart';
 import 'student_setup_screen.dart';
 
@@ -49,15 +51,23 @@ class _SplashScreenState extends State<SplashScreen>
     final prefs = await SharedPreferences.getInstance();
     final hasOnboarded = prefs.getBool('has_onboarded') ?? false;
 
+    final authService = SupabaseAuthService.instance;
+    final isAuth = authService.isAuthenticated;
+    final isGuest = await authService.isGuestMode();
+
     if (!mounted) return;
 
     Widget target;
-    if (hasValidProfile) {
-      target = const MainNavigationShell();
+    if (isAuth || isGuest) {
+      if (hasValidProfile) {
+        target = const MainNavigationShell();
+      } else {
+        target = const StudentSetupScreen();
+      }
     } else if (!hasOnboarded) {
       target = const OnboardingScreen();
     } else {
-      target = const StudentSetupScreen();
+      target = const AuthScreen();
     }
 
     Navigator.of(context).pushReplacement(

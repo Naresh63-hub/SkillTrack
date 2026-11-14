@@ -25,10 +25,12 @@ class CareerAssistantService {
 
     return {
       'name': profile.name.isNotEmpty ? profile.name : 'Student',
-      'college': profile.college.isNotEmpty ? profile.college : 'Engineering College',
+      'college':
+          profile.college.isNotEmpty ? profile.college : 'Engineering College',
       'degree': profile.degree.isNotEmpty ? profile.degree : 'B.Tech',
       'branch': profile.branch.isNotEmpty ? profile.branch : 'Computer Science',
-      'graduationYear': profile.graduationYear.isNotEmpty ? profile.graduationYear : '2026',
+      'graduationYear':
+          profile.graduationYear.isNotEmpty ? profile.graduationYear : '2026',
       'targetRole': profile.targetJobRole.isNotEmpty
           ? profile.targetJobRole
           : 'Software Engineer',
@@ -122,9 +124,8 @@ Security Guardrails:
 ''';
 
       // Keep recent 14 messages for extended conversation memory
-      final recentHistory = history.length > 14
-          ? history.sublist(history.length - 14)
-          : history;
+      final recentHistory =
+          history.length > 14 ? history.sublist(history.length - 14) : history;
 
       final conversationSnippet = recentHistory
           .map((m) => '${m.isUser ? "Student" : "Assistant"}: ${m.content}')

@@ -13,6 +13,7 @@ import '../../../models/learning_goal.dart';
 import '../../../repositories/tasks_repository.dart';
 import 'add_edit_task_dialog.dart';
 import 'add_edit_goal_dialog.dart';
+import '../../notes_planner/screens/notes_planner_hub_screen.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -181,6 +182,14 @@ class _TasksScreenState extends State<TasksScreen>
     }
   }
 
+  void _openPlanner() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const NotesPlannerHubScreen(initialTabIndex: 1),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentTasks = _getFilteredTasksForTab(_tabController.index);
@@ -188,6 +197,13 @@ class _TasksScreenState extends State<TasksScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tasks & Goals'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_month_rounded, size: 21),
+            tooltip: 'Future Study Planner',
+            onPressed: _openPlanner,
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
