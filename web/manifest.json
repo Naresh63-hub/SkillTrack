@@ -1,11 +1,11 @@
 {
-    "name": "skilltrack",
-    "short_name": "skilltrack",
+    "name": "SkillTrack — Student Skills & Placement Tracker",
+    "short_name": "SkillTrack",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#100B16",
+    "theme_color": "#8B5CF6",
+    "description": "Student Skills & Placement Tracker — Career Roadmaps, Coding Practice, Cheatsheets & Placement Planner",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

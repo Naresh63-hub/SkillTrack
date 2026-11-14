@@ -69,6 +69,32 @@
     <div class="title">SkillTrack</div>
     <div class="subtitle">Build Skills • Track Progress • Get Placement Ready</div>
   </div>
+  <script>
+    // PWA Install Prompt Capture
+    window.deferredPWAInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      window.deferredPWAInstallPrompt = e;
+      window.dispatchEvent(new CustomEvent('pwa_prompt_available'));
+      console.log('SkillTrack: PWA install prompt ready.');
+    });
+    window.triggerPWAInstall = function() {
+      if (window.deferredPWAInstallPrompt) {
+        window.deferredPWAInstallPrompt.prompt();
+        window.deferredPWAInstallPrompt.userChoice.then(function(choiceResult) {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('SkillTrack: PWA installation accepted.');
+          }
+          window.deferredPWAInstallPrompt = null;
+        });
+        return true;
+      }
+      return false;
+    };
+    window.isPWAStandalone = function() {
+      return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+    };
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

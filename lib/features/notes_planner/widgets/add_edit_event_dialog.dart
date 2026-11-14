@@ -179,9 +179,7 @@ class _AddEditEventDialogState extends State<AddEditEventDialog> {
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          isEditing
-                              ? 'Edit Event'
-                              : 'Schedule Future Event',
+                          isEditing ? 'Edit Event' : 'Schedule Future Event',
                           style: const TextStyle(
                             color: AppColors.primaryText,
                             fontSize: 16.5,

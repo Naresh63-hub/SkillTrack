@@ -151,7 +151,9 @@ class _AddEditNoteDialogState extends State<AddEditNoteDialog> {
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          isEditing ? 'Edit Note / Cheatsheet' : 'Add Note / Cheatsheet',
+                          isEditing
+                              ? 'Edit Note / Cheatsheet'
+                              : 'Add Note / Cheatsheet',
                           style: const TextStyle(
                             color: AppColors.primaryText,
                             fontSize: 16.5,
@@ -280,8 +282,8 @@ class _AddEditNoteDialogState extends State<AddEditNoteDialog> {
                                     child: Text('None (General Note)'),
                                   ),
                                   if (_selectedSkillName != null &&
-                                      !_availableSkills.any((s) =>
-                                          s.name == _selectedSkillName))
+                                      !_availableSkills.any(
+                                          (s) => s.name == _selectedSkillName))
                                     DropdownMenuItem<String?>(
                                       value: _selectedSkillName,
                                       child: Text(

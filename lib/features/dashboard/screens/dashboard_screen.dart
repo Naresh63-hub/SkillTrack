@@ -49,6 +49,8 @@ import '../../github/screens/github_dashboard_screen.dart';
 import '../../mock_interview/screens/mock_interview_setup_screen.dart';
 import '../../career_assistant/screens/career_assistant_screen.dart';
 import '../../notes_planner/screens/notes_planner_hub_screen.dart';
+import '../../app_install/widgets/install_app_dialog.dart';
+import '../../app_install/widgets/install_app_banner.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(int tabIndex)? onNavigateTab;
@@ -425,6 +427,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           icon: Icons.picture_as_pdf_rounded,
           color: AppColors.lightPurple,
           onTap: _quickGenerateResume),
+      QuickActionItem(
+          label: 'Install App',
+          icon: Icons.install_mobile_rounded,
+          color: const Color(0xFF34D399),
+          onTap: () => InstallAppDialog.show(context)),
     ];
 
     final ongoingSkills =
@@ -468,6 +475,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             icon: const Icon(Icons.event_note_rounded, size: 23),
             tooltip: 'Notes & Study Planner',
             onPressed: () => _openNotesPlanner(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.install_mobile_rounded, size: 22),
+            tooltip: 'Download & Install App',
+            onPressed: () => InstallAppDialog.show(context),
           ),
           IconButton(
             icon: const Icon(Icons.person_outline_rounded, size: 23),
@@ -696,6 +708,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
+
+                  // Install App Banner (PWA / APK)
+                  const InstallAppBanner(),
 
                   // Upcoming Placement Interview Banner (if active)
                   if (_upcomingInterview != null) ...[

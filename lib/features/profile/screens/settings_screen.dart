@@ -11,6 +11,8 @@ import '../../../services/export_import_service.dart';
 import '../../../services/ai_service.dart';
 import '../../../services/supabase_auth_service.dart';
 import '../../auth/screens/auth_screen.dart';
+import '../../app_install/widgets/install_app_dialog.dart';
+import '../../../services/app_install_service.dart';
 import 'database_tables_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -315,6 +317,91 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         : const Icon(Icons.download, size: 18),
                     label: const Text('Load Comprehensive Demo Data'),
                     onPressed: _isProcessing ? null : _loadDemoData,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Download & Install App Card
+            CustomCard(
+              gradient: AppColors.elevatedGradient,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.install_mobile_rounded,
+                              color: AppColors.brightAccent, size: 22),
+                          SizedBox(width: 8),
+                          Text(
+                            'Download & Install App',
+                            style: TextStyle(
+                              color: AppColors.primaryText,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (AppInstallService.instance.isInstalledPWA)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppColors.success.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'Installed',
+                            style: TextStyle(
+                              color: AppColors.success,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Install SkillTrack directly on your Android phone, iPhone/iPad, or Windows/Mac desktop for seamless 100% offline access, home screen shortcuts, and zero browser borders.',
+                    style: TextStyle(
+                      color: AppColors.secondaryText,
+                      fontSize: 12,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 8,
+                    children: [
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryPurple,
+                          foregroundColor: Colors.white,
+                        ),
+                        icon: const Icon(Icons.get_app_rounded, size: 18),
+                        label: const Text('Install / Add to Home'),
+                        onPressed: () => InstallAppDialog.show(context),
+                      ),
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.lightPurple,
+                          side:
+                              const BorderSide(color: AppColors.primaryPurple),
+                        ),
+                        icon: const Icon(Icons.android_rounded, size: 18),
+                        label: const Text('Download APK'),
+                        onPressed: () =>
+                            AppInstallService.instance.downloadAndroidApk(),
+                      ),
+                    ],
                   ),
                 ],
               ),
