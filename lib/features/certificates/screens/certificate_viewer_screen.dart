@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -12,6 +13,34 @@ class CertificateViewerScreen extends StatelessWidget {
   final Certificate certificate;
 
   const CertificateViewerScreen({super.key, required this.certificate});
+
+  String _extractFileName(String path) {
+    if (path.startsWith('data:')) {
+      final match = RegExp(r'name=([^;]+);').firstMatch(path);
+      if (match != null) {
+        return Uri.decodeComponent(match.group(1)!);
+      }
+      return 'Attached Document';
+    }
+    return path.split(RegExp(r'[/\\]')).last;
+  }
+
+  Future<void> _openAttachedFile(BuildContext context, String path) async {
+    try {
+      final uri = Uri.parse(path);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      } else {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open file: $e')),
+        );
+      }
+    }
+  }
 
   Future<void> _launchUrl(BuildContext context, String url) async {
     final uri = Uri.tryParse(url);
@@ -50,86 +79,113 @@ class CertificateViewerScreen extends StatelessWidget {
                   width: double.infinity,
                   constraints: const BoxConstraints(maxHeight: 300),
                   color: AppColors.cardBackground,
-                  child: kIsWeb
-                      ? Image.network(
-                          filePath,
+                  child: filePath.startsWith('data:image/')
+                      ? Image.memory(
+                          base64Decode(filePath.split(',').last),
                           fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Padding(
-                            padding: EdgeInsets.all(32),
-                            child: Column(
-                              children: [
-                                Icon(Icons.broken_image,
-                                    size: 40, color: AppColors.mutedText),
-                                SizedBox(height: 8),
-                                Text('Image file moved or deleted',
-                                    style:
-                                        TextStyle(color: AppColors.mutedText)),
-                              ],
-                            ),
-                          ),
                         )
-                      : Image.file(
-                          File(filePath),
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Padding(
-                              padding: EdgeInsets.all(32),
-                              child: Column(
-                                children: [
-                                  Icon(Icons.broken_image,
-                                      size: 40, color: AppColors.mutedText),
-                                  SizedBox(height: 8),
-                                  Text('Image file moved or deleted',
-                                      style: TextStyle(
-                                          color: AppColors.mutedText)),
-                                ],
+                      : (kIsWeb
+                          ? Image.network(
+                              filePath,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Padding(
+                                padding: EdgeInsets.all(32),
+                                child: Column(
+                                  children: [
+                                    Icon(Icons.broken_image,
+                                        size: 40, color: AppColors.mutedText),
+                                    SizedBox(height: 8),
+                                    Text('Image file moved or deleted',
+                                        style: TextStyle(
+                                            color: AppColors.mutedText)),
+                                  ],
+                                ),
                               ),
-                            );
-                          },
-                        ),
+                            )
+                          : Image.file(
+                              File(filePath),
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Padding(
+                                  padding: EdgeInsets.all(32),
+                                  child: Column(
+                                    children: [
+                                      Icon(Icons.broken_image,
+                                          size: 40, color: AppColors.mutedText),
+                                      SizedBox(height: 8),
+                                      Text('Image file moved or deleted',
+                                          style: TextStyle(
+                                              color: AppColors.mutedText)),
+                                    ],
+                                  ),
+                                );
+                              },
+                            )),
                 ),
               ),
               const SizedBox(height: 16),
             ] else if (hasFile && isPdf) ...[
               CustomCard(
                 padding: const EdgeInsets.all(20),
-                child: Row(
+                child: Column(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.picture_as_pdf,
-                          color: AppColors.error, size: 28),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.error.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.picture_as_pdf,
+                              color: AppColors.error, size: 28),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                certificate.category.contains('Offer Letter')
+                                    ? 'PDF Offer Letter Document'
+                                    : (certificate.category
+                                            .contains('Completion')
+                                        ? 'PDF Completion Certificate'
+                                        : 'PDF Credential Document'),
+                                style: const TextStyle(
+                                    color: AppColors.primaryText,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _extractFileName(filePath),
+                                style: const TextStyle(
+                                    color: AppColors.mutedText, fontSize: 11),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            certificate.category.contains('Offer Letter')
-                                ? 'PDF Offer Letter Document'
-                                : (certificate.category.contains('Completion')
-                                    ? 'PDF Completion Certificate'
-                                    : 'PDF Credential Document'),
-                            style: const TextStyle(
-                                color: AppColors.primaryText,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryPurple,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            filePath.split(RegExp(r'[/\\]')).last,
-                            style: const TextStyle(
-                                color: AppColors.mutedText, fontSize: 11),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                        ),
+                        icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                        label: const Text('View / Open PDF Document'),
+                        onPressed: () => _openAttachedFile(context, filePath),
                       ),
                     ),
                   ],

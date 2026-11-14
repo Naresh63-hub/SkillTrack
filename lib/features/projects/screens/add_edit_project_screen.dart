@@ -162,13 +162,16 @@ class _AddEditProjectScreenState extends State<AddEditProjectScreen> {
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: _category,
+                      isExpanded: true,
                       dropdownColor: AppColors.secondaryBackground,
                       style: const TextStyle(
                           color: AppColors.primaryText, fontSize: 13),
                       decoration: const InputDecoration(
                         labelText: 'Category *',
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         prefixIcon: Icon(Icons.category,
-                            size: 20, color: AppColors.mutedText),
+                            size: 18, color: AppColors.mutedText),
                       ),
                       items: AppStrings.skillCategories.map((c) {
                         return DropdownMenuItem(
@@ -184,16 +187,21 @@ class _AddEditProjectScreenState extends State<AddEditProjectScreen> {
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: _status,
+                      isExpanded: true,
                       dropdownColor: AppColors.secondaryBackground,
                       style: const TextStyle(
                           color: AppColors.primaryText, fontSize: 13),
                       decoration: const InputDecoration(
                         labelText: 'Status',
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         prefixIcon: Icon(Icons.flag,
-                            size: 20, color: AppColors.mutedText),
+                            size: 18, color: AppColors.mutedText),
                       ),
                       items: AppStrings.projectStatuses.map((s) {
-                        return DropdownMenuItem(value: s, child: Text(s));
+                        return DropdownMenuItem(
+                            value: s,
+                            child: Text(s, overflow: TextOverflow.ellipsis));
                       }).toList(),
                       onChanged: (v) {
                         if (v != null) setState(() => _status = v);

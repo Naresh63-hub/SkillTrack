@@ -173,12 +173,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  String _getTimeGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
-  }
+
 
   void _showNotificationsSheet() {
     showModalBottomSheet(
@@ -361,6 +356,140 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .then((_) => _loadDashboardData());
   }
 
+  Future<void> _showTargetRoleSelector(StudentProfile p) async {
+    const availableRoles = [
+      'Full Stack Developer',
+      'Data Analyst',
+      'Flutter Developer',
+      'Python Developer',
+      'AI/ML Engineer',
+      'Java Developer',
+    ];
+
+    final currentSet = p.targetJobRole
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toSet();
+
+    final selected = Set<String>.from(currentSet);
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.cardBackground,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                  20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Target Career Roles',
+                        style: TextStyle(
+                          color: AppColors.primaryText,
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close,
+                            size: 20, color: AppColors.mutedText),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const Text(
+                    'Select multiple career targets to personalize your skill roadmaps and interview preparation:',
+                    style: TextStyle(
+                        color: AppColors.secondaryText, fontSize: 12.5),
+                  ),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: availableRoles.map((role) {
+                      final isChosen = selected.contains(role);
+                      return FilterChip(
+                        label: Text(role),
+                        selected: isChosen,
+                        selectedColor: AppColors.primaryPurple,
+                        backgroundColor: AppColors.surfaceVariant,
+                        checkmarkColor: Colors.white,
+                        labelStyle: TextStyle(
+                          color: isChosen
+                              ? Colors.white
+                              : AppColors.secondaryText,
+                          fontSize: 12,
+                          fontWeight: isChosen
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                        onSelected: (val) {
+                          setModalState(() {
+                            if (val) {
+                              selected.add(role);
+                            } else {
+                              selected.remove(role);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            _openRoadmaps();
+                          },
+                          child: const Text('Explore Roadmaps'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryPurple,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () async {
+                            final updatedRole = selected.join(', ');
+                            final updatedProfile =
+                                p.copyWith(targetJobRole: updatedRole);
+                            await _profileRepo.saveProfile(updatedProfile);
+                            if (mounted) {
+                              Navigator.of(context).pop();
+                              _loadDashboardData();
+                            }
+                          },
+                          child: const Text('Save Targets'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _openNotesPlanner({int tabIndex = 0}) {
     Navigator.of(context)
         .push(
@@ -441,48 +570,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        titleSpacing: 16,
         title: const Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            SkillTrackLogo(size: 32),
-            SizedBox(width: 10),
+            SkillTrackLogo(size: 28),
+            SizedBox(width: 8),
             Text(
               'SkillTrack',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none_rounded, size: 23),
-            tooltip: 'Notifications',
-            onPressed: _showNotificationsSheet,
-          ),
-          IconButton(
-            icon: const Icon(Icons.emoji_events_outlined, size: 23),
+            icon: const Icon(Icons.emoji_events_outlined, size: 22),
             tooltip: 'Milestones & Celebration',
             onPressed: () => CelebrationDialog.show(context),
           ),
           IconButton(
-            icon: const Icon(Icons.bar_chart_rounded, size: 23),
-            tooltip: 'Analytics',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (ctx) => const AnalyticsScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.event_note_rounded, size: 23),
-            tooltip: 'Notes & Study Planner',
-            onPressed: () => _openNotesPlanner(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.install_mobile_rounded, size: 22),
-            tooltip: 'Download & Install App',
-            onPressed: () => InstallAppDialog.show(context),
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_outline_rounded, size: 23),
+            icon: const Icon(Icons.person_outline_rounded, size: 22),
             tooltip: 'Profile',
             onPressed: () async {
               await Navigator.of(context).push(
@@ -490,6 +597,84 @@ class _DashboardScreenState extends State<DashboardScreen> {
               );
               _loadDashboardData();
             },
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded, size: 22),
+            tooltip: 'More options',
+            color: AppColors.secondaryCard,
+            onSelected: (value) async {
+              switch (value) {
+                case 'notifications':
+                  _showNotificationsSheet();
+                  break;
+                case 'analytics':
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                        builder: (ctx) => const AnalyticsScreen()),
+                  );
+                  break;
+                case 'notes_planner':
+                  _openNotesPlanner();
+                  break;
+                case 'install':
+                  InstallAppDialog.show(context);
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'notifications',
+                child: Row(
+                  children: [
+                    Icon(Icons.notifications_none_rounded,
+                        size: 18, color: AppColors.lightPurple),
+                    SizedBox(width: 10),
+                    Text('Notifications',
+                        style: TextStyle(
+                            color: AppColors.primaryText, fontSize: 13.5)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'analytics',
+                child: Row(
+                  children: [
+                    Icon(Icons.bar_chart_rounded,
+                        size: 18, color: AppColors.brightAccent),
+                    SizedBox(width: 10),
+                    Text('Analytics',
+                        style: TextStyle(
+                            color: AppColors.primaryText, fontSize: 13.5)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'notes_planner',
+                child: Row(
+                  children: [
+                    Icon(Icons.event_note_rounded,
+                        size: 18, color: AppColors.secondaryAccent),
+                    SizedBox(width: 10),
+                    Text('Notes & Study Planner',
+                        style: TextStyle(
+                            color: AppColors.primaryText, fontSize: 13.5)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'install',
+                child: Row(
+                  children: [
+                    Icon(Icons.install_mobile_rounded,
+                        size: 18, color: AppColors.success),
+                    SizedBox(width: 10),
+                    Text('Download & Install App',
+                        style: TextStyle(
+                            color: AppColors.primaryText, fontSize: 13.5)),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(width: 4),
         ],
@@ -569,7 +754,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '${_getTimeGreeting()}, $firstName 👋',
+                                    p.name.trim().isNotEmpty
+                                        ? p.name.trim()
+                                        : 'Student Developer',
                                     style: const TextStyle(
                                       color: AppColors.primaryText,
                                       fontSize: 18,
@@ -623,7 +810,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             // Target Role Pill (Matching Screen 3 of reference mockup)
                             Flexible(
                               child: InkWell(
-                                onTap: _openRoadmaps,
+                                onTap: () => _showTargetRoleSelector(p),
                                 borderRadius: BorderRadius.circular(12),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
@@ -648,7 +835,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       const SizedBox(width: 5),
                                       Flexible(
                                         child: Text(
-                                          'Target: ${p.targetJobRole.trim().isNotEmpty ? p.targetJobRole : "Flutter Developer"}',
+                                          'Target: ${p.targetJobRole.trim().isNotEmpty ? p.targetJobRole : "Full Stack Developer"}',
                                           style: const TextStyle(
                                             color: AppColors.lightPurple,
                                             fontSize: 11.5,

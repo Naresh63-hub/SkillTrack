@@ -44,11 +44,13 @@ class FileUtils {
   }
 
   static bool isImageFile(String filePath) {
+    if (filePath.startsWith('data:image/')) return true;
     final ext = getFileExtension(filePath);
     return ext == '.png' || ext == '.jpg' || ext == '.jpeg' || ext == '.webp';
   }
 
   static bool isPdfFile(String filePath) {
+    if (filePath.startsWith('data:application/pdf')) return true;
     final ext = getFileExtension(filePath);
     return ext == '.pdf';
   }

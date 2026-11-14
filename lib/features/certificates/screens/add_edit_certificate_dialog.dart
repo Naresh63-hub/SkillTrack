@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../core/constants/app_colors.dart';
@@ -27,6 +29,7 @@ class _AddEditCertificateDialogState extends State<AddEditCertificateDialog> {
   DateTime _completionDate = DateTime.now();
   DateTime? _expirationDate;
   String? _localFilePath;
+  String? _pickedFileName;
   bool _isPickingFile = false;
 
   @override
@@ -66,27 +69,58 @@ class _AddEditCertificateDialogState extends State<AddEditCertificateDialog> {
     super.dispose();
   }
 
+  String _getFileName() {
+    if (_pickedFileName != null) return _pickedFileName!;
+    if (_localFilePath == null) return '';
+    if (_localFilePath!.startsWith('data:')) {
+      final match = RegExp(r'name=([^;]+);').firstMatch(_localFilePath!);
+      if (match != null) {
+        return Uri.decodeComponent(match.group(1)!);
+      }
+      return 'Document';
+    }
+    return _localFilePath!.split(RegExp(r'[/\\]')).last;
+  }
+
   Future<void> _pickCertificateFile() async {
     setState(() => _isPickingFile = true);
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg'],
+        withData: true,
       );
 
-      if (result != null && result.files.single.path != null) {
-        final originalPath = result.files.single.path!;
-        // Copy to persistent storage
-        final persistentPath =
-            await FileUtils.copyFileToAppStorage(originalPath);
-        setState(() {
-          _localFilePath = persistentPath ?? originalPath;
-        });
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.single;
+        if (kIsWeb) {
+          if (file.bytes != null) {
+            final ext = (file.extension ?? 'pdf').toLowerCase();
+            final mime = ext == 'pdf'
+                ? 'application/pdf'
+                : (ext == 'png' ? 'image/png' : 'image/jpeg');
+            final base64Content = base64Encode(file.bytes!);
+            final dataUri =
+                'data:$mime;name=${Uri.encodeComponent(file.name)};base64,$base64Content';
+            setState(() {
+              _localFilePath = dataUri;
+              _pickedFileName = file.name;
+            });
+          }
+        } else if (file.path != null) {
+          final originalPath = file.path!;
+          final persistentPath =
+              await FileUtils.copyFileToAppStorage(originalPath);
+          setState(() {
+            _localFilePath = persistentPath ?? originalPath;
+            _pickedFileName = file.name;
+          });
+        }
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not pick file')),
+          SnackBar(content: Text('Could not pick file: $e')),
         );
       }
     } finally {
@@ -310,7 +344,7 @@ class _AddEditCertificateDialogState extends State<AddEditCertificateDialog> {
                       Expanded(
                         child: Text(
                           _localFilePath != null
-                              ? 'File attached (${_localFilePath!.split(RegExp(r'[/\\]')).last})'
+                              ? 'File attached (${_getFileName()})'
                               : 'No document attached (PDF or Image)',
                           style: TextStyle(
                             color: _localFilePath != null
@@ -330,8 +364,10 @@ class _AddEditCertificateDialogState extends State<AddEditCertificateDialog> {
                         IconButton(
                           icon: const Icon(Icons.clear,
                               size: 18, color: AppColors.error),
-                          onPressed: () =>
-                              setState(() => _localFilePath = null),
+                          onPressed: () => setState(() {
+                            _localFilePath = null;
+                            _pickedFileName = null;
+                          }),
                         ),
                     ],
                   ),

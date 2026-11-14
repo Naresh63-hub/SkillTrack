@@ -26,6 +26,7 @@ class _StudentSetupScreenState extends State<StudentSetupScreen> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
 
+  final Set<String> _selectedRoles = {};
   String _degree = 'B.Tech';
   String _semester = '6th Semester';
   String _gradYear = '2026';
@@ -107,16 +108,27 @@ class _StudentSetupScreenState extends State<StudentSetupScreen> {
 
       await _profileRepo.saveProfile(profile);
 
-      // Optionally auto-import recommended roadmap for target role
+      // Optionally auto-import recommended roadmaps for target roles
       if (_autoImportRoadmap) {
-        final role = _targetRoleController.text.trim();
-        final roadmap = RoadmapService.getRoadmapByRoleName(role) ??
-            RoadmapService.getRoadmapByRoleName('Full Stack Developer');
-        if (roadmap != null) {
-          try {
-            await RoadmapService().importRoadmap(roadmap);
-          } catch (_) {
-            // Non-blocking fallback
+        final rolesToImport = _selectedRoles.isNotEmpty
+            ? _selectedRoles.toList()
+            : _targetRoleController.text
+                .split(',')
+                .map((e) => e.trim())
+                .where((e) => e.isNotEmpty)
+                .toList();
+
+        for (final role in rolesToImport) {
+          final roadmap = RoadmapService.getRoadmapByRoleName(role) ??
+              (rolesToImport.length == 1
+                  ? RoadmapService.getRoadmapByRoleName('Full Stack Developer')
+                  : null);
+          if (roadmap != null) {
+            try {
+              await RoadmapService().importRoadmap(roadmap);
+            } catch (_) {
+              // Non-blocking fallback
+            }
           }
         }
       }
@@ -418,22 +430,34 @@ class _StudentSetupScreenState extends State<StudentSetupScreen> {
                       ),
                       const SizedBox(height: 8),
 
-                      // Quick role selection chips
+                      // Quick multi-role selection chips
                       Wrap(
                         spacing: 6,
                         runSpacing: 6,
                         children: _careerRoles.map((role) {
-                          final isSelected =
-                              _targetRoleController.text.trim() == role;
-                          return ChoiceChip(
+                          final currentRoles = _targetRoleController.text
+                              .split(',')
+                              .map((e) => e.trim())
+                              .where((e) => e.isNotEmpty)
+                              .toSet();
+                          final isSelected = _selectedRoles.contains(role) ||
+                              currentRoles.contains(role);
+
+                          return FilterChip(
                             label: Text(role),
                             selected: isSelected,
                             onSelected: (selected) {
-                              if (selected) {
-                                setState(() {
-                                  _targetRoleController.text = role;
-                                });
-                              }
+                              setState(() {
+                                if (selected) {
+                                  _selectedRoles.addAll(currentRoles);
+                                  _selectedRoles.add(role);
+                                } else {
+                                  _selectedRoles.addAll(currentRoles);
+                                  _selectedRoles.remove(role);
+                                }
+                                _targetRoleController.text =
+                                    _selectedRoles.join(', ');
+                              });
                             },
                             labelStyle: TextStyle(
                               color: isSelected
@@ -446,6 +470,7 @@ class _StudentSetupScreenState extends State<StudentSetupScreen> {
                             ),
                             selectedColor: AppColors.primaryPurple,
                             backgroundColor: AppColors.surfaceVariant,
+                            checkmarkColor: Colors.white,
                             side: BorderSide(
                               color: isSelected
                                   ? AppColors.primaryPurple

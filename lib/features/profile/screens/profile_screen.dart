@@ -39,6 +39,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isEditing = false;
   bool _isSaving = false;
 
+  static const List<String> _careerRoles = [
+    'Python Developer',
+    'Full Stack Developer',
+    'Flutter Developer',
+    'Data Analyst',
+    'AI/ML Engineer',
+    'Java Developer',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -272,7 +281,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       TextFormField(
                         controller: _targetRoleController,
                         decoration: const InputDecoration(
-                            labelText: 'Target Career Role'),
+                            labelText:
+                                'Target Career Roles (e.g. Full Stack Developer, Data Analyst)'),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: _careerRoles.map((role) {
+                          final currentRoles = _targetRoleController.text
+                              .split(',')
+                              .map((e) => e.trim())
+                              .where((e) => e.isNotEmpty)
+                              .toSet();
+                          final isSelected = currentRoles.contains(role);
+                          return FilterChip(
+                            label: Text(role),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              setState(() {
+                                if (selected) {
+                                  currentRoles.add(role);
+                                } else {
+                                  currentRoles.remove(role);
+                                }
+                                _targetRoleController.text =
+                                    currentRoles.join(', ');
+                              });
+                            },
+                            labelStyle: TextStyle(
+                              color: isSelected
+                                  ? Colors.white
+                                  : AppColors.secondaryText,
+                              fontSize: 11,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                            selectedColor: AppColors.primaryPurple,
+                            backgroundColor: AppColors.surfaceVariant,
+                            checkmarkColor: Colors.white,
+                            side: BorderSide(
+                              color: isSelected
+                                  ? AppColors.primaryPurple
+                                  : AppColors.border,
+                              width: 0.8,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                          );
+                        }).toList(),
                       ),
                       const SizedBox(height: 10),
                       Row(
