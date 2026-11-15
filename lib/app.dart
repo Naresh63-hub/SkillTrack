@@ -46,6 +46,10 @@ class MainNavigationShell extends StatefulWidget {
 class _MainNavigationShellState extends State<MainNavigationShell>
     with WidgetsBindingObserver {
   late int _currentIndex;
+  final GlobalKey<DashboardScreenState> _dashboardKey =
+      GlobalKey<DashboardScreenState>();
+  final GlobalKey<SkillsScreenState> _skillsKey =
+      GlobalKey<SkillsScreenState>();
 
   @override
   void initState() {
@@ -115,13 +119,21 @@ class _MainNavigationShellState extends State<MainNavigationShell>
       _currentIndex = clamped;
     });
     NavigationStateService.instance.saveActiveTab(clamped);
+    if (clamped == 0) {
+      _dashboardKey.currentState?.reload();
+    } else if (clamped == 1) {
+      _skillsKey.currentState?.reload();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final destinations = [
-      DashboardScreen(onNavigateTab: _onTabSelected),
-      const SkillsScreen(),
+      DashboardScreen(
+        key: _dashboardKey,
+        onNavigateTab: _onTabSelected,
+      ),
+      SkillsScreen(key: _skillsKey),
       const ProjectsScreen(),
       const TasksScreen(),
       const PlacementScreen(),
