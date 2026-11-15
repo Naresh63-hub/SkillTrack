@@ -115,6 +115,29 @@ class Certificate {
     return buffer.toString();
   }
 
+  /// Generates a rich, modern formatted message for WhatsApp, LinkedIn, and messaging
+  String get modernShareSummary {
+    final buffer = StringBuffer();
+    buffer.writeln('🎓 *SkillTrack Verified Credential*');
+    buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
+    buffer.writeln('🏆 *Title:* $name');
+    buffer.writeln('🏢 *Issuing Org:* $issuingOrganization');
+    buffer.writeln('📂 *Category:* $category');
+    buffer.writeln('📅 *Issued On:* $completionDate');
+    if (expirationDate != null && expirationDate!.isNotEmpty) {
+      buffer.writeln('⏳ *Valid Until:* $expirationDate');
+    }
+    if (credentialId != null && credentialId!.isNotEmpty) {
+      buffer.writeln('🆔 *Credential ID:* `$credentialId`');
+    }
+    if (hasVerificationUrl) {
+      buffer.writeln('🔗 *Verify Online:* $verificationUrl');
+    }
+    buffer.writeln('━━━━━━━━━━━━━━━━━━━━');
+    buffer.write('⚡ Verified and tracked on SkillTrack');
+    return buffer.toString();
+  }
+
   Map<String, dynamic> toMap() {
     return {
       if (id != null) 'id': id,

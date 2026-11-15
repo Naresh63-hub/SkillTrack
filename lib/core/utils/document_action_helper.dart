@@ -13,8 +13,8 @@ import '../constants/app_colors.dart';
 import '../../models/certificate.dart';
 import 'web_file_downloader.dart';
 
-/// Universal helper to View, Download, and Share certificate and offer letter documents.
-/// Guarantees that EVERY certificate always has a viewable, downloadable, and shareable document.
+/// Modern application certificate management: viewing, downloading, and rich sharing.
+/// Emulates the gold standard of platforms like Coursera, Credly, and LinkedIn.
 class DocumentActionHelper {
   /// Extracts raw byte data from a Certificate's localFilePath.
   /// Handles Web Data URIs, Network URLs, and Native local file paths.
@@ -247,10 +247,10 @@ class DocumentActionHelper {
 
   /// Downloads the certificate document (PDF or Image) to the user's device
   static Future<void> downloadDocument(
-      BuildContext context, Certificate cert) async {
+      BuildContext context, Certificate cert, [Uint8List? preloadedBytes]) async {
     final fileName = cert.fileName;
     try {
-      final bytes = await getOrGenerateBytes(cert);
+      final bytes = preloadedBytes ?? await getOrGenerateBytes(cert);
 
       if (kIsWeb) {
         final mime = cert.isImage ? 'image/png' : 'application/pdf';
@@ -323,54 +323,113 @@ class DocumentActionHelper {
     }
   }
 
-  /// Shares the actual document file (Total File Share)
-  static Future<void> shareDocumentFile(
+  /// Official 1-Click LinkedIn Add-To-Profile scheme
+  static Future<void> addToLinkedInProfile(
       BuildContext context, Certificate cert) async {
-    final fileName = cert.fileName;
+    int? issueYear;
+    int? issueMonth;
     try {
-      final bytes = await getOrGenerateBytes(cert);
-
-      if (kIsWeb) {
-        final mime = cert.isImage ? 'image/png' : 'application/pdf';
-        final base64Content = base64Encode(bytes);
-        final dataUri =
-            'data:$mime;name=${Uri.encodeComponent(fileName)};base64,$base64Content';
-
-        // 1. Try modern Web Share API with attached file
-        final shared = await shareWebFile(
-          dataUri,
-          fileName,
-          title: cert.name,
-          text: cert.shareSummary,
-        );
-
-        if (!shared) {
-          // If browser doesn't support file sharing, trigger download
-          await downloadWebFile(dataUri, fileName);
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                    'Downloaded "$fileName". You can now attach and send it directly!'),
-                backgroundColor: AppColors.success,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          }
-        }
-        return;
+      final date = DateTime.tryParse(cert.completionDate);
+      if (date != null) {
+        issueYear = date.year;
+        issueMonth = date.month;
       }
+    } catch (_) {}
 
-      // Native (Android/iOS): Invokes native Android share sheet with file
-      await Printing.sharePdf(bytes: bytes, filename: fileName);
-    } catch (e) {
+    int? expYear;
+    int? expMonth;
+    if (cert.expirationDate != null && cert.expirationDate!.isNotEmpty) {
+      try {
+        final expDate = DateTime.tryParse(cert.expirationDate!);
+        if (expDate != null) {
+          expYear = expDate.year;
+          expMonth = expDate.month;
+        }
+      } catch (_) {}
+    }
+
+    final queryParams = <String, String>{
+      'startTask': 'CERTIFICATION_NAME',
+      'name': cert.name,
+      'organizationName': cert.issuingOrganization,
+      if (issueYear != null) 'issueYear': issueYear.toString(),
+      if (issueMonth != null) 'issueMonth': issueMonth.toString(),
+      if (expYear != null) 'expirationYear': expYear.toString(),
+      if (expMonth != null) 'expirationMonth': expMonth.toString(),
+      if (cert.credentialId != null && cert.credentialId!.isNotEmpty)
+        'certId': cert.credentialId!,
+      if (cert.hasVerificationUrl)
+        'certUrl': cert.verificationUrl!
+      else
+        'certUrl': 'https://skill-track-ashy.vercel.app',
+    };
+
+    final uri = Uri.https('www.linkedin.com', '/profile/add', queryParams);
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not share file: $e'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-          ),
+          const SnackBar(content: Text('Could not open LinkedIn.')),
+        );
+      }
+    }
+  }
+
+  /// Shares achievement to LinkedIn Feed / Post
+  static Future<void> shareToLinkedInFeed(
+      BuildContext context, Certificate cert) async {
+    final shareUrl = cert.hasVerificationUrl
+        ? cert.verificationUrl!
+        : 'https://skill-track-ashy.vercel.app';
+    final uri = Uri.https('www.linkedin.com', '/sharing/share-offsite/', {
+      'url': shareUrl,
+    });
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open LinkedIn.')),
+        );
+      }
+    }
+  }
+
+  /// Shares achievement to X / Twitter
+  static Future<void> shareToTwitter(
+      BuildContext context, Certificate cert) async {
+    final text =
+        'Excited to share that I earned the "${cert.name}" credential issued by ${cert.issuingOrganization}! 🎓⚡ Verified on #SkillTrack #CareerReady';
+    final shareUrl = cert.hasVerificationUrl
+        ? cert.verificationUrl!
+        : 'https://skill-track-ashy.vercel.app';
+    final uri = Uri.https('twitter.com', '/intent/tweet', {
+      'text': text,
+      'url': shareUrl,
+    });
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open Twitter/X.')),
+        );
+      }
+    }
+  }
+
+  /// Shares formatted rich summary to WhatsApp
+  static Future<void> shareToWhatsApp(
+      BuildContext context, Certificate cert) async {
+    final text = Uri.encodeComponent(cert.modernShareSummary);
+    final uri = Uri.parse('https://wa.me/?text=$text');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open WhatsApp.')),
         );
       }
     }
@@ -394,14 +453,14 @@ class DocumentActionHelper {
     }
   }
 
-  /// Opens the Share bottom sheet with full file and direct sharing options
+  /// Opens the modern Share bottom sheet
   static void showShareDialog(BuildContext context, Certificate cert) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.cardBackground,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
       builder: (ctx) => ShareCredentialSheet(certificate: cert),
     );
@@ -447,9 +506,9 @@ class PdfDocumentViewerScreen extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.share_rounded),
-            tooltip: 'Share Document File',
+            tooltip: 'Share Certificate',
             onPressed: () =>
-                DocumentActionHelper.shareDocumentFile(context, certificate),
+                DocumentActionHelper.showShareDialog(context, certificate),
           ),
         ],
       ),
@@ -542,9 +601,9 @@ class ImageDocumentViewerScreen extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.share_rounded, color: Colors.white),
-            tooltip: 'Share Document File',
+            tooltip: 'Share Certificate',
             onPressed: () =>
-                DocumentActionHelper.shareDocumentFile(context, certificate),
+                DocumentActionHelper.showShareDialog(context, certificate),
           ),
         ],
       ),
@@ -579,46 +638,114 @@ class ImageDocumentViewerScreen extends StatelessWidget {
   }
 }
 
-/// Bottom Sheet for sharing certificates, offer letters, and credentials.
-/// Offers direct TOTAL FILE SHARING (sharing the actual PDF/image file) + text summary.
-class ShareCredentialSheet extends StatelessWidget {
+/// Modern interactive Bottom Sheet for sharing certificates, offer letters, and credentials.
+/// Emulates modern apps (Coursera, Credly, LinkedIn) with zero-latency file sharing,
+/// 1-click LinkedIn profile import, WhatsApp card formatting, and social broadcast.
+class ShareCredentialSheet extends StatefulWidget {
   final Certificate certificate;
 
   const ShareCredentialSheet({super.key, required this.certificate});
 
-  Future<void> _shareOnWhatsApp(BuildContext context) async {
-    final text = Uri.encodeComponent(certificate.shareSummary);
-    final uri = Uri.parse('https://wa.me/?text=$text');
-    try {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open WhatsApp.')),
-        );
-      }
-    }
+  @override
+  State<ShareCredentialSheet> createState() => _ShareCredentialSheetState();
+}
+
+class _ShareCredentialSheetState extends State<ShareCredentialSheet> {
+  Uint8List? _preparedBytes;
+  String? _preparedDataUri;
+  bool _isSharing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _prepareDocumentData();
   }
 
-  Future<void> _shareOnLinkedIn(BuildContext context) async {
-    final shareUrl = certificate.verificationUrl ??
-        'https://skill-track-ashy.vercel.app';
-    final uri = Uri.parse(
-        'https://www.linkedin.com/sharing/share-offsite/?url=${Uri.encodeComponent(shareUrl)}');
+  Future<void> _prepareDocumentData() async {
     try {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {
-      if (context.mounted) {
+      final bytes =
+          await DocumentActionHelper.getOrGenerateBytes(widget.certificate);
+      final fileName = widget.certificate.fileName;
+      final mime =
+          widget.certificate.isImage ? 'image/png' : 'application/pdf';
+      final base64Content = base64Encode(bytes);
+      final dataUri =
+          'data:$mime;name=${Uri.encodeComponent(fileName)};base64,$base64Content';
+
+      if (mounted) {
+        setState(() {
+          _preparedBytes = bytes;
+          _preparedDataUri = dataUri;
+        });
+      }
+    } catch (_) {}
+  }
+
+  /// Triggers instant file share preserving the browser/mobile user gesture
+  Future<void> _handleFileShare() async {
+    if (_isSharing) return;
+    setState(() => _isSharing = true);
+
+    try {
+      Uint8List? bytes = _preparedBytes;
+      String? dataUri = _preparedDataUri;
+
+      if (bytes == null || dataUri == null) {
+        bytes =
+            await DocumentActionHelper.getOrGenerateBytes(widget.certificate);
+        final fileName = widget.certificate.fileName;
+        final mime =
+            widget.certificate.isImage ? 'image/png' : 'application/pdf';
+        dataUri =
+            'data:$mime;name=${Uri.encodeComponent(fileName)};base64,${base64Encode(bytes)}';
+      }
+
+      final fileName = widget.certificate.fileName;
+
+      if (kIsWeb) {
+        // Modern Web Share API with attached document file
+        final shared = await shareWebFile(
+          dataUri,
+          fileName,
+          title: widget.certificate.name,
+          text: widget.certificate.shareSummary,
+        );
+
+        if (!shared && mounted) {
+          // Fallback to downloading so user can manually attach
+          await downloadWebFile(dataUri, fileName);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  'Downloaded "$fileName". You can now attach and share it directly!'),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        // Native Android/iOS: Launches system ACTION_SEND sheet with attached document
+        await Printing.sharePdf(bytes: bytes, filename: fileName);
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open LinkedIn.')),
+          SnackBar(
+            content: Text('Could not share file: $e'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isSharing = false);
     }
   }
 
   Future<void> _shareViaEmail(BuildContext context) async {
-    final subject = Uri.encodeComponent('Credential: ${certificate.name}');
-    final body = Uri.encodeComponent(certificate.shareSummary);
+    final subject =
+        Uri.encodeComponent('Verified Credential: ${widget.certificate.name}');
+    final body = Uri.encodeComponent(widget.certificate.modernShareSummary);
     final uri = Uri.parse('mailto:?subject=$subject&body=$body');
     try {
       await launchUrl(uri);
@@ -633,279 +760,418 @@ class ShareCredentialSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final cert = widget.certificate;
+
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.9,
+      ),
       padding: EdgeInsets.fromLTRB(
           20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.share_rounded,
-                      color: AppColors.primaryPurple, size: 22),
-                  SizedBox(width: 8),
-                  Text(
-                    'Share Credential & Document',
-                    style: TextStyle(
-                      color: AppColors.primaryText,
-                      fontSize: 16.5,
-                      fontWeight: FontWeight.bold,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Drag handle
+            Center(
+              child: Container(
+                width: 38,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+
+            // Sheet Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.workspace_premium_rounded,
+                        color: AppColors.brightAccent, size: 24),
+                    SizedBox(width: 8),
+                    Text(
+                      'Share Credential',
+                      style: TextStyle(
+                        color: AppColors.primaryText,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
+                  ],
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded,
+                      size: 22, color: AppColors.mutedText),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Modern Certificate Badge Card (Social Preview)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFF3E8FF), Color(0xFFEDE9FE)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                    color: AppColors.primaryPurple.withValues(alpha: 0.35)),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryPurple.withValues(alpha: 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
-              IconButton(
-                icon: const Icon(Icons.close,
-                    size: 20, color: AppColors.mutedText),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          // Certificate Preview Card
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.secondaryCard,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryPurple.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    certificate.isPdf
-                        ? Icons.picture_as_pdf_rounded
-                        : (certificate.isImage
-                            ? Icons.image_rounded
-                            : Icons.verified_rounded),
-                    color: AppColors.primaryPurple,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        certificate.name,
-                        style: const TextStyle(
-                          color: AppColors.primaryText,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryPurple,
+                          borderRadius: BorderRadius.circular(6),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        child: Text(
+                          cert.category.toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${certificate.issuingOrganization} • ${certificate.category}',
-                        style: const TextStyle(
-                          color: AppColors.secondaryText,
-                          fontSize: 12,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'File: ${certificate.fileName}',
-                        style: const TextStyle(
-                          color: AppColors.lightPurple,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      const Row(
+                        children: [
+                          Icon(Icons.verified_rounded,
+                              size: 15, color: Color(0xFF059669)),
+                          SizedBox(width: 4),
+                          Text(
+                            'Verified',
+                            style: TextStyle(
+                              color: Color(0xFF059669),
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    cert.name,
+                    style: const TextStyle(
+                      color: AppColors.primaryText,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Issued by ${cert.issuingOrganization}',
+                    style: const TextStyle(
+                      color: AppColors.brightAccent,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Completed: ${cert.completionDate}',
+                        style: const TextStyle(
+                            color: AppColors.mutedText, fontSize: 11),
+                      ),
+                      if (cert.credentialId != null &&
+                          cert.credentialId!.isNotEmpty)
+                        Text(
+                          'ID: ${cert.credentialId}',
+                          style: const TextStyle(
+                            color: AppColors.mutedText,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // PRIMARY HERO ACTION: TOTAL FILE SHARING
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.brightAccent,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 2,
+                ),
+                icon: _isSharing
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.share_rounded, size: 20),
+                label: Text(
+                  _isSharing
+                      ? 'Opening Share Sheet...'
+                      : 'Share Document File (PDF / Image)',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                onPressed: _isSharing ? null : _handleFileShare,
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // PROFESSIONAL & SOCIAL CHANNELS
+            const Text(
+              'Share To Professional & Social Networks:',
+              style: TextStyle(
+                color: AppColors.secondaryText,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Official 1-Click LinkedIn Add to Profile Button (Gold standard)
+            InkWell(
+              onTap: () =>
+                  DocumentActionHelper.addToLinkedInProfile(context, cert),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0077B5).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: const Color(0xFF0077B5).withValues(alpha: 0.35)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.badge_rounded,
+                        color: Color(0xFF0077B5), size: 20),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Add to LinkedIn Profile',
+                            style: TextStyle(
+                              color: Color(0xFF0077B5),
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            '1-click official certification import',
+                            style: TextStyle(
+                              color: AppColors.mutedText,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_ios_rounded,
+                        size: 13, color: Color(0xFF0077B5)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Quick Network Buttons: WhatsApp, LinkedIn Feed, X/Twitter, Email
+            Row(
+              children: [
+                Expanded(
+                  child: _ModernSocialButton(
+                    icon: Icons.chat_bubble_rounded,
+                    label: 'WhatsApp',
+                    color: const Color(0xFF25D366),
+                    onTap: () =>
+                        DocumentActionHelper.shareToWhatsApp(context, cert),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ModernSocialButton(
+                    icon: Icons.public_rounded,
+                    label: 'LinkedIn Feed',
+                    color: const Color(0xFF0077B5),
+                    onTap: () =>
+                        DocumentActionHelper.shareToLinkedInFeed(context, cert),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ModernSocialButton(
+                    icon: Icons.tag_rounded,
+                    label: 'X (Twitter)',
+                    color: const Color(0xFF1DA1F2),
+                    onTap: () =>
+                        DocumentActionHelper.shareToTwitter(context, cert),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ModernSocialButton(
+                    icon: Icons.mail_outline_rounded,
+                    label: 'Email',
+                    color: AppColors.lightPurple,
+                    onTap: () => _shareViaEmail(context),
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          // PRIMARY PROMINENT ACTION: SHARE TOTAL FILE
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryPurple,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                elevation: 2,
-              ),
-              icon: const Icon(Icons.send_rounded, size: 18),
-              label: const Text(
-                'Share Total Document File (PDF / Image)',
-                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-                DocumentActionHelper.shareDocumentFile(context, certificate);
-              },
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          // Secondary Action Buttons: Download & Copy Text Details
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    side: BorderSide(
-                      color: AppColors.brightAccent.withValues(alpha: 0.4),
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  icon: const Icon(Icons.download_rounded,
-                      size: 16, color: AppColors.brightAccent),
-                  label: const Text(
-                    'Download File',
-                    style: TextStyle(
-                      color: AppColors.brightAccent,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12.5,
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    DocumentActionHelper.downloadDocument(context, certificate);
-                  },
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    side: const BorderSide(color: AppColors.border),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  icon: const Icon(Icons.copy_rounded, size: 16),
-                  label: const Text(
-                    'Copy Text',
-                    style: TextStyle(fontSize: 12.5),
-                  ),
-                  onPressed: () async {
-                    await Clipboard.setData(
-                        ClipboardData(text: certificate.shareSummary));
-                    if (context.mounted) {
-                      Navigator.of(context).pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content:
-                              Text('Credential details copied to clipboard!'),
-                          backgroundColor: AppColors.success,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-          if (certificate.hasVerificationUrl) ...[
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.link_rounded, size: 16),
-                label: const Text('Copy Verification URL'),
-                onPressed: () async {
-                  await Clipboard.setData(
-                      ClipboardData(text: certificate.verificationUrl!));
-                  if (context.mounted) {
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Verification URL copied!'),
-                        backgroundColor: AppColors.success,
-                        behavior: SnackBarBehavior.floating,
+            // UTILITIES: Download, Copy Details, View Document
+            const Divider(height: 1, thickness: 0.8, color: AppColors.border),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      side: const BorderSide(color: AppColors.border),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                    );
-                  }
-                },
-              ),
+                    ),
+                    icon: const Icon(Icons.download_rounded,
+                        size: 16, color: AppColors.brightAccent),
+                    label: const Text(
+                      'Download PDF',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.brightAccent,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onPressed: () => DocumentActionHelper.downloadDocument(
+                        context, cert, _preparedBytes),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      side: const BorderSide(color: AppColors.border),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    icon: const Icon(Icons.copy_rounded, size: 16),
+                    label: const Text(
+                      'Copy Text',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    onPressed: () async {
+                      await Clipboard.setData(
+                          ClipboardData(text: cert.modernShareSummary));
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                'Formatted credential copied to clipboard!'),
+                            backgroundColor: AppColors.success,
+                            behavior: SnackBarBehavior.floating,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ),
+                if (cert.hasVerificationUrl) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        side: const BorderSide(color: AppColors.border),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      icon: const Icon(Icons.link_rounded, size: 16),
+                      label: const Text(
+                        'Copy Link',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      onPressed: () async {
+                        await Clipboard.setData(
+                            ClipboardData(text: cert.verificationUrl!));
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Verification link copied!'),
+                              backgroundColor: AppColors.success,
+                              behavior: SnackBarBehavior.floating,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ],
             ),
           ],
-          const SizedBox(height: 14),
-
-          // Direct Channels
-          const Text(
-            'Quick Message Share:',
-            style: TextStyle(
-              color: AppColors.secondaryText,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _ShareChannelButton(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  label: 'WhatsApp',
-                  color: const Color(0xFF25D366),
-                  onTap: () => _shareOnWhatsApp(context),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _ShareChannelButton(
-                  icon: Icons.work_outline_rounded,
-                  label: 'LinkedIn',
-                  color: const Color(0xFF0077B5),
-                  onTap: () => _shareOnLinkedIn(context),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _ShareChannelButton(
-                  icon: Icons.mail_outline_rounded,
-                  label: 'Email',
-                  color: AppColors.lightPurple,
-                  onTap: () => _shareViaEmail(context),
-                ),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _ShareChannelButton extends StatelessWidget {
+class _ModernSocialButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
 
-  const _ShareChannelButton({
+  const _ModernSocialButton({
     required this.icon,
     required this.label,
     required this.color,
@@ -918,24 +1184,26 @@ class _ShareChannelButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 9),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.25)),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 16),
-            const SizedBox(width: 6),
+            Icon(icon, color: color, size: 20),
+            const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
                 color: color,
-                fontSize: 12,
+                fontSize: 10.5,
                 fontWeight: FontWeight.bold,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

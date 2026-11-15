@@ -166,9 +166,8 @@
         return false;
       }
     };
-    window.shareFileFromDataUrl = async function(dataUrl, fileName, title, text) {
+    window.shareFileFromDataUrl = function(dataUrl, fileName, title, text) {
       try {
-        if (!navigator.canShare) return false;
         var arr = dataUrl.split(',');
         var mimeMatch = arr[0].match(/:(.*?);/);
         var mime = mimeMatch ? mimeMatch[1] : 'application/pdf';
@@ -179,19 +178,33 @@
           u8arr[n] = bstr.charCodeAt(n);
         }
         var blob = new Blob([u8arr], { type: mime });
-        var file = new File([blob], fileName || 'document.pdf', { type: mime });
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({
+        var file = new File([blob], fileName || 'certificate.pdf', { type: mime });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          return navigator.share({
             files: [file],
-            title: title || fileName || 'Document',
+            title: title || fileName || 'SkillTrack Certificate',
             text: text || ''
+          }).then(function() {
+            return true;
+          }).catch(function(err) {
+            console.warn('File share dismissed or failed:', err);
+            return false;
           });
-          return true;
+        } else if (navigator.share) {
+          return navigator.share({
+            title: title || fileName || 'SkillTrack Certificate',
+            text: text || '',
+            url: window.location.href
+          }).then(function() {
+            return true;
+          }).catch(function() {
+            return false;
+          });
         }
       } catch (e) {
-        console.warn('Web file share error or dismissed:', e);
+        console.warn('Web file share error:', e);
       }
-      return false;
+      return Promise.resolve(false);
     };
     window.openFileInNewTab = function(dataUrl) {
       try {
