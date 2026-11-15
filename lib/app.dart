@@ -13,7 +13,8 @@ import 'features/resume/screens/resume_screen.dart';
 import 'services/navigation_state_service.dart';
 
 class SkillTrackApp extends StatelessWidget {
-  const SkillTrackApp({super.key});
+  final Widget? initialHome;
+  const SkillTrackApp({super.key, this.initialHome});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +25,7 @@ class SkillTrackApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
-      home: const SplashScreen(),
+      home: initialHome ?? const SplashScreen(),
     );
   }
 }

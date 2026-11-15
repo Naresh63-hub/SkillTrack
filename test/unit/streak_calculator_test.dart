@@ -4,7 +4,6 @@ import 'package:skilltrack/core/utils/streak_calculator.dart';
 import 'package:skilltrack/models/task_model.dart';
 import 'package:skilltrack/models/skill.dart';
 import 'package:skilltrack/models/project.dart';
-import 'package:skilltrack/models/certificate.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
