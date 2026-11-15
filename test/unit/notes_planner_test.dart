@@ -162,6 +162,37 @@ void main() {
       expect(completed.isCompleted, isTrue);
       expect(completed.title, 'Resume Review');
     });
+
+    test('PlannerEvent supports Call / Meeting type and early reminder labels', () {
+      expect(PlannerEvent.eventTypes, contains('Call / Meeting'));
+
+      final callEvent = PlannerEvent(
+        title: 'Mock Technical Interview with Senior Engineer',
+        eventType: 'Call / Meeting',
+        targetDate: '2026-11-20',
+        startTime: '10:00 AM',
+        reminderMinutesBefore: 15,
+      );
+
+      expect(callEvent.eventType, 'Call / Meeting');
+      expect(callEvent.reminderMinutesBefore, 15);
+      expect(callEvent.reminderLabel, '15 mins early');
+
+      final atTimeEvent = callEvent.copyWith(reminderMinutesBefore: 0);
+      expect(atTimeEvent.reminderLabel, 'At start time');
+
+      final hourEvent = callEvent.copyWith(reminderMinutesBefore: 60);
+      expect(hourEvent.reminderLabel, '1 hour early');
+
+      final dayEvent = callEvent.copyWith(reminderMinutesBefore: 1440);
+      expect(dayEvent.reminderLabel, '1 day early');
+
+      final map = callEvent.toMap();
+      final revived = PlannerEvent.fromMap(map);
+      expect(revived.eventType, 'Call / Meeting');
+      expect(revived.reminderMinutesBefore, 15);
+      expect(revived.reminderLabel, '15 mins early');
+    });
   });
 
   group('Notes & Planner Database & Repository Integration Tests', () {

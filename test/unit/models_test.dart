@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:skilltrack/core/constants/app_strings.dart';
 import 'package:skilltrack/models/student_profile.dart';
 import 'package:skilltrack/models/skill.dart';
 import 'package:skilltrack/models/project.dart';
 import 'package:skilltrack/models/placement_topic.dart';
+import 'package:skilltrack/models/task_model.dart';
 
 void main() {
   group('Model Serialization & Logic Tests', () {
@@ -105,6 +107,44 @@ void main() {
       );
 
       expect(completedTopic.completionPercentage, 100.0);
+    });
+
+    test('TaskModel early reminder serialization and label calculation', () {
+      expect(AppStrings.taskCategories, contains('Call / Meeting'));
+
+      final task = TaskModel(
+        id: 42,
+        title: 'Weekly 1-on-1 Mentor Sync',
+        category: 'Call / Meeting',
+        priority: 'High',
+        dueDate: '2026-11-20T15:00:00.000',
+        earlyReminderMinutes: 15,
+        reminderDateTime: '2026-11-20T14:45:00.000',
+      );
+
+      expect(task.category, 'Call / Meeting');
+      expect(task.earlyReminderMinutes, 15);
+      expect(task.earlyReminderLabel, '15 mins early');
+
+      final atTime = task.copyWith(earlyReminderMinutes: 0);
+      expect(atTime.earlyReminderLabel, 'At due time');
+
+      final oneHour = task.copyWith(earlyReminderMinutes: 60);
+      expect(oneHour.earlyReminderLabel, '1 hour early');
+
+      final oneDay = task.copyWith(earlyReminderMinutes: 1440);
+      expect(oneDay.earlyReminderLabel, '1 day early');
+
+      final map = task.toMap();
+      expect(map['early_reminder_minutes'], 15);
+      expect(map['category'], 'Call / Meeting');
+
+      final revived = TaskModel.fromMap(map);
+      expect(revived.id, 42);
+      expect(revived.title, 'Weekly 1-on-1 Mentor Sync');
+      expect(revived.category, 'Call / Meeting');
+      expect(revived.earlyReminderMinutes, 15);
+      expect(revived.earlyReminderLabel, '15 mins early');
     });
   });
 }

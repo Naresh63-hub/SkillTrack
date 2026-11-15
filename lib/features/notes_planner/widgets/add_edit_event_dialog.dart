@@ -567,6 +567,139 @@ class _AddEditEventDialogState extends State<AddEditEventDialog>
                         ),
                         const SizedBox(height: 14),
 
+                        // Early Reminder Selector
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.secondaryCard,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _reminderMinutesBefore != null
+                                  ? AppColors.primaryPurple.withValues(alpha: 0.4)
+                                  : AppColors.border,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        _selectedEventType == 'Call / Meeting'
+                                            ? Icons.phone_in_talk_rounded
+                                            : Icons.notifications_active_outlined,
+                                        size: 18,
+                                        color: _reminderMinutesBefore != null
+                                            ? AppColors.lightPurple
+                                            : AppColors.mutedText,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        _selectedEventType == 'Call / Meeting'
+                                            ? 'Call / Meeting Reminder'
+                                            : 'Early Event Reminder',
+                                        style: const TextStyle(
+                                          color: AppColors.primaryText,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Switch(
+                                    value: _reminderMinutesBefore != null,
+                                    activeColor: AppColors.brightAccent,
+                                    onChanged: (val) {
+                                      setState(() {
+                                        _reminderMinutesBefore =
+                                            val ? 15 : null;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                              if (_reminderMinutesBefore != null) ...[
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Remind me ahead of time:',
+                                  style: TextStyle(
+                                    color: AppColors.secondaryText,
+                                    fontSize: 11.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                DropdownButtonFormField<int>(
+                                  value: _reminderMinutesBefore,
+                                  isExpanded: true,
+                                  dropdownColor: AppColors.secondaryCard,
+                                  style: const TextStyle(
+                                      color: AppColors.primaryText,
+                                      fontSize: 13),
+                                  decoration: InputDecoration(
+                                    contentPadding:
+                                        const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 8),
+                                    prefixIcon: const Icon(
+                                        Icons.timer_outlined,
+                                        size: 18,
+                                        color: AppColors.lightPurple),
+                                    filled: true,
+                                    fillColor: AppColors.cardBackground,
+                                    border: OutlineInputBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(10),
+                                      borderSide: const BorderSide(
+                                          color: AppColors.border),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(10),
+                                      borderSide: const BorderSide(
+                                          color: AppColors.border),
+                                    ),
+                                  ),
+                                  items: const [
+                                    DropdownMenuItem(
+                                        value: 0,
+                                        child: Text(
+                                            'At event start time (0 mins)')),
+                                    DropdownMenuItem(
+                                        value: 5,
+                                        child: Text('5 minutes early')),
+                                    DropdownMenuItem(
+                                        value: 10,
+                                        child: Text('10 minutes early')),
+                                    DropdownMenuItem(
+                                        value: 15,
+                                        child: Text(
+                                            '15 minutes early (Recommended)')),
+                                    DropdownMenuItem(
+                                        value: 30,
+                                        child: Text('30 minutes early')),
+                                    DropdownMenuItem(
+                                        value: 60,
+                                        child: Text('1 hour early')),
+                                    DropdownMenuItem(
+                                        value: 1440,
+                                        child: Text('1 day early')),
+                                  ],
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      setState(() =>
+                                          _reminderMinutesBefore = val);
+                                    }
+                                  },
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+
                         // Description
                         TextFormField(
                           controller: _descriptionController,

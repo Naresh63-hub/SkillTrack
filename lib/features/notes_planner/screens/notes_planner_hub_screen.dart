@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/notifications/notification_service.dart';
 import '../../../core/widgets/search_filter_bar.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../models/note_model.dart';
@@ -226,6 +227,58 @@ class _NotesPlannerHubScreenState extends State<NotesPlannerHubScreen>
     }
   }
 
+  DateTime? _calculateEventDateTime(String targetDate, String? startTime) {
+    try {
+      final parts = targetDate.split('-');
+      if (parts.length < 3) return null;
+      final year = int.parse(parts[0]);
+      final month = int.parse(parts[1]);
+      final day = int.parse(parts[2]);
+
+      int hour = 9;
+      int minute = 0;
+
+      if (startTime != null && startTime.trim().isNotEmpty) {
+        final clean = startTime.trim();
+        final isPm = clean.toUpperCase().contains('PM');
+        final isAm = clean.toUpperCase().contains('AM');
+        final timeStr = clean.replaceAll(RegExp(r'[a-zA-Z\s]'), '');
+        final timeParts = timeStr.split(':');
+        if (timeParts.isNotEmpty) {
+          int parsedHour = int.tryParse(timeParts[0]) ?? 9;
+          int parsedMin =
+              timeParts.length > 1 ? (int.tryParse(timeParts[1]) ?? 0) : 0;
+          if (isPm && parsedHour < 12) parsedHour += 12;
+          if (isAm && parsedHour == 12) parsedHour = 0;
+          hour = parsedHour;
+          minute = parsedMin;
+        }
+      }
+
+      return DateTime(year, month, day, hour, minute);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _scheduleEventReminder(PlannerEvent event, int id) async {
+    if (event.reminderMinutesBefore == null) {
+      await NotificationService.instance.cancelEventReminder(id);
+      return;
+    }
+    final dt = _calculateEventDateTime(event.targetDate, event.startTime);
+    if (dt != null) {
+      await NotificationService.instance.scheduleEventReminder(
+        id: id,
+        title: event.title,
+        description: event.description,
+        eventDateTime: dt,
+        reminderMinutesBefore: event.reminderMinutesBefore,
+        eventType: event.eventType,
+      );
+    }
+  }
+
   Future<void> _addEvent() async {
     final selectedDateStr = _selectedDate.toIso8601String().split('T').first;
     final newEvent = await showDialog<PlannerEvent>(
@@ -234,7 +287,10 @@ class _NotesPlannerHubScreenState extends State<NotesPlannerHubScreen>
     );
 
     if (newEvent != null) {
-      await _plannerRepo.addEvent(newEvent);
+      final id = await _plannerRepo.addEvent(newEvent);
+      if (newEvent.reminderMinutesBefore != null) {
+        await _scheduleEventReminder(newEvent, id);
+      }
       _loadPlanner();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -255,6 +311,13 @@ class _NotesPlannerHubScreenState extends State<NotesPlannerHubScreen>
 
     if (updated != null) {
       await _plannerRepo.updateEvent(updated);
+      if (updated.id != null) {
+        if (updated.reminderMinutesBefore != null && !updated.isCompleted) {
+          await _scheduleEventReminder(updated, updated.id!);
+        } else {
+          await NotificationService.instance.cancelEventReminder(updated.id!);
+        }
+      }
       _loadPlanner();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -268,6 +331,14 @@ class _NotesPlannerHubScreenState extends State<NotesPlannerHubScreen>
   }
 
   Future<void> _toggleEventComplete(PlannerEvent event) async {
+    final newStatus = !event.isCompleted;
+    if (event.id != null) {
+      if (newStatus) {
+        await NotificationService.instance.cancelEventReminder(event.id!);
+      } else if (event.reminderMinutesBefore != null) {
+        await _scheduleEventReminder(event, event.id!);
+      }
+    }
     await _plannerRepo.toggleEventCompleted(event.id!, event.isCompleted);
     _loadPlanner();
   }
@@ -301,6 +372,9 @@ class _NotesPlannerHubScreenState extends State<NotesPlannerHubScreen>
     );
 
     if (confirmed == true) {
+      if (event.id != null) {
+        await NotificationService.instance.cancelEventReminder(event.id!);
+      }
       await _plannerRepo.deleteEvent(event.id!);
       _loadPlanner();
       if (mounted) {
@@ -1265,6 +1339,48 @@ class _NotesPlannerHubScreenState extends State<NotesPlannerHubScreen>
                                 color: AppColors.lightPurple,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (event.reminderLabel != null) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryPurple
+                                    .withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(5),
+                                border: Border.all(
+                                  color: AppColors.primaryPurple
+                                      .withValues(alpha: 0.35),
+                                  width: 0.7,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    event.eventType == 'Call / Meeting'
+                                        ? Icons.phone_in_talk
+                                        : Icons.notifications_active,
+                                    size: 10,
+                                    color: AppColors.lightPurple,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Remind: ${event.reminderLabel}',
+                                    style: const TextStyle(
+                                      color: AppColors.lightPurple,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
