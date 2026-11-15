@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../models/planner_event.dart';
+import '../../../services/draft_service.dart';
 
 class AddEditEventDialog extends StatefulWidget {
   final PlannerEvent? event;
@@ -16,7 +17,8 @@ class AddEditEventDialog extends StatefulWidget {
   State<AddEditEventDialog> createState() => _AddEditEventDialogState();
 }
 
-class _AddEditEventDialogState extends State<AddEditEventDialog> {
+class _AddEditEventDialogState extends State<AddEditEventDialog>
+    with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController _titleController;
@@ -26,10 +28,12 @@ class _AddEditEventDialogState extends State<AddEditEventDialog> {
   String? _startTime;
   String? _endTime;
   late String _priority;
+  bool _draftRestored = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final event = widget.event;
     _titleController = TextEditingController(text: event?.title ?? '');
     _descriptionController =
@@ -41,10 +45,73 @@ class _AddEditEventDialogState extends State<AddEditEventDialog> {
     _startTime = event?.startTime;
     _endTime = event?.endTime;
     _priority = event?.priority ?? 'Medium';
+
+    if (widget.event == null) {
+      _restoreDraft();
+      _titleController.addListener(_autoSaveDraft);
+      _descriptionController.addListener(_autoSaveDraft);
+    }
+  }
+
+  Future<void> _restoreDraft() async {
+    final draft = await DraftService.instance.getDraft('add_event');
+    if (draft != null && mounted) {
+      setState(() {
+        if (draft['title'] != null && _titleController.text.isEmpty) {
+          _titleController.text = draft['title'];
+        }
+        if (draft['description'] != null &&
+            _descriptionController.text.isEmpty) {
+          _descriptionController.text = draft['description'];
+        }
+        if (draft['eventType'] != null) {
+          _selectedEventType = draft['eventType'];
+        }
+        if (draft['targetDate'] != null) {
+          _targetDate = draft['targetDate'];
+        }
+        if (draft['startTime'] != null) {
+          _startTime = draft['startTime'];
+        }
+        if (draft['endTime'] != null) {
+          _endTime = draft['endTime'];
+        }
+        if (draft['priority'] != null) {
+          _priority = draft['priority'];
+        }
+        if (_titleController.text.isNotEmpty ||
+            _descriptionController.text.isNotEmpty) {
+          _draftRestored = true;
+        }
+      });
+    }
+  }
+
+  void _autoSaveDraft() {
+    if (widget.event != null) return;
+    DraftService.instance.saveDraft('add_event', {
+      'title': _titleController.text,
+      'description': _descriptionController.text,
+      'eventType': _selectedEventType,
+      'targetDate': _targetDate,
+      'startTime': _startTime,
+      'endTime': _endTime,
+      'priority': _priority,
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      _autoSaveDraft();
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _titleController.dispose();
     _descriptionController.dispose();
     super.dispose();
@@ -129,6 +196,9 @@ class _AddEditEventDialogState extends State<AddEditEventDialog> {
       updatedAt: DateTime.now().toIso8601String(),
     );
 
+    if (widget.event == null) {
+      DraftService.instance.clearDraft('add_event');
+    }
     Navigator.of(context).pop(updated);
   }
 
@@ -186,6 +256,30 @@ class _AddEditEventDialogState extends State<AddEditEventDialog> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        if (_draftRestored) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryPurple
+                                  .withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: AppColors.primaryPurple
+                                    .withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: const Text(
+                              'Draft restored',
+                              style: TextStyle(
+                                color: AppColors.lightPurple,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                     IconButton(

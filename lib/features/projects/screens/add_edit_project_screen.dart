@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/validators.dart';
 import '../../../models/project.dart';
+import '../../../services/draft_service.dart';
 
 class AddEditProjectScreen extends StatefulWidget {
   final Project? project;
@@ -13,7 +14,8 @@ class AddEditProjectScreen extends StatefulWidget {
   State<AddEditProjectScreen> createState() => _AddEditProjectScreenState();
 }
 
-class _AddEditProjectScreenState extends State<AddEditProjectScreen> {
+class _AddEditProjectScreenState extends State<AddEditProjectScreen>
+    with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController _nameController;
@@ -34,10 +36,12 @@ class _AddEditProjectScreenState extends State<AddEditProjectScreen> {
   List<String> _technologies = [];
   DateTime? _startDate;
   DateTime? _completionDate;
+  bool _draftRestored = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final p = widget.project;
     _nameController = TextEditingController(text: p?.name ?? '');
     _shortDescController =
@@ -68,10 +72,85 @@ class _AddEditProjectScreenState extends State<AddEditProjectScreen> {
         _completionDate = DateTime.parse(p.completionDate!);
       } catch (_) {}
     }
+
+    if (widget.project == null) {
+      _restoreDraft();
+      _nameController.addListener(_autoSaveDraft);
+      _shortDescController.addListener(_autoSaveDraft);
+      _detailedDescController.addListener(_autoSaveDraft);
+      _githubController.addListener(_autoSaveDraft);
+      _demoController.addListener(_autoSaveDraft);
+      _notesController.addListener(_autoSaveDraft);
+    }
+  }
+
+  Future<void> _restoreDraft() async {
+    final draft = await DraftService.instance.getDraft('add_project');
+    if (draft != null && mounted) {
+      setState(() {
+        if (draft['name'] != null && _nameController.text.isEmpty) {
+          _nameController.text = draft['name'];
+        }
+        if (draft['shortDesc'] != null && _shortDescController.text.isEmpty) {
+          _shortDescController.text = draft['shortDesc'];
+        }
+        if (draft['detailedDesc'] != null &&
+            _detailedDescController.text.isEmpty) {
+          _detailedDescController.text = draft['detailedDesc'];
+        }
+        if (draft['github'] != null && _githubController.text.isEmpty) {
+          _githubController.text = draft['github'];
+        }
+        if (draft['demo'] != null && _demoController.text.isEmpty) {
+          _demoController.text = draft['demo'];
+        }
+        if (draft['notes'] != null && _notesController.text.isEmpty) {
+          _notesController.text = draft['notes'];
+        }
+        if (draft['category'] != null) {
+          _category = draft['category'];
+        }
+        if (draft['status'] != null) {
+          _status = draft['status'];
+        }
+        if (draft['technologies'] != null && draft['technologies'] is List) {
+          _technologies = List<String>.from(draft['technologies']);
+        }
+        if (_nameController.text.isNotEmpty ||
+            _shortDescController.text.isNotEmpty) {
+          _draftRestored = true;
+        }
+      });
+    }
+  }
+
+  void _autoSaveDraft() {
+    if (widget.project != null) return;
+    DraftService.instance.saveDraft('add_project', {
+      'name': _nameController.text,
+      'shortDesc': _shortDescController.text,
+      'detailedDesc': _detailedDescController.text,
+      'github': _githubController.text,
+      'demo': _demoController.text,
+      'notes': _notesController.text,
+      'category': _category,
+      'status': _status,
+      'technologies': _technologies,
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      _autoSaveDraft();
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _nameController.dispose();
     _shortDescController.dispose();
     _detailedDescController.dispose();
@@ -107,7 +186,34 @@ class _AddEditProjectScreenState extends State<AddEditProjectScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Edit Project' : 'New Portfolio Project'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(isEditing ? 'Edit Project' : 'New Portfolio Project'),
+            if (_draftRestored) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryPurple.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: AppColors.primaryPurple.withValues(alpha: 0.4),
+                  ),
+                ),
+                child: const Text(
+                  'Draft restored',
+                  style: TextStyle(
+                    color: AppColors.lightPurple,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.check, color: AppColors.brightAccent),
@@ -518,6 +624,9 @@ class _AddEditProjectScreenState extends State<AddEditProjectScreen> {
       createdAt: widget.project?.createdAt,
     );
 
+    if (widget.project == null) {
+      DraftService.instance.clearDraft('add_project');
+    }
     Navigator.of(context).pop(project);
   }
 }

@@ -6,6 +6,7 @@ import '../../../core/widgets/skilltrack_logo.dart';
 import '../../../models/student_profile.dart';
 import '../../../repositories/profile_repository.dart';
 import '../../../services/roadmap_service.dart';
+import '../../../services/draft_service.dart';
 import '../../../app.dart';
 
 class StudentSetupScreen extends StatefulWidget {
@@ -15,7 +16,8 @@ class StudentSetupScreen extends StatefulWidget {
   State<StudentSetupScreen> createState() => _StudentSetupScreenState();
 }
 
-class _StudentSetupScreenState extends State<StudentSetupScreen> {
+class _StudentSetupScreenState extends State<StudentSetupScreen>
+    with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
   final ProfileRepository _profileRepo = ProfileRepository();
 
@@ -74,7 +76,73 @@ class _StudentSetupScreenState extends State<StudentSetupScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _restoreDraft();
+    _setupAutoSaveListeners();
+  }
+
+  void _setupAutoSaveListeners() {
+    _nameController.addListener(_saveDraft);
+    _collegeController.addListener(_saveDraft);
+    _branchController.addListener(_saveDraft);
+    _targetRoleController.addListener(_saveDraft);
+    _emailController.addListener(_saveDraft);
+    _phoneController.addListener(_saveDraft);
+  }
+
+  Future<void> _restoreDraft() async {
+    final draft = await DraftService.instance.getDraft('student_setup');
+    if (draft != null && mounted) {
+      setState(() {
+        if (draft['name'] != null) _nameController.text = draft['name'];
+        if (draft['college'] != null) {
+          _collegeController.text = draft['college'];
+        }
+        if (draft['branch'] != null) _branchController.text = draft['branch'];
+        if (draft['targetRole'] != null) {
+          _targetRoleController.text = draft['targetRole'];
+        }
+        if (draft['email'] != null) _emailController.text = draft['email'];
+        if (draft['phone'] != null) _phoneController.text = draft['phone'];
+        if (draft['degree'] != null) _degree = draft['degree'];
+        if (draft['semester'] != null) _semester = draft['semester'];
+        if (draft['gradYear'] != null) _gradYear = draft['gradYear'];
+        if (draft['roles'] != null && draft['roles'] is List) {
+          _selectedRoles.addAll(List<String>.from(draft['roles']));
+        }
+      });
+    }
+  }
+
+  void _saveDraft() {
+    DraftService.instance.saveDraft('student_setup', {
+      'name': _nameController.text,
+      'college': _collegeController.text,
+      'branch': _branchController.text,
+      'targetRole': _targetRoleController.text,
+      'email': _emailController.text,
+      'phone': _phoneController.text,
+      'degree': _degree,
+      'semester': _semester,
+      'gradYear': _gradYear,
+      'roles': _selectedRoles.toList(),
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      _saveDraft();
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _nameController.dispose();
     _collegeController.dispose();
     _branchController.dispose();
@@ -107,6 +175,7 @@ class _StudentSetupScreenState extends State<StudentSetupScreen> {
       );
 
       await _profileRepo.saveProfile(profile);
+      await DraftService.instance.clearDraft('student_setup');
 
       // Optionally auto-import recommended roadmaps for target roles
       if (_autoImportRoadmap) {

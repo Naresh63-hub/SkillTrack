@@ -6,6 +6,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/widgets/skilltrack_logo.dart';
 import '../../../repositories/profile_repository.dart';
 import '../../../services/supabase_auth_service.dart';
+import '../../../services/navigation_state_service.dart';
 import '../../../app.dart';
 import '../../auth/screens/auth_screen.dart';
 import 'onboarding_screen.dart';
@@ -60,7 +61,13 @@ class _SplashScreenState extends State<SplashScreen>
     Widget target;
     if (isAuth || isGuest) {
       if (hasValidProfile) {
-        target = const MainNavigationShell();
+        final savedTab = await NavigationStateService.instance.getActiveTab();
+        final savedRoute =
+            await NavigationStateService.instance.getActiveRoute();
+        target = MainNavigationShell(
+          initialIndex: savedTab,
+          initialRoute: savedRoute,
+        );
       } else {
         target = const StudentSetupScreen();
       }

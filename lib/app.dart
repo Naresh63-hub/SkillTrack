@@ -7,6 +7,10 @@ import 'features/projects/screens/projects_screen.dart';
 import 'features/tasks/screens/tasks_screen.dart';
 import 'features/placement/screens/placement_screen.dart';
 import 'features/intro/screens/splash_screen.dart';
+import 'features/notes_planner/screens/notes_planner_hub_screen.dart';
+import 'features/skills/screens/career_roadmaps_screen.dart';
+import 'features/resume/screens/resume_screen.dart';
+import 'services/navigation_state_service.dart';
 
 class SkillTrackApp extends StatelessWidget {
   const SkillTrackApp({super.key});
@@ -15,6 +19,7 @@ class SkillTrackApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'SkillTrack',
+      restorationScopeId: 'skilltrack_app',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
@@ -25,19 +30,91 @@ class SkillTrackApp extends StatelessWidget {
 }
 
 class MainNavigationShell extends StatefulWidget {
-  const MainNavigationShell({super.key});
+  final int initialIndex;
+  final String? initialRoute;
+
+  const MainNavigationShell({
+    super.key,
+    this.initialIndex = 0,
+    this.initialRoute,
+  });
 
   @override
   State<MainNavigationShell> createState() => _MainNavigationShellState();
 }
 
-class _MainNavigationShellState extends State<MainNavigationShell> {
-  int _currentIndex = 0;
+class _MainNavigationShellState extends State<MainNavigationShell>
+    with WidgetsBindingObserver {
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex.clamp(0, 4);
+    WidgetsBinding.instance.addObserver(this);
+    _checkRestoreState();
+  }
+
+  Future<void> _checkRestoreState() async {
+    if (widget.initialIndex == 0) {
+      final savedTab = await NavigationStateService.instance.getActiveTab();
+      if (mounted && savedTab != _currentIndex) {
+        setState(() {
+          _currentIndex = savedTab.clamp(0, 4);
+        });
+      }
+    }
+
+    final route = widget.initialRoute ??
+        await NavigationStateService.instance.getActiveRoute();
+    if (route != null && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _resumeSubRoute(route);
+      });
+    }
+  }
+
+  void _resumeSubRoute(String route) {
+    NavigationStateService.instance.saveActiveRoute(null);
+    Widget? targetScreen;
+    if (route == 'notes_planner') {
+      targetScreen = const NotesPlannerHubScreen();
+    } else if (route == 'career_roadmaps') {
+      targetScreen = const CareerRoadmapsScreen();
+    } else if (route == 'resume_builder') {
+      targetScreen = const ResumeScreen();
+    }
+
+    if (targetScreen != null && mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => targetScreen!),
+      );
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      NavigationStateService.instance.saveActiveTab(_currentIndex);
+      NavigationStateService.instance.recordAppBackgrounded();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
   void _onTabSelected(int index) {
+    final clamped = index.clamp(0, 4);
     setState(() {
-      _currentIndex = index.clamp(0, 4);
+      _currentIndex = clamped;
     });
+    NavigationStateService.instance.saveActiveTab(clamped);
   }
 
   @override

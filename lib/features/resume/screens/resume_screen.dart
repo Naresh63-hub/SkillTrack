@@ -12,6 +12,7 @@ import '../../../repositories/skills_repository.dart';
 import '../../../repositories/projects_repository.dart';
 import '../../../repositories/certificates_repository.dart';
 import '../../../services/resume_service.dart';
+import '../../../services/navigation_state_service.dart';
 import 'resume_preview_screen.dart';
 
 class ResumeScreen extends StatefulWidget {
@@ -53,6 +54,7 @@ class _ResumeScreenState extends State<ResumeScreen> {
   @override
   void initState() {
     super.initState();
+    NavigationStateService.instance.saveActiveRoute('resume_builder');
     _nameController = TextEditingController();
     _emailController = TextEditingController();
     _phoneController = TextEditingController();
@@ -66,6 +68,7 @@ class _ResumeScreenState extends State<ResumeScreen> {
 
   @override
   void dispose() {
+    NavigationStateService.instance.saveActiveRoute(null);
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();

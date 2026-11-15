@@ -9,6 +9,7 @@ import '../../../repositories/planner_repository.dart';
 import '../widgets/add_edit_note_dialog.dart';
 import '../widgets/add_edit_event_dialog.dart';
 import '../widgets/note_reader_dialog.dart';
+import '../../../services/navigation_state_service.dart';
 
 class NotesPlannerHubScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -52,6 +53,7 @@ class _NotesPlannerHubScreenState extends State<NotesPlannerHubScreen>
   @override
   void initState() {
     super.initState();
+    NavigationStateService.instance.saveActiveRoute('notes_planner');
     _tabController = TabController(
       length: 2,
       vsync: this,
@@ -77,6 +79,7 @@ class _NotesPlannerHubScreenState extends State<NotesPlannerHubScreen>
 
   @override
   void dispose() {
+    NavigationStateService.instance.saveActiveRoute(null);
     _tabController.dispose();
     _notesSearchController.dispose();
     super.dispose();

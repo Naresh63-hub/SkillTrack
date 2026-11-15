@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/validators.dart';
 import '../../../models/skill.dart';
+import '../../../services/draft_service.dart';
 
 class AddEditSkillDialog extends StatefulWidget {
   final Skill? skill;
@@ -13,7 +14,8 @@ class AddEditSkillDialog extends StatefulWidget {
   State<AddEditSkillDialog> createState() => _AddEditSkillDialogState();
 }
 
-class _AddEditSkillDialogState extends State<AddEditSkillDialog> {
+class _AddEditSkillDialogState extends State<AddEditSkillDialog>
+    with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _urlController;
@@ -23,10 +25,12 @@ class _AddEditSkillDialogState extends State<AddEditSkillDialog> {
   late double _progress;
   DateTime? _startDate;
   DateTime? _targetDate;
+  bool _draftRestored = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final s = widget.skill;
     _nameController = TextEditingController(text: s?.name ?? '');
     _urlController = TextEditingController(text: s?.learningResourceUrl ?? '');
@@ -46,10 +50,69 @@ class _AddEditSkillDialogState extends State<AddEditSkillDialog> {
         _targetDate = DateTime.parse(s.targetCompletionDate!);
       } catch (_) {}
     }
+
+    if (widget.skill == null) {
+      _restoreDraft();
+      _nameController.addListener(_autoSaveDraft);
+      _urlController.addListener(_autoSaveDraft);
+      _notesController.addListener(_autoSaveDraft);
+    }
+  }
+
+  Future<void> _restoreDraft() async {
+    final draft = await DraftService.instance.getDraft('add_skill');
+    if (draft != null && mounted) {
+      setState(() {
+        if (draft['name'] != null && _nameController.text.isEmpty) {
+          _nameController.text = draft['name'];
+        }
+        if (draft['url'] != null && _urlController.text.isEmpty) {
+          _urlController.text = draft['url'];
+        }
+        if (draft['notes'] != null && _notesController.text.isEmpty) {
+          _notesController.text = draft['notes'];
+        }
+        if (draft['category'] != null) {
+          _category = draft['category'];
+        }
+        if (draft['proficiency'] != null) {
+          _proficiency = draft['proficiency'];
+        }
+        if (draft['progress'] != null) {
+          _progress = (draft['progress'] as num).toDouble();
+        }
+        if (_nameController.text.isNotEmpty ||
+            _notesController.text.isNotEmpty) {
+          _draftRestored = true;
+        }
+      });
+    }
+  }
+
+  void _autoSaveDraft() {
+    if (widget.skill != null) return;
+    DraftService.instance.saveDraft('add_skill', {
+      'name': _nameController.text,
+      'url': _urlController.text,
+      'notes': _notesController.text,
+      'category': _category,
+      'proficiency': _proficiency,
+      'progress': _progress,
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      _autoSaveDraft();
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _nameController.dispose();
     _urlController.dispose();
     _notesController.dispose();
@@ -75,13 +138,41 @@ class _AddEditSkillDialogState extends State<AddEditSkillDialog> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      isEditing ? 'Edit Skill' : 'Add New Skill',
-                      style: const TextStyle(
-                        color: AppColors.primaryText,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          isEditing ? 'Edit Skill' : 'Add New Skill',
+                          style: const TextStyle(
+                            color: AppColors.primaryText,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (_draftRestored) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryPurple
+                                  .withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: AppColors.primaryPurple
+                                    .withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: const Text(
+                              'Draft restored',
+                              style: TextStyle(
+                                color: AppColors.lightPurple,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     IconButton(
                       icon: const Icon(Icons.close, color: AppColors.mutedText),
@@ -305,6 +396,9 @@ class _AddEditSkillDialogState extends State<AddEditSkillDialog> {
       createdAt: widget.skill?.createdAt,
     );
 
+    if (widget.skill == null) {
+      DraftService.instance.clearDraft('add_skill');
+    }
     Navigator.of(context).pop(skill);
   }
 }

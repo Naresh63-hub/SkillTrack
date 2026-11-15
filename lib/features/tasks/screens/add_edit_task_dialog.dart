@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/validators.dart';
 import '../../../models/task_model.dart';
+import '../../../services/draft_service.dart';
 
 class AddEditTaskDialog extends StatefulWidget {
   final TaskModel? task;
@@ -13,7 +14,8 @@ class AddEditTaskDialog extends StatefulWidget {
   State<AddEditTaskDialog> createState() => _AddEditTaskDialogState();
 }
 
-class _AddEditTaskDialogState extends State<AddEditTaskDialog> {
+class _AddEditTaskDialogState extends State<AddEditTaskDialog>
+    with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _titleController;
   late TextEditingController _descController;
@@ -22,10 +24,12 @@ class _AddEditTaskDialogState extends State<AddEditTaskDialog> {
   DateTime _dueDate = DateTime.now();
   TimeOfDay _dueTime = const TimeOfDay(hour: 18, minute: 0);
   bool _setReminder = false;
+  bool _draftRestored = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final t = widget.task;
     _titleController = TextEditingController(text: t?.title ?? '');
     _descController = TextEditingController(text: t?.description ?? '');
@@ -41,10 +45,60 @@ class _AddEditTaskDialogState extends State<AddEditTaskDialog> {
     }
     _setReminder =
         t?.reminderDateTime != null && t!.reminderDateTime!.isNotEmpty;
+
+    if (widget.task == null) {
+      _restoreDraft();
+      _titleController.addListener(_autoSaveDraft);
+      _descController.addListener(_autoSaveDraft);
+    }
+  }
+
+  Future<void> _restoreDraft() async {
+    final draft = await DraftService.instance.getDraft('add_task');
+    if (draft != null && mounted) {
+      setState(() {
+        if (draft['title'] != null && _titleController.text.isEmpty) {
+          _titleController.text = draft['title'];
+        }
+        if (draft['description'] != null && _descController.text.isEmpty) {
+          _descController.text = draft['description'];
+        }
+        if (draft['category'] != null) {
+          _category = draft['category'];
+        }
+        if (draft['priority'] != null) {
+          _priority = draft['priority'];
+        }
+        if (_titleController.text.isNotEmpty ||
+            _descController.text.isNotEmpty) {
+          _draftRestored = true;
+        }
+      });
+    }
+  }
+
+  void _autoSaveDraft() {
+    if (widget.task != null) return;
+    DraftService.instance.saveDraft('add_task', {
+      'title': _titleController.text,
+      'description': _descController.text,
+      'category': _category,
+      'priority': _priority,
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      _autoSaveDraft();
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _titleController.dispose();
     _descController.dispose();
     super.dispose();
@@ -69,13 +123,41 @@ class _AddEditTaskDialogState extends State<AddEditTaskDialog> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      isEditing ? 'Edit Task' : 'New Task',
-                      style: const TextStyle(
-                        color: AppColors.primaryText,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          isEditing ? 'Edit Task' : 'New Task',
+                          style: const TextStyle(
+                            color: AppColors.primaryText,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (_draftRestored) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryPurple
+                                  .withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: AppColors.primaryPurple
+                                    .withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: const Text(
+                              'Draft restored',
+                              style: TextStyle(
+                                color: AppColors.lightPurple,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     IconButton(
                       icon: const Icon(Icons.close, color: AppColors.mutedText),
@@ -267,6 +349,9 @@ class _AddEditTaskDialogState extends State<AddEditTaskDialog> {
       creationDate: widget.task?.creationDate,
     );
 
+    if (widget.task == null) {
+      DraftService.instance.clearDraft('add_task');
+    }
     Navigator.of(context).pop(task);
   }
 }

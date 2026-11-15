@@ -4,6 +4,7 @@ import '../../../models/career_roadmap.dart';
 import '../../../models/skill.dart';
 import '../../../repositories/profile_repository.dart';
 import '../../../services/roadmap_service.dart';
+import '../../../services/navigation_state_service.dart';
 import 'roadmap_detail_screen.dart';
 
 class CareerRoadmapsScreen extends StatefulWidget {
@@ -34,6 +35,7 @@ class _CareerRoadmapsScreenState extends State<CareerRoadmapsScreen> {
   @override
   void initState() {
     super.initState();
+    NavigationStateService.instance.saveActiveRoute('career_roadmaps');
     if (widget.initialRoadmaps != null) {
       _roadmaps = widget.initialRoadmaps!;
       _existingSkillsMap = widget.initialSkillsMap ?? {};
@@ -70,6 +72,12 @@ class _CareerRoadmapsScreenState extends State<CareerRoadmapsScreen> {
     if (result == true) {
       _loadData();
     }
+  }
+
+  @override
+  void dispose() {
+    NavigationStateService.instance.saveActiveRoute(null);
+    super.dispose();
   }
 
   @override

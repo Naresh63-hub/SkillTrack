@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../models/note_model.dart';
 import '../../../models/skill.dart';
 import '../../../repositories/skills_repository.dart';
+import '../../../services/draft_service.dart';
 
 class AddEditNoteDialog extends StatefulWidget {
   final NoteModel? note;
@@ -20,7 +21,8 @@ class AddEditNoteDialog extends StatefulWidget {
   State<AddEditNoteDialog> createState() => _AddEditNoteDialogState();
 }
 
-class _AddEditNoteDialogState extends State<AddEditNoteDialog> {
+class _AddEditNoteDialogState extends State<AddEditNoteDialog>
+    with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
   final SkillsRepository _skillsRepo = SkillsRepository();
 
@@ -30,12 +32,14 @@ class _AddEditNoteDialogState extends State<AddEditNoteDialog> {
   late String _selectedColorTag;
   String? _selectedSkillName;
   late bool _isPinned;
+  bool _draftRestored = false;
 
   List<Skill> _availableSkills = [];
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final note = widget.note;
     _titleController = TextEditingController(text: note?.title ?? '');
     _contentController = TextEditingController(text: note?.content ?? '');
@@ -48,6 +52,56 @@ class _AddEditNoteDialogState extends State<AddEditNoteDialog> {
       _availableSkills = widget.availableSkills!;
     } else {
       _loadSkills();
+    }
+
+    if (widget.note == null) {
+      _restoreDraft();
+      _titleController.addListener(_autoSaveDraft);
+      _contentController.addListener(_autoSaveDraft);
+    }
+  }
+
+  Future<void> _restoreDraft() async {
+    final draft = await DraftService.instance.getDraft('add_note');
+    if (draft != null && mounted) {
+      setState(() {
+        if (draft['title'] != null && _titleController.text.isEmpty) {
+          _titleController.text = draft['title'];
+        }
+        if (draft['content'] != null && _contentController.text.isEmpty) {
+          _contentController.text = draft['content'];
+        }
+        if (draft['category'] != null) {
+          _selectedCategory = draft['category'];
+        }
+        if (draft['colorTag'] != null) {
+          _selectedColorTag = draft['colorTag'];
+        }
+        if (_titleController.text.isNotEmpty ||
+            _contentController.text.isNotEmpty) {
+          _draftRestored = true;
+        }
+      });
+    }
+  }
+
+  void _autoSaveDraft() {
+    if (widget.note != null) return;
+    DraftService.instance.saveDraft('add_note', {
+      'title': _titleController.text,
+      'content': _contentController.text,
+      'category': _selectedCategory,
+      'colorTag': _selectedColorTag,
+      'skillName': _selectedSkillName,
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      _autoSaveDraft();
     }
   }
 
@@ -62,6 +116,7 @@ class _AddEditNoteDialogState extends State<AddEditNoteDialog> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _titleController.dispose();
     _contentController.dispose();
     super.dispose();
@@ -101,6 +156,9 @@ class _AddEditNoteDialogState extends State<AddEditNoteDialog> {
       updatedAt: DateTime.now().toIso8601String(),
     );
 
+    if (widget.note == null) {
+      DraftService.instance.clearDraft('add_note');
+    }
     Navigator.of(context).pop(updated);
   }
 
@@ -160,6 +218,30 @@ class _AddEditNoteDialogState extends State<AddEditNoteDialog> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        if (_draftRestored) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryPurple
+                                  .withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: AppColors.primaryPurple
+                                    .withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: const Text(
+                              'Draft restored',
+                              style: TextStyle(
+                                color: AppColors.lightPurple,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                     IconButton(
