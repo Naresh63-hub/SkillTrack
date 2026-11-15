@@ -82,10 +82,6 @@ class StreakCalculator {
           activeDates.add(DateTime(dt.year, dt.month, dt.day));
         } catch (_) {}
       }
-      try {
-        final dt = DateTime.parse(t.creationDate);
-        activeDates.add(DateTime(dt.year, dt.month, dt.day));
-      } catch (_) {}
     }
 
     for (final s in skills) {
@@ -93,16 +89,6 @@ class StreakCalculator {
         final dt = DateTime.parse(s.updatedAt);
         activeDates.add(DateTime(dt.year, dt.month, dt.day));
       } catch (_) {}
-      try {
-        final dt = DateTime.parse(s.createdAt);
-        activeDates.add(DateTime(dt.year, dt.month, dt.day));
-      } catch (_) {}
-      if (s.dateStarted != null && s.dateStarted!.isNotEmpty) {
-        try {
-          final dt = DateTime.parse(s.dateStarted!);
-          activeDates.add(DateTime(dt.year, dt.month, dt.day));
-        } catch (_) {}
-      }
     }
 
     if (projects != null) {
@@ -111,19 +97,9 @@ class StreakCalculator {
           final dt = DateTime.parse(p.updatedAt);
           activeDates.add(DateTime(dt.year, dt.month, dt.day));
         } catch (_) {}
-        try {
-          final dt = DateTime.parse(p.createdAt);
-          activeDates.add(DateTime(dt.year, dt.month, dt.day));
-        } catch (_) {}
         if (p.completionDate != null && p.completionDate!.isNotEmpty) {
           try {
             final dt = DateTime.parse(p.completionDate!);
-            activeDates.add(DateTime(dt.year, dt.month, dt.day));
-          } catch (_) {}
-        }
-        if (p.startDate != null && p.startDate!.isNotEmpty) {
-          try {
-            final dt = DateTime.parse(p.startDate!);
             activeDates.add(DateTime(dt.year, dt.month, dt.day));
           } catch (_) {}
         }
@@ -132,10 +108,6 @@ class StreakCalculator {
 
     if (certificates != null) {
       for (final c in certificates) {
-        try {
-          final dt = DateTime.parse(c.createdAt);
-          activeDates.add(DateTime(dt.year, dt.month, dt.day));
-        } catch (_) {}
         try {
           final dt = DateTime.parse(c.completionDate);
           activeDates.add(DateTime(dt.year, dt.month, dt.day));
