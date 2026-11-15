@@ -129,6 +129,20 @@
     window.isPWAStandalone = function() {
       return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
     };
+    window.downloadFileFromDataUrl = function(dataUrl, fileName) {
+      try {
+        var a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = fileName || 'document';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        return true;
+      } catch (e) {
+        console.error('Download error:', e);
+        return false;
+      }
+    };
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>

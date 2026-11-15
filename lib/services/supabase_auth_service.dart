@@ -64,6 +64,7 @@ class SupabaseAuthService {
     final response = await client.auth.signUp(
       email: email.trim(),
       password: password,
+      emailRedirectTo: _getAuthRedirectUrl(),
       data: fullName != null && fullName.trim().isNotEmpty
           ? {'full_name': fullName.trim()}
           : null,

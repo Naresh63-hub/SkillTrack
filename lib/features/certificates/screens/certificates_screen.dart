@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/widgets/custom_card.dart';
@@ -6,6 +7,7 @@ import '../../../core/widgets/search_filter_bar.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/document_action_helper.dart';
 import '../../../models/certificate.dart';
 import '../../../repositories/certificates_repository.dart';
 import 'add_edit_certificate_dialog.dart';
@@ -320,13 +322,82 @@ class _CertificatesScreenState extends State<CertificatesScreen> {
                 constraints: const BoxConstraints(),
                 color: AppColors.secondaryBackground,
                 onSelected: (action) {
-                  if (action == 'edit') {
+                  if (action == 'view') {
+                    DocumentActionHelper.viewDocument(context, cert);
+                  } else if (action == 'download') {
+                    DocumentActionHelper.downloadDocument(context, cert);
+                  } else if (action == 'share') {
+                    DocumentActionHelper.showShareDialog(context, cert);
+                  } else if (action == 'verify') {
+                    if (cert.hasVerificationUrl) {
+                      final uri = Uri.tryParse(cert.verificationUrl!);
+                      if (uri != null) {
+                        launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    }
+                  } else if (action == 'edit') {
                     _editCertificate(cert);
                   } else if (action == 'delete') {
                     _deleteCertificate(cert);
                   }
                 },
                 itemBuilder: (context) => [
+                  if (cert.hasFile)
+                    const PopupMenuItem(
+                      value: 'view',
+                      child: Row(
+                        children: [
+                          Icon(Icons.visibility_outlined,
+                              size: 16, color: AppColors.brightAccent),
+                          SizedBox(width: 8),
+                          Text('View Document',
+                              style: TextStyle(
+                                  color: AppColors.primaryText, fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                  if (cert.hasFile)
+                    const PopupMenuItem(
+                      value: 'download',
+                      child: Row(
+                        children: [
+                          Icon(Icons.download_rounded,
+                              size: 16, color: AppColors.secondaryAccent),
+                          SizedBox(width: 8),
+                          Text('Download Document',
+                              style: TextStyle(
+                                  color: AppColors.primaryText, fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                  const PopupMenuItem(
+                    value: 'share',
+                    child: Row(
+                      children: [
+                        Icon(Icons.share_rounded,
+                            size: 16, color: AppColors.primaryPurple),
+                        SizedBox(width: 8),
+                        Text('Share Certificate',
+                            style: TextStyle(
+                                color: AppColors.primaryText, fontSize: 13)),
+                      ],
+                    ),
+                  ),
+                  if (cert.hasVerificationUrl)
+                    const PopupMenuItem(
+                      value: 'verify',
+                      child: Row(
+                        children: [
+                          Icon(Icons.open_in_new_rounded,
+                              size: 16, color: AppColors.brightAccent),
+                          SizedBox(width: 8),
+                          Text('Verify Online',
+                              style: TextStyle(
+                                  color: AppColors.primaryText, fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                  const PopupMenuDivider(),
                   const PopupMenuItem(
                     value: 'edit',
                     child: Row(
@@ -408,6 +479,95 @@ class _CertificatesScreenState extends State<CertificatesScreen> {
                       ),
                     ),
                 ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Divider(height: 1, thickness: 0.8, color: AppColors.border),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              if (cert.hasFile) ...[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+                      visualDensity: VisualDensity.compact,
+                      side: BorderSide(
+                        color: AppColors.brightAccent.withValues(alpha: 0.35),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    icon: const Icon(Icons.visibility_outlined,
+                        size: 14, color: AppColors.brightAccent),
+                    label: const Text(
+                      'View',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.brightAccent,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onPressed: () =>
+                        DocumentActionHelper.viewDocument(context, cert),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+                      visualDensity: VisualDensity.compact,
+                      side: BorderSide(
+                        color: AppColors.secondaryAccent.withValues(alpha: 0.5),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    icon: const Icon(Icons.download_rounded,
+                        size: 14, color: AppColors.brightAccent),
+                    label: const Text(
+                      'Download',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.brightAccent,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onPressed: () =>
+                        DocumentActionHelper.downloadDocument(context, cert),
+                  ),
+                ),
+                const SizedBox(width: 6),
+              ],
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+                    visualDensity: VisualDensity.compact,
+                    side: BorderSide(
+                      color: AppColors.primaryPurple.withValues(alpha: 0.35),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  icon: const Icon(Icons.share_outlined,
+                      size: 14, color: AppColors.primaryPurple),
+                  label: const Text(
+                    'Share',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: AppColors.primaryPurple,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  onPressed: () =>
+                      DocumentActionHelper.showShareDialog(context, cert),
+                ),
               ),
             ],
           ),

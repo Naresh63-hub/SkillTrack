@@ -31,6 +31,58 @@ class Certificate {
   bool get hasVerificationUrl =>
       verificationUrl != null && verificationUrl!.isNotEmpty;
 
+  /// Returns the document file name (or extracts it from data URI / path)
+  String get fileName {
+    if (!hasFile) return '';
+    final path = localFilePath!;
+    if (path.startsWith('data:')) {
+      final match = RegExp(r'name=([^;]+);').firstMatch(path);
+      if (match != null) {
+        return Uri.decodeComponent(match.group(1)!);
+      }
+      return '${name.replaceAll(RegExp(r'[^\w\-]'), '_')}.${isPdf ? "pdf" : "png"}';
+    }
+    return path.split(RegExp(r'[/\\]')).last;
+  }
+
+  /// True if the attached document is a PDF
+  bool get isPdf {
+    if (!hasFile) return false;
+    final path = localFilePath!;
+    if (path.startsWith('data:application/pdf')) return true;
+    final lower = path.toLowerCase();
+    return lower.endsWith('.pdf');
+  }
+
+  /// True if the attached document is an image (PNG, JPG, WebP)
+  bool get isImage {
+    if (!hasFile) return false;
+    final path = localFilePath!;
+    if (path.startsWith('data:image/')) return true;
+    final lower = path.toLowerCase();
+    return lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.webp');
+  }
+
+  /// Generates a clean, professional summary text suitable for sharing
+  String get shareSummary {
+    final buffer = StringBuffer();
+    buffer.writeln('🎓 $name');
+    buffer.writeln('🏢 Issued By: $issuingOrganization');
+    buffer.writeln('📂 Category: $category');
+    buffer.writeln('📅 Completion Date: $completionDate');
+    if (credentialId != null && credentialId!.isNotEmpty) {
+      buffer.writeln('🆔 Credential ID: $credentialId');
+    }
+    if (hasVerificationUrl) {
+      buffer.writeln('🔗 Verification: $verificationUrl');
+    }
+    buffer.write('Verified on SkillTrack ⚡');
+    return buffer.toString();
+  }
+
   Map<String, dynamic> toMap() {
     return {
       if (id != null) 'id': id,

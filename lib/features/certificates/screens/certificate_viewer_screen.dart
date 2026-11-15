@@ -7,40 +7,13 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/custom_card.dart';
 import '../../../core/utils/file_utils.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/document_action_helper.dart';
 import '../../../models/certificate.dart';
 
 class CertificateViewerScreen extends StatelessWidget {
   final Certificate certificate;
 
   const CertificateViewerScreen({super.key, required this.certificate});
-
-  String _extractFileName(String path) {
-    if (path.startsWith('data:')) {
-      final match = RegExp(r'name=([^;]+);').firstMatch(path);
-      if (match != null) {
-        return Uri.decodeComponent(match.group(1)!);
-      }
-      return 'Attached Document';
-    }
-    return path.split(RegExp(r'[/\\]')).last;
-  }
-
-  Future<void> _openAttachedFile(BuildContext context, String path) async {
-    try {
-      final uri = Uri.parse(path);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri);
-      } else {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not open file: $e')),
-        );
-      }
-    }
-  }
 
   Future<void> _launchUrl(BuildContext context, String url) async {
     final uri = Uri.tryParse(url);
@@ -64,7 +37,27 @@ class CertificateViewerScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(certificate.name),
+        title: Text(
+          certificate.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        actions: [
+          if (hasFile)
+            IconButton(
+              icon: const Icon(Icons.download_rounded),
+              tooltip: 'Download Document',
+              onPressed: () =>
+                  DocumentActionHelper.downloadDocument(context, certificate),
+            ),
+          IconButton(
+            icon: const Icon(Icons.share_rounded),
+            tooltip: 'Share Credential',
+            onPressed: () =>
+                DocumentActionHelper.showShareDialog(context, certificate),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -73,41 +66,26 @@ class CertificateViewerScreen extends StatelessWidget {
           children: [
             // Preview Section
             if (hasFile && isImage) ...[
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: double.infinity,
-                  constraints: const BoxConstraints(maxHeight: 300),
-                  color: AppColors.cardBackground,
-                  child: filePath.startsWith('data:image/')
-                      ? Image.memory(
-                          base64Decode(filePath.split(',').last),
-                          fit: BoxFit.contain,
-                        )
-                      : (kIsWeb
-                          ? Image.network(
-                              filePath,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const Padding(
-                                padding: EdgeInsets.all(32),
-                                child: Column(
-                                  children: [
-                                    Icon(Icons.broken_image,
-                                        size: 40, color: AppColors.mutedText),
-                                    SizedBox(height: 8),
-                                    Text('Image file moved or deleted',
-                                        style: TextStyle(
-                                            color: AppColors.mutedText)),
-                                  ],
-                                ),
-                              ),
-                            )
-                          : Image.file(
-                              File(filePath),
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Padding(
+              GestureDetector(
+                onTap: () =>
+                    DocumentActionHelper.viewDocument(context, certificate),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: double.infinity,
+                    constraints: const BoxConstraints(maxHeight: 280),
+                    color: AppColors.cardBackground,
+                    child: filePath.startsWith('data:image/')
+                        ? Image.memory(
+                            base64Decode(filePath.split(',').last),
+                            fit: BoxFit.contain,
+                          )
+                        : (kIsWeb
+                            ? Image.network(
+                                filePath,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Padding(
                                   padding: EdgeInsets.all(32),
                                   child: Column(
                                     children: [
@@ -119,15 +97,66 @@ class CertificateViewerScreen extends StatelessWidget {
                                               color: AppColors.mutedText)),
                                     ],
                                   ),
-                                );
-                              },
-                            )),
+                                ),
+                              )
+                            : Image.file(
+                                File(filePath),
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Padding(
+                                    padding: EdgeInsets.all(32),
+                                    child: Column(
+                                      children: [
+                                        Icon(Icons.broken_image,
+                                            size: 40,
+                                            color: AppColors.mutedText),
+                                        SizedBox(height: 8),
+                                        Text('Image file moved or deleted',
+                                            style: TextStyle(
+                                                color: AppColors.mutedText)),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              )),
+                  ),
                 ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.fullscreen_rounded, size: 16),
+                      label: const Text('View Fullscreen'),
+                      onPressed: () => DocumentActionHelper.viewDocument(
+                          context, certificate),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.download_rounded, size: 16),
+                      label: const Text('Download'),
+                      onPressed: () => DocumentActionHelper.downloadDocument(
+                          context, certificate),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.share_rounded, size: 16),
+                      label: const Text('Share'),
+                      onPressed: () => DocumentActionHelper.showShareDialog(
+                          context, certificate),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
             ] else if (hasFile && isPdf) ...[
               CustomCard(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(18),
                 child: Column(
                   children: [
                     Row(
@@ -160,7 +189,7 @@ class CertificateViewerScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                _extractFileName(filePath),
+                                certificate.fileName,
                                 style: const TextStyle(
                                     color: AppColors.mutedText, fontSize: 11),
                                 maxLines: 1,
@@ -171,22 +200,61 @@ class CertificateViewerScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryPurple,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryPurple,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            icon: const Icon(Icons.visibility_rounded, size: 16),
+                            label: const Text('View PDF'),
+                            onPressed: () => DocumentActionHelper.viewDocument(
+                                context, certificate),
                           ),
                         ),
-                        icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                        label: const Text('View / Open PDF Document'),
-                        onPressed: () => _openAttachedFile(context, filePath),
-                      ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 4,
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            icon: const Icon(Icons.download_rounded, size: 16),
+                            label: const Text('Download'),
+                            onPressed: () =>
+                                DocumentActionHelper.downloadDocument(
+                                    context, certificate),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 3,
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            icon: const Icon(Icons.share_rounded, size: 16),
+                            label: const Text('Share'),
+                            onPressed: () =>
+                                DocumentActionHelper.showShareDialog(
+                                    context, certificate),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
