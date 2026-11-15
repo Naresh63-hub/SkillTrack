@@ -91,12 +91,17 @@ class _TasksScreenState extends State<TasksScreen>
     if (newTask != null) {
       final id = await _repository.addTask(newTask);
       if (newTask.reminderDateTime != null) {
-        // Schedule notification
-        await NotificationService.instance.showTaskNotification(
-          id: id,
-          title: 'SkillTrack Task Reminder',
-          body: newTask.title,
-        );
+        try {
+          final due = DateTime.parse(newTask.dueDate);
+          await NotificationService.instance.scheduleTaskReminder(
+            id: id,
+            title: newTask.title,
+            description: newTask.description,
+            dueDateTime: due,
+            earlyMinutes: newTask.earlyReminderMinutes,
+            category: newTask.category,
+          );
+        } catch (_) {}
       }
       _loadData();
       if (mounted) {
@@ -115,6 +120,23 @@ class _TasksScreenState extends State<TasksScreen>
 
     if (updated != null) {
       await _repository.updateTask(updated);
+      if (updated.id != null) {
+        if (updated.reminderDateTime != null && !updated.isCompleted) {
+          try {
+            final due = DateTime.parse(updated.dueDate);
+            await NotificationService.instance.scheduleTaskReminder(
+              id: updated.id!,
+              title: updated.title,
+              description: updated.description,
+              dueDateTime: due,
+              earlyMinutes: updated.earlyReminderMinutes,
+              category: updated.category,
+            );
+          } catch (_) {}
+        } else {
+          await NotificationService.instance.cancelTaskReminder(updated.id!);
+        }
+      }
       _loadData();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -132,6 +154,9 @@ class _TasksScreenState extends State<TasksScreen>
     );
 
     if (confirmed) {
+      if (task.id != null) {
+        await NotificationService.instance.cancelTaskReminder(task.id!);
+      }
       await _repository.deleteTask(task.id!);
       _loadData();
       if (mounted) {
@@ -143,6 +168,26 @@ class _TasksScreenState extends State<TasksScreen>
   }
 
   Future<void> _toggleComplete(TaskModel task) async {
+    final newStatus = !task.isCompleted;
+    if (task.id != null) {
+      if (newStatus) {
+        // Marked completed -> cancel scheduled reminder
+        await NotificationService.instance.cancelTaskReminder(task.id!);
+      } else if (task.reminderDateTime != null) {
+        // Un-marked -> reschedule reminder
+        try {
+          final due = DateTime.parse(task.dueDate);
+          await NotificationService.instance.scheduleTaskReminder(
+            id: task.id!,
+            title: task.title,
+            description: task.description,
+            dueDateTime: due,
+            earlyMinutes: task.earlyReminderMinutes,
+            category: task.category,
+          );
+        } catch (_) {}
+      }
+    }
     await _repository.toggleTaskComplete(task.id!, task.isCompleted);
     _loadData();
   }
@@ -580,11 +625,56 @@ class _TasksScreenState extends State<TasksScreen>
                       ),
                     ),
                     const SizedBox(width: 8),
+                    if (task.category == 'Call / Meeting') ...[
+                      const Icon(Icons.phone_in_talk,
+                          size: 11, color: AppColors.brightAccent),
+                      const SizedBox(width: 3),
+                    ],
                     Text(
                       task.category,
-                      style: const TextStyle(
-                          color: AppColors.mutedText, fontSize: 11),
+                      style: TextStyle(
+                        color: task.category == 'Call / Meeting'
+                            ? AppColors.brightAccent
+                            : AppColors.mutedText,
+                        fontSize: 11,
+                        fontWeight: task.category == 'Call / Meeting'
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
                     ),
+                    if (task.earlyReminderLabel != null) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color:
+                              AppColors.primaryPurple.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color:
+                                AppColors.primaryPurple.withValues(alpha: 0.4),
+                            width: 0.7,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.notifications_active,
+                                size: 9.5, color: AppColors.lightPurple),
+                            const SizedBox(width: 3),
+                            Text(
+                              task.earlyReminderLabel!,
+                              style: const TextStyle(
+                                color: AppColors.lightPurple,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const Spacer(),
                     Icon(
                       isOverdue ? Icons.warning : Icons.schedule,

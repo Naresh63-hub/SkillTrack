@@ -28,6 +28,7 @@ class _AddEditEventDialogState extends State<AddEditEventDialog>
   String? _startTime;
   String? _endTime;
   late String _priority;
+  int? _reminderMinutesBefore;
   bool _draftRestored = false;
 
   @override
@@ -45,6 +46,10 @@ class _AddEditEventDialogState extends State<AddEditEventDialog>
     _startTime = event?.startTime;
     _endTime = event?.endTime;
     _priority = event?.priority ?? 'Medium';
+    _reminderMinutesBefore = event?.reminderMinutesBefore;
+    if (_reminderMinutesBefore == null && _selectedEventType == 'Call / Meeting') {
+      _reminderMinutesBefore = 15;
+    }
 
     if (widget.event == null) {
       _restoreDraft();
@@ -79,6 +84,9 @@ class _AddEditEventDialogState extends State<AddEditEventDialog>
         if (draft['priority'] != null) {
           _priority = draft['priority'];
         }
+        if (draft['reminderMinutesBefore'] != null) {
+          _reminderMinutesBefore = draft['reminderMinutesBefore'] as int?;
+        }
         if (_titleController.text.isNotEmpty ||
             _descriptionController.text.isNotEmpty) {
           _draftRestored = true;
@@ -97,6 +105,7 @@ class _AddEditEventDialogState extends State<AddEditEventDialog>
       'startTime': _startTime,
       'endTime': _endTime,
       'priority': _priority,
+      'reminderMinutesBefore': _reminderMinutesBefore,
     });
   }
 
@@ -192,6 +201,7 @@ class _AddEditEventDialogState extends State<AddEditEventDialog>
       endTime: _endTime,
       isCompleted: widget.event?.isCompleted ?? false,
       priority: _priority,
+      reminderMinutesBefore: _reminderMinutesBefore,
       createdAt: widget.event?.createdAt,
       updatedAt: DateTime.now().toIso8601String(),
     );
@@ -363,8 +373,15 @@ class _AddEditEventDialogState extends State<AddEditEventDialog>
                                   );
                                 }).toList(),
                                 onChanged: (val) {
-                                  if (val != null)
-                                    setState(() => _selectedEventType = val);
+                                  if (val != null) {
+                                    setState(() {
+                                      _selectedEventType = val;
+                                      if (val == 'Call / Meeting' &&
+                                          _reminderMinutesBefore == null) {
+                                        _reminderMinutesBefore = 15;
+                                      }
+                                    });
+                                  }
                                 },
                               ),
                             ),

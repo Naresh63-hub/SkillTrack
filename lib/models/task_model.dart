@@ -9,6 +9,7 @@ class TaskModel {
   final bool isCompleted;
   final String? completedAt;
   final String? reminderDateTime;
+  final int? earlyReminderMinutes;
   final int? relatedSkillId;
   final int? relatedProjectId;
 
@@ -23,6 +24,7 @@ class TaskModel {
     this.isCompleted = false,
     this.completedAt,
     this.reminderDateTime,
+    this.earlyReminderMinutes,
     this.relatedSkillId,
     this.relatedProjectId,
   }) : creationDate = creationDate ?? DateTime.now().toIso8601String();
@@ -63,6 +65,18 @@ class TaskModel {
     }
   }
 
+  /// Formatted string describing the early reminder (e.g. "15 mins early", "At due time")
+  String? get earlyReminderLabel {
+    if (earlyReminderMinutes == null && reminderDateTime == null) return null;
+    final mins = earlyReminderMinutes ?? 0;
+    if (mins == 0) return 'At due time';
+    if (mins < 60) return '$mins mins early';
+    if (mins == 60) return '1 hour early';
+    if (mins < 1440) return '${mins ~/ 60} hours early';
+    if (mins == 1440) return '1 day early';
+    return '${mins ~/ 1440} days early';
+  }
+
   Map<String, dynamic> toMap() {
     return {
       if (id != null) 'id': id,
@@ -75,6 +89,7 @@ class TaskModel {
       'is_completed': isCompleted ? 1 : 0,
       'completed_at': completedAt,
       'reminder_date_time': reminderDateTime,
+      'early_reminder_minutes': earlyReminderMinutes,
       'related_skill_id': relatedSkillId,
       'related_project_id': relatedProjectId,
     };
@@ -92,6 +107,7 @@ class TaskModel {
       isCompleted: (map['is_completed'] as int? ?? 0) == 1,
       completedAt: map['completed_at'] as String?,
       reminderDateTime: map['reminder_date_time'] as String?,
+      earlyReminderMinutes: map['early_reminder_minutes'] as int?,
       relatedSkillId: map['related_skill_id'] as int?,
       relatedProjectId: map['related_project_id'] as int?,
     );
@@ -108,6 +124,7 @@ class TaskModel {
     bool? isCompleted,
     String? completedAt,
     String? reminderDateTime,
+    int? earlyReminderMinutes,
     int? relatedSkillId,
     int? relatedProjectId,
   }) {
@@ -122,6 +139,7 @@ class TaskModel {
       isCompleted: isCompleted ?? this.isCompleted,
       completedAt: completedAt ?? this.completedAt,
       reminderDateTime: reminderDateTime ?? this.reminderDateTime,
+      earlyReminderMinutes: earlyReminderMinutes ?? this.earlyReminderMinutes,
       relatedSkillId: relatedSkillId ?? this.relatedSkillId,
       relatedProjectId: relatedProjectId ?? this.relatedProjectId,
     );

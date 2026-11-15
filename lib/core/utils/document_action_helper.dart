@@ -419,8 +419,55 @@ class DocumentActionHelper {
     }
   }
 
-  /// Shares formatted rich summary to WhatsApp
-  static Future<void> shareToWhatsApp(
+  /// Directly shares the certificate document file (PDF or Image)
+  static Future<void> shareDocumentFileDirect(
+    BuildContext context,
+    Certificate cert, {
+    Uint8List? preloadedBytes,
+    String? preloadedDataUri,
+  }) async {
+    try {
+      final bytes = preloadedBytes ?? await getOrGenerateBytes(cert);
+      final fileName = cert.fileName;
+      if (kIsWeb) {
+        final mime = cert.isImage ? 'image/png' : 'application/pdf';
+        final dataUri = preloadedDataUri ??
+            'data:$mime;name=${Uri.encodeComponent(fileName)};base64,${base64Encode(bytes)}';
+        final shared = await shareWebFile(
+          dataUri,
+          fileName,
+          title: cert.name,
+          text: cert.shareSummary,
+        );
+        if (!shared && context.mounted) {
+          await downloadWebFile(dataUri, fileName);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  'Downloaded "$fileName". You can attach it directly into your chat!'),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        await Printing.sharePdf(bytes: bytes, filename: fileName);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not share file: $e'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Sends the formatted rich text message to WhatsApp
+  static Future<void> sendWhatsAppTextMessage(
       BuildContext context, Certificate cert) async {
     final text = Uri.encodeComponent(cert.modernShareSummary);
     final uri = Uri.parse('https://wa.me/?text=$text');
@@ -433,6 +480,20 @@ class DocumentActionHelper {
         );
       }
     }
+  }
+
+  /// Presents WhatsApp sharing options: Send PDF / Image Document or Send Formatted Message Card
+  static Future<void> shareToWhatsApp(
+      BuildContext context, Certificate cert) async {
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.cardBackground,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => _WhatsAppShareSheet(certificate: cert),
+    );
   }
 
   /// Views the certificate document (Opens PDF viewer or Fullscreen Image viewer)
@@ -1204,6 +1265,308 @@ class _ModernSocialButton extends StatelessWidget {
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WhatsAppShareSheet extends StatefulWidget {
+  final Certificate certificate;
+
+  const _WhatsAppShareSheet({required this.certificate});
+
+  @override
+  State<_WhatsAppShareSheet> createState() => _WhatsAppShareSheetState();
+}
+
+class _WhatsAppShareSheetState extends State<_WhatsAppShareSheet> {
+  Uint8List? _preparedBytes;
+  String? _preparedDataUri;
+
+  @override
+  void initState() {
+    super.initState();
+    _prewarmDocument();
+  }
+
+  Future<void> _prewarmDocument() async {
+    try {
+      final bytes =
+          await DocumentActionHelper.getOrGenerateBytes(widget.certificate);
+      final fileName = widget.certificate.fileName;
+      final mime =
+          widget.certificate.isImage ? 'image/png' : 'application/pdf';
+      final base64Content = base64Encode(bytes);
+      final dataUri =
+          'data:$mime;name=${Uri.encodeComponent(fileName)};base64,$base64Content';
+      if (mounted) {
+        setState(() {
+          _preparedBytes = bytes;
+          _preparedDataUri = dataUri;
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _shareFile() async {
+    final navigator = Navigator.of(context);
+    final cert = widget.certificate;
+    final bytes = _preparedBytes;
+    final dataUri = _preparedDataUri;
+    navigator.pop();
+    await DocumentActionHelper.shareDocumentFileDirect(
+      context,
+      cert,
+      preloadedBytes: bytes,
+      preloadedDataUri: dataUri,
+    );
+  }
+
+  Future<void> _shareMessage() async {
+    final navigator = Navigator.of(context);
+    final cert = widget.certificate;
+    navigator.pop();
+    await DocumentActionHelper.sendWhatsAppTextMessage(context, cert);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const waGreen = Color(0xFF25D366);
+    final isPdf = widget.certificate.isPdf;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: waGreen.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.chat_bubble_rounded,
+                    color: waGreen,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Share to WhatsApp',
+                        style: TextStyle(
+                          color: AppColors.primaryText,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Select how you want to share this credential',
+                        style: TextStyle(
+                          color: AppColors.secondaryText,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close,
+                      size: 20, color: AppColors.mutedText),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+
+            // Option 1: Send Document File (PDF / Image)
+            InkWell(
+              onTap: _shareFile,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: waGreen.withValues(alpha: 0.35)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: waGreen.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        isPdf
+                            ? Icons.picture_as_pdf_rounded
+                            : Icons.image_rounded,
+                        color: waGreen,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                isPdf
+                                    ? 'Send PDF Document'
+                                    : 'Send Image Document',
+                                style: const TextStyle(
+                                  color: AppColors.primaryText,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: waGreen.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'File',
+                                  style: TextStyle(
+                                    color: waGreen,
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'Attach the verified ${isPdf ? "PDF certificate" : "document file"} directly into WhatsApp chat',
+                            style: const TextStyle(
+                              color: AppColors.secondaryText,
+                              fontSize: 11.5,
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 13,
+                      color: waGreen,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Option 2: Send Formatted Message Card
+            InkWell(
+              onTap: _shareMessage,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.lightPurple.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.text_snippet_rounded,
+                        color: AppColors.lightPurple,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text(
+                                'Send Formatted Message Card',
+                                style: TextStyle(
+                                  color: AppColors.primaryText,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.lightPurple
+                                      .withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'Text',
+                                  style: TextStyle(
+                                    color: AppColors.lightPurple,
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          const Text(
+                            'Share rich card with bold title, issuing org, credential ID & verification link',
+                            style: TextStyle(
+                              color: AppColors.secondaryText,
+                              fontSize: 11.5,
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 13,
+                      color: AppColors.mutedText,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),

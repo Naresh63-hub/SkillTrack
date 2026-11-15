@@ -29,6 +29,32 @@ class FileUtils {
     }
   }
 
+  /// Safely writes raw file bytes directly to application-managed persistent storage.
+  /// Useful on Android when SAF returns content streams or `file.path` is null.
+  static Future<String?> saveBytesToAppStorage(
+    List<int> bytes,
+    String fileName, {
+    String subDir = 'certificates',
+  }) async {
+    if (kIsWeb) return null;
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      final targetDir = Directory(p.join(appDir.path, subDir));
+      if (!await targetDir.exists()) {
+        await targetDir.create(recursive: true);
+      }
+
+      final sanitizedName = p.basename(fileName);
+      final uniqueName = '${DateTime.now().millisecondsSinceEpoch}_$sanitizedName';
+      final destinationPath = p.join(targetDir.path, uniqueName);
+      final file = File(destinationPath);
+      await file.writeAsBytes(bytes, flush: true);
+      return file.path;
+    } catch (e) {
+      return null;
+    }
+  }
+
   static Future<bool> fileExists(String? filePath) async {
     if (filePath == null || filePath.isEmpty) return false;
     if (kIsWeb) return true;

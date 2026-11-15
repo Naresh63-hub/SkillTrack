@@ -262,59 +262,83 @@ class _AddEditProjectScreenState extends State<AddEditProjectScreen>
               ),
               const SizedBox(height: 14),
 
-              // Category & Status
-              Row(
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      value: _category,
-                      isExpanded: true,
-                      dropdownColor: AppColors.secondaryBackground,
-                      style: const TextStyle(
-                          color: AppColors.primaryText, fontSize: 13),
-                      decoration: const InputDecoration(
-                        labelText: 'Category *',
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        prefixIcon: Icon(Icons.category,
-                            size: 18, color: AppColors.mutedText),
-                      ),
-                      items: AppStrings.skillCategories.map((c) {
-                        return DropdownMenuItem(
-                            value: c,
-                            child: Text(c, overflow: TextOverflow.ellipsis));
-                      }).toList(),
-                      onChanged: (v) {
-                        if (v != null) setState(() => _category = v);
-                      },
+              // Category & Status (Responsive layout to ensure dropdown text never overlaps arrow on mobile)
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isCompact = constraints.maxWidth < 460;
+
+                  final categoryField = DropdownButtonFormField<String>(
+                    value: _category,
+                    isExpanded: true,
+                    isDense: true,
+                    iconSize: 20,
+                    dropdownColor: AppColors.secondaryBackground,
+                    style: const TextStyle(
+                        color: AppColors.primaryText, fontSize: 13),
+                    decoration: const InputDecoration(
+                      labelText: 'Category *',
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      prefixIcon: Icon(Icons.category,
+                          size: 18, color: AppColors.mutedText),
+                      prefixIconConstraints:
+                          BoxConstraints(minWidth: 38, minHeight: 38),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      value: _status,
-                      isExpanded: true,
-                      dropdownColor: AppColors.secondaryBackground,
-                      style: const TextStyle(
-                          color: AppColors.primaryText, fontSize: 13),
-                      decoration: const InputDecoration(
-                        labelText: 'Status',
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        prefixIcon: Icon(Icons.flag,
-                            size: 18, color: AppColors.mutedText),
-                      ),
-                      items: AppStrings.projectStatuses.map((s) {
-                        return DropdownMenuItem(
-                            value: s,
-                            child: Text(s, overflow: TextOverflow.ellipsis));
-                      }).toList(),
-                      onChanged: (v) {
-                        if (v != null) setState(() => _status = v);
-                      },
+                    items: AppStrings.skillCategories.map((c) {
+                      return DropdownMenuItem(
+                          value: c,
+                          child: Text(c, overflow: TextOverflow.ellipsis));
+                    }).toList(),
+                    onChanged: (v) {
+                      if (v != null) setState(() => _category = v);
+                    },
+                  );
+
+                  final statusField = DropdownButtonFormField<String>(
+                    value: _status,
+                    isExpanded: true,
+                    isDense: true,
+                    iconSize: 20,
+                    dropdownColor: AppColors.secondaryBackground,
+                    style: const TextStyle(
+                        color: AppColors.primaryText, fontSize: 13),
+                    decoration: const InputDecoration(
+                      labelText: 'Status',
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      prefixIcon:
+                          Icon(Icons.flag, size: 18, color: AppColors.mutedText),
+                      prefixIconConstraints:
+                          BoxConstraints(minWidth: 38, minHeight: 38),
                     ),
-                  ),
-                ],
+                    items: AppStrings.projectStatuses.map((s) {
+                      return DropdownMenuItem(
+                          value: s,
+                          child: Text(s, overflow: TextOverflow.ellipsis));
+                    }).toList(),
+                    onChanged: (v) {
+                      if (v != null) setState(() => _status = v);
+                    },
+                  );
+
+                  if (isCompact) {
+                    return Column(
+                      children: [
+                        categoryField,
+                        const SizedBox(height: 14),
+                        statusField,
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      Expanded(child: categoryField),
+                      const SizedBox(width: 12),
+                      Expanded(child: statusField),
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 14),
 

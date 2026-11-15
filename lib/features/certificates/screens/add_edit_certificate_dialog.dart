@@ -89,21 +89,11 @@ class _AddEditCertificateDialogState extends State<AddEditCertificateDialog> {
       try {
         result = await FilePicker.platform.pickFiles(
           type: FileType.custom,
-          allowedExtensions: [
-            'pdf',
-            'png',
-            'jpg',
-            'jpeg',
-            'PDF',
-            'PNG',
-            'JPG',
-            'JPEG'
-          ],
+          allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg', 'webp'],
           withData: true,
         );
       } catch (pickerErr) {
-        debugPrint(
-            'Custom file picker failed, falling back to any: $pickerErr');
+        debugPrint('Custom file picker failed, falling back to any: $pickerErr');
         result = await FilePicker.platform.pickFiles(
           type: FileType.any,
           withData: true,
@@ -143,23 +133,44 @@ class _AddEditCertificateDialogState extends State<AddEditCertificateDialog> {
               );
             }
           }
-        } else if (file.path != null) {
-          final originalPath = file.path!;
-          final persistentPath =
-              await FileUtils.copyFileToAppStorage(originalPath);
-          setState(() {
-            _localFilePath = persistentPath ?? originalPath;
-            _pickedFileName = name;
-          });
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Attached "$name" successfully'),
-                behavior: SnackBarBehavior.floating,
-                backgroundColor: AppColors.success,
-                duration: const Duration(seconds: 2),
-              ),
+        } else {
+          // Native platforms (Android, iOS, Desktop)
+          String? persistentPath;
+          if (file.path != null) {
+            persistentPath = await FileUtils.copyFileToAppStorage(file.path!);
+            persistentPath ??= file.path;
+          } else if (file.bytes != null && file.bytes!.isNotEmpty) {
+            persistentPath = await FileUtils.saveBytesToAppStorage(
+              file.bytes!,
+              name,
             );
+          }
+
+          if (persistentPath != null) {
+            setState(() {
+              _localFilePath = persistentPath;
+              _pickedFileName = name;
+            });
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Attached "$name" successfully'),
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: AppColors.success,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Could not access selected file. Please try another file.'),
+                  backgroundColor: AppColors.error,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
           }
         }
       }

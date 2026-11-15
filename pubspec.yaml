@@ -32,6 +32,7 @@ dependencies:
 
   # Notifications
   flutter_local_notifications: ^19.0.0
+  timezone: ^0.10.1
 
   # Speech to Text for Mock Interview Verbal Practice
   speech_to_text: ^7.0.0

@@ -60,6 +60,7 @@ class AppStrings {
     'Project Development',
     'Certification',
     'Placement Preparation',
+    'Call / Meeting',
     'College Work',
     'Personal',
     'Other',

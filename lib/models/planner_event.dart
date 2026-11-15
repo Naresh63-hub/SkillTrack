@@ -128,9 +128,21 @@ class PlannerEvent {
     return '${days.abs()} DAYS AGO';
   }
 
+  String? get reminderLabel {
+    if (reminderMinutesBefore == null) return null;
+    final mins = reminderMinutesBefore!;
+    if (mins == 0) return 'At start time';
+    if (mins < 60) return '$mins mins early';
+    if (mins == 60) return '1 hour early';
+    if (mins < 1440) return '${mins ~/ 60} hours early';
+    if (mins == 1440) return '1 day early';
+    return '${mins ~/ 1440} days early';
+  }
+
   static const List<String> eventTypes = [
     'Placement Drive',
     'Exam / Test',
+    'Call / Meeting',
     'Study Sprint',
     'Revision',
     'Mock Interview',

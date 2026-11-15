@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/validators.dart';
@@ -24,6 +25,7 @@ class _AddEditTaskDialogState extends State<AddEditTaskDialog>
   DateTime _dueDate = DateTime.now();
   TimeOfDay _dueTime = const TimeOfDay(hour: 18, minute: 0);
   bool _setReminder = false;
+  int _earlyReminderMinutes = 15;
   bool _draftRestored = false;
 
   @override
@@ -43,8 +45,9 @@ class _AddEditTaskDialogState extends State<AddEditTaskDialog>
         _dueTime = TimeOfDay(hour: dt.hour, minute: dt.minute);
       } catch (_) {}
     }
-    _setReminder =
-        t?.reminderDateTime != null && t!.reminderDateTime!.isNotEmpty;
+    _setReminder = (t?.reminderDateTime != null && t!.reminderDateTime!.isNotEmpty) ||
+        (t?.earlyReminderMinutes != null);
+    _earlyReminderMinutes = t?.earlyReminderMinutes ?? 15;
 
     if (widget.task == null) {
       _restoreDraft();
@@ -69,6 +72,12 @@ class _AddEditTaskDialogState extends State<AddEditTaskDialog>
         if (draft['priority'] != null) {
           _priority = draft['priority'];
         }
+        if (draft['earlyReminderMinutes'] != null) {
+          _earlyReminderMinutes = draft['earlyReminderMinutes'] as int;
+        }
+        if (draft['setReminder'] != null) {
+          _setReminder = draft['setReminder'] as bool;
+        }
         if (_titleController.text.isNotEmpty ||
             _descController.text.isNotEmpty) {
           _draftRestored = true;
@@ -84,6 +93,8 @@ class _AddEditTaskDialogState extends State<AddEditTaskDialog>
       'description': _descController.text,
       'category': _category,
       'priority': _priority,
+      'earlyReminderMinutes': _earlyReminderMinutes,
+      'setReminder': _setReminder,
     });
   }
 
@@ -218,7 +229,15 @@ class _AddEditTaskDialogState extends State<AddEditTaskDialog>
                               child: Text(c, overflow: TextOverflow.ellipsis));
                         }).toList(),
                         onChanged: (v) {
-                          if (v != null) setState(() => _category = v);
+                          if (v != null) {
+                            setState(() {
+                              _category = v;
+                              if (v == 'Call / Meeting' && !_setReminder) {
+                                _setReminder = true;
+                                _earlyReminderMinutes = 15;
+                              }
+                            });
+                          }
                         },
                       ),
                     ),
@@ -286,17 +305,142 @@ class _AddEditTaskDialogState extends State<AddEditTaskDialog>
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
 
-                // Reminder Checkbox
-                CheckboxListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Schedule task notification reminder',
-                      style: TextStyle(
-                          color: AppColors.secondaryText, fontSize: 13)),
-                  value: _setReminder,
-                  activeColor: AppColors.brightAccent,
-                  onChanged: (v) => setState(() => _setReminder = v ?? false),
+                // Early Reminder Container
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondaryBackground.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _setReminder
+                          ? AppColors.primaryPurple.withValues(alpha: 0.4)
+                          : AppColors.border.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                _category == 'Call / Meeting'
+                                    ? Icons.phone_in_talk_rounded
+                                    : Icons.notifications_active_outlined,
+                                size: 18,
+                                color: _setReminder
+                                    ? AppColors.lightPurple
+                                    : AppColors.mutedText,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _category == 'Call / Meeting'
+                                    ? 'Call / Meeting Reminder'
+                                    : 'Early Notification Reminder',
+                                style: const TextStyle(
+                                  color: AppColors.primaryText,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Switch(
+                            value: _setReminder,
+                            activeColor: AppColors.brightAccent,
+                            onChanged: (v) => setState(() => _setReminder = v),
+                          ),
+                        ],
+                      ),
+                      if (_setReminder) ...[
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Remind me ahead of time:',
+                          style: TextStyle(
+                            color: AppColors.secondaryText,
+                            fontSize: 11.5,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        DropdownButtonFormField<int>(
+                          value: _earlyReminderMinutes,
+                          dropdownColor: AppColors.secondaryBackground,
+                          style: const TextStyle(
+                              color: AppColors.primaryText, fontSize: 13),
+                          decoration: InputDecoration(
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            prefixIcon: const Icon(Icons.timer_outlined,
+                                size: 18, color: AppColors.lightPurple),
+                            filled: true,
+                            fillColor: AppColors.cardBackground,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide:
+                                  const BorderSide(color: AppColors.border),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide:
+                                  const BorderSide(color: AppColors.border),
+                            ),
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                                value: 0, child: Text('At due time (0 mins)')),
+                            DropdownMenuItem(
+                                value: 5, child: Text('5 minutes early')),
+                            DropdownMenuItem(
+                                value: 10, child: Text('10 minutes early')),
+                            DropdownMenuItem(
+                                value: 15,
+                                child: Text('15 minutes early (Recommended)')),
+                            DropdownMenuItem(
+                                value: 30, child: Text('30 minutes early')),
+                            DropdownMenuItem(
+                                value: 60, child: Text('1 hour early')),
+                            DropdownMenuItem(
+                                value: 1440, child: Text('1 day early')),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() => _earlyReminderMinutes = val);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 6),
+                        Builder(
+                          builder: (context) {
+                            final fullDue = DateTime(
+                              _dueDate.year,
+                              _dueDate.month,
+                              _dueDate.day,
+                              _dueTime.hour,
+                              _dueTime.minute,
+                            );
+                            final alertAt = fullDue.subtract(
+                                Duration(minutes: _earlyReminderMinutes));
+                            final isPast = alertAt.isBefore(DateTime.now());
+                            return Text(
+                              isPast
+                                  ? '⚠️ Notice: Reminder time is in the past'
+                                  : '⏰ Alert scheduled for ${DateFormat('MMM d, h:mm a').format(alertAt)}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isPast
+                                    ? Colors.amberAccent
+                                    : AppColors.lightPurple,
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -334,6 +478,11 @@ class _AddEditTaskDialogState extends State<AddEditTaskDialog>
       _dueTime.minute,
     );
 
+    final earlyMins = _setReminder ? _earlyReminderMinutes : null;
+    final reminderDate = _setReminder
+        ? fullDueDate.subtract(Duration(minutes: earlyMins!)).toIso8601String()
+        : null;
+
     final task = TaskModel(
       id: widget.task?.id,
       title: _titleController.text.trim(),
@@ -343,7 +492,8 @@ class _AddEditTaskDialogState extends State<AddEditTaskDialog>
       category: _category,
       priority: _priority,
       dueDate: fullDueDate.toIso8601String(),
-      reminderDateTime: _setReminder ? fullDueDate.toIso8601String() : null,
+      reminderDateTime: reminderDate,
+      earlyReminderMinutes: earlyMins,
       isCompleted: widget.task?.isCompleted ?? false,
       completedAt: widget.task?.completedAt,
       creationDate: widget.task?.creationDate,

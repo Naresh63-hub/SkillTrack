@@ -150,6 +150,7 @@ class DatabaseHelper {
           is_completed INTEGER NOT NULL DEFAULT 0,
           completed_at TEXT,
           reminder_date_time TEXT,
+          early_reminder_minutes INTEGER,
           related_skill_id INTEGER,
           related_project_id INTEGER,
           FOREIGN KEY (related_skill_id) REFERENCES skills (id) ON DELETE SET NULL,
@@ -507,6 +508,10 @@ class DatabaseHelper {
     try {
       await db.execute(
           'ALTER TABLE planner_events ADD COLUMN reminder_minutes_before INTEGER;');
+    } catch (_) {}
+    try {
+      await db.execute(
+          'ALTER TABLE tasks ADD COLUMN early_reminder_minutes INTEGER;');
     } catch (_) {}
   }
 
