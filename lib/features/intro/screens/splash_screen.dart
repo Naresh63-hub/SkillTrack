@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/widgets/skilltrack_logo.dart';
+import '../../../models/student_profile.dart';
 import '../../../repositories/profile_repository.dart';
 import '../../../services/supabase_auth_service.dart';
 import '../../../services/navigation_state_service.dart';
@@ -27,43 +29,48 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
+    // Snappy, modern startup animation (400ms instead of 1800ms)
     _progressController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1800),
+      duration: const Duration(milliseconds: 400),
     );
 
     _progressAnimation = CurvedAnimation(
       parent: _progressController,
-      curve: Curves.easeInOut,
+      curve: Curves.easeOutCubic,
     );
 
     _progressController.forward();
-
-    _progressController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _navigateNext();
-      }
-    });
+    _fastBootAndNavigate();
   }
 
-  Future<void> _navigateNext() async {
-    final profile = await ProfileRepository().getProfile();
+  Future<void> _fastBootAndNavigate() async {
+    // Run all database, preferences, and auth checks concurrently
+    final results = await Future.wait([
+      ProfileRepository().getProfile(),
+      SharedPreferences.getInstance(),
+      NavigationStateService.instance.getActiveTab(),
+      NavigationStateService.instance.getActiveRoute(),
+      Future.delayed(const Duration(milliseconds: kIsWeb ? 200 : 350)),
+    ]);
+
+    final profile = results[0] as StudentProfile;
+    final prefs = results[1] as SharedPreferences;
+    final savedTab = results[2] as int;
+    final savedRoute = results[3] as String?;
+
     final hasValidProfile = profile.name.trim().isNotEmpty;
-    final prefs = await SharedPreferences.getInstance();
     final hasOnboarded = prefs.getBool('has_onboarded') ?? false;
 
     final authService = SupabaseAuthService.instance;
     final isAuth = authService.isAuthenticated;
-    final isGuest = await authService.isGuestMode();
+    final isGuest = prefs.getBool('is_guest_mode') ?? false;
 
     if (!mounted) return;
 
     Widget target;
     if (isAuth || isGuest) {
       if (hasValidProfile) {
-        final savedTab = await NavigationStateService.instance.getActiveTab();
-        final savedRoute =
-            await NavigationStateService.instance.getActiveRoute();
         target = MainNavigationShell(
           initialIndex: savedTab,
           initialRoute: savedRoute,
@@ -79,7 +86,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 600),
+        transitionDuration: const Duration(milliseconds: 200),
         pageBuilder: (context, animation, secondaryAnimation) => target,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);

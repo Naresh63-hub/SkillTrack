@@ -342,34 +342,32 @@ class _CertificatesScreenState extends State<CertificatesScreen> {
                   }
                 },
                 itemBuilder: (context) => [
-                  if (cert.hasFile)
-                    const PopupMenuItem(
-                      value: 'view',
-                      child: Row(
-                        children: [
-                          Icon(Icons.visibility_outlined,
-                              size: 16, color: AppColors.brightAccent),
-                          SizedBox(width: 8),
-                          Text('View Document',
-                              style: TextStyle(
-                                  color: AppColors.primaryText, fontSize: 13)),
-                        ],
-                      ),
+                  const PopupMenuItem(
+                    value: 'view',
+                    child: Row(
+                      children: [
+                        Icon(Icons.visibility_outlined,
+                            size: 16, color: AppColors.brightAccent),
+                        SizedBox(width: 8),
+                        Text('View Document',
+                            style: TextStyle(
+                                color: AppColors.primaryText, fontSize: 13)),
+                      ],
                     ),
-                  if (cert.hasFile)
-                    const PopupMenuItem(
-                      value: 'download',
-                      child: Row(
-                        children: [
-                          Icon(Icons.download_rounded,
-                              size: 16, color: AppColors.secondaryAccent),
-                          SizedBox(width: 8),
-                          Text('Download Document',
-                              style: TextStyle(
-                                  color: AppColors.primaryText, fontSize: 13)),
-                        ],
-                      ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'download',
+                    child: Row(
+                      children: [
+                        Icon(Icons.download_rounded,
+                            size: 16, color: AppColors.secondaryAccent),
+                        SizedBox(width: 8),
+                        Text('Download Document',
+                            style: TextStyle(
+                                color: AppColors.primaryText, fontSize: 13)),
+                      ],
                     ),
+                  ),
                   const PopupMenuItem(
                     value: 'share',
                     child: Row(
@@ -487,66 +485,67 @@ class _CertificatesScreenState extends State<CertificatesScreen> {
           const SizedBox(height: 8),
           Row(
             children: [
-              if (cert.hasFile) ...[
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
-                      visualDensity: VisualDensity.compact,
-                      side: BorderSide(
-                        color: AppColors.brightAccent.withValues(alpha: 0.35),
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    icon: const Icon(Icons.visibility_outlined,
-                        size: 14, color: AppColors.brightAccent),
-                    label: const Text(
-                      'View',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: AppColors.brightAccent,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    onPressed: () =>
-                        DocumentActionHelper.viewDocument(context, cert),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
-                      visualDensity: VisualDensity.compact,
-                      side: BorderSide(
-                        color: AppColors.secondaryAccent.withValues(alpha: 0.5),
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    icon: const Icon(Icons.download_rounded,
-                        size: 14, color: AppColors.brightAccent),
-                    label: const Text(
-                      'Download',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: AppColors.brightAccent,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    onPressed: () =>
-                        DocumentActionHelper.downloadDocument(context, cert),
-                  ),
-                ),
-                const SizedBox(width: 6),
-              ],
               Expanded(
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                    visualDensity: VisualDensity.compact,
+                    side: BorderSide(
+                      color: AppColors.brightAccent.withValues(alpha: 0.35),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  icon: const Icon(Icons.visibility_outlined,
+                      size: 14, color: AppColors.brightAccent),
+                  label: const Text(
+                    'View',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: AppColors.brightAccent,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  onPressed: () =>
+                      DocumentActionHelper.viewDocument(context, cert),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                    visualDensity: VisualDensity.compact,
+                    side: BorderSide(
+                      color: AppColors.secondaryAccent.withValues(alpha: 0.5),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  icon: const Icon(Icons.download_rounded,
+                      size: 14, color: AppColors.brightAccent),
+                  label: const Text(
+                    'Download',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: AppColors.brightAccent,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  onPressed: () =>
+                      DocumentActionHelper.downloadDocument(context, cert),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
                     visualDensity: VisualDensity.compact,
                     side: BorderSide(
                       color: AppColors.primaryPurple.withValues(alpha: 0.35),

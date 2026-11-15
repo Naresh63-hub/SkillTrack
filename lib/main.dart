@@ -14,23 +14,28 @@ void main() async {
     databaseFactory = databaseFactoryFfiWebNoWebWorker;
   }
 
-  // Initialize Supabase Cloud Auth
+  // Fast parallel initialization with short network timeout so app startup is never stalled
   try {
-    if (SupabaseConfig.isConfigured) {
-      await Supabase.initialize(
-        url: SupabaseConfig.url,
-        anonKey: SupabaseConfig.anonKey,
-      );
-    }
+    await Future.wait([
+      if (SupabaseConfig.isConfigured)
+        Supabase.initialize(
+          url: SupabaseConfig.url,
+          anonKey: SupabaseConfig.anonKey,
+        ).timeout(
+          const Duration(milliseconds: 300),
+          onTimeout: () {
+            debugPrint(
+                'Supabase init fast-path timeout: continuing in background');
+            return Supabase.instance;
+          },
+        ).catchError((e) {
+          debugPrint('Supabase initialization notice: $e');
+          return Supabase.instance;
+        }),
+      NotificationService.instance.init().catchError((_) {}),
+    ]);
   } catch (e) {
-    debugPrint('Supabase initialization notice: $e');
-  }
-
-  // Initialize notifications gracefully
-  try {
-    await NotificationService.instance.init();
-  } catch (_) {
-    // If running in test or restricted environment
+    debugPrint('Startup services fast-init notice: $e');
   }
 
   runApp(const SkillTrackApp());

@@ -5,16 +5,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:printing/printing.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:path/path.dart' as p;
 import '../constants/app_colors.dart';
 import '../../models/certificate.dart';
 import 'web_file_downloader.dart';
 
-/// Universal helper to View, Download, and Share certificate and offer letter documents
+/// Universal helper to View, Download, and Share certificate and offer letter documents.
+/// Guarantees that EVERY certificate always has a viewable, downloadable, and shareable document.
 class DocumentActionHelper {
-  /// Extracts raw byte data from a Certificate's localFilePath
-  /// Handles both Web Data URIs and Native local file paths.
+  /// Extracts raw byte data from a Certificate's localFilePath.
+  /// Handles Web Data URIs, Network URLs, and Native local file paths.
   static Uint8List? getBytes(Certificate cert) {
     if (!cert.hasFile) return null;
     final path = cert.localFilePath!;
@@ -36,55 +39,242 @@ class DocumentActionHelper {
     return null;
   }
 
-  /// Downloads the certificate document (PDF or Image) to user's device
+  /// Generates an official, beautifully styled Verified Digital Credential PDF document.
+  static Future<Uint8List> generateCertificatePdf(Certificate cert) async {
+    final pdf = pw.Document();
+
+    final primaryColor = PdfColor.fromHex('#4C1D95'); // Deep Violet
+    final accentColor = PdfColor.fromHex('#7C3AED'); // Vibrant Purple
+    final goldColor = PdfColor.fromHex('#D97706'); // Amber / Gold
+    final textColor = PdfColor.fromHex('#1E1B4B');
+    final mutedColor = PdfColor.fromHex('#6B7280');
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(32),
+        build: (pw.Context ctx) {
+          return pw.Container(
+            padding: const pw.EdgeInsets.all(22),
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(color: primaryColor, width: 3.5),
+              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(12)),
+            ),
+            child: pw.Container(
+              padding: const pw.EdgeInsets.all(18),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: goldColor, width: 1.2),
+                borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+              ),
+              child: pw.Column(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  // Top Header
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text(
+                            'SKILLTRACK VERIFIED CREDENTIAL',
+                            style: pw.TextStyle(
+                              color: primaryColor,
+                              fontSize: 15,
+                              fontWeight: pw.FontWeight.bold,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          pw.SizedBox(height: 2),
+                          pw.Text(
+                            'Official Academic & Career Verification Record',
+                            style: pw.TextStyle(
+                                color: mutedColor, fontSize: 9),
+                          ),
+                        ],
+                      ),
+                      pw.Container(
+                        padding: const pw.EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: pw.BoxDecoration(
+                          color: PdfColor.fromHex('#EDE9FE'),
+                          borderRadius:
+                              const pw.BorderRadius.all(pw.Radius.circular(4)),
+                        ),
+                        child: pw.Text(
+                          cert.category.toUpperCase(),
+                          style: pw.TextStyle(
+                            color: accentColor,
+                            fontSize: 9.5,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Center Certificate Details
+                  pw.Column(
+                    children: [
+                      pw.SizedBox(height: 10),
+                      pw.Text(
+                        'This document certifies completion and record of',
+                        style: pw.TextStyle(
+                          color: mutedColor,
+                          fontSize: 11.5,
+                          fontStyle: pw.FontStyle.italic,
+                        ),
+                      ),
+                      pw.SizedBox(height: 8),
+                      pw.Text(
+                        cert.name,
+                        style: pw.TextStyle(
+                          color: textColor,
+                          fontSize: 22,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                        textAlign: pw.TextAlign.center,
+                      ),
+                      pw.SizedBox(height: 6),
+                      pw.Text(
+                        'Issued by ${cert.issuingOrganization}',
+                        style: pw.TextStyle(
+                          color: accentColor,
+                          fontSize: 13,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      if (cert.description != null &&
+                          cert.description!.isNotEmpty) ...[
+                        pw.SizedBox(height: 8),
+                        pw.Container(
+                          constraints: const pw.BoxConstraints(maxWidth: 520),
+                          child: pw.Text(
+                            cert.description!,
+                            style: pw.TextStyle(
+                                color: textColor, fontSize: 9.5),
+                            textAlign: pw.TextAlign.center,
+                            maxLines: 3,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+
+                  // Bottom Metadata & Verification
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: pw.CrossAxisAlignment.end,
+                    children: [
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text('Completion Date: ${cert.completionDate}',
+                              style: pw.TextStyle(
+                                  color: textColor, fontSize: 9.5)),
+                          if (cert.expirationDate != null &&
+                              cert.expirationDate!.isNotEmpty) ...[
+                            pw.SizedBox(height: 2),
+                            pw.Text('Valid Until: ${cert.expirationDate}',
+                                style: pw.TextStyle(
+                                    color: mutedColor, fontSize: 9)),
+                          ],
+                          if (cert.credentialId != null &&
+                              cert.credentialId!.isNotEmpty) ...[
+                            pw.SizedBox(height: 2),
+                            pw.Text('Credential ID: ${cert.credentialId}',
+                                style: pw.TextStyle(
+                                    color: mutedColor, fontSize: 9)),
+                          ],
+                          if (cert.hasVerificationUrl) ...[
+                            pw.SizedBox(height: 2),
+                            pw.Text('Verification: ${cert.verificationUrl}',
+                                style: pw.TextStyle(
+                                    color: accentColor, fontSize: 8.5)),
+                          ],
+                        ],
+                      ),
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.end,
+                        children: [
+                          pw.Container(
+                            padding: const pw.EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: pw.BoxDecoration(
+                              border:
+                                  pw.Border.all(color: goldColor, width: 1),
+                              borderRadius: const pw.BorderRadius.all(
+                                  pw.Radius.circular(6)),
+                            ),
+                            child: pw.Text(
+                              'VERIFIED BY SKILLTRACK',
+                              style: pw.TextStyle(
+                                color: goldColor,
+                                fontSize: 8.5,
+                                fontWeight: pw.FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          pw.SizedBox(height: 3),
+                          pw.Text(
+                            'https://skill-track-ashy.vercel.app',
+                            style:
+                                pw.TextStyle(color: mutedColor, fontSize: 7.5),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    return pdf.save();
+  }
+
+  /// Returns uploaded document bytes or generates an official verified PDF credential
+  static Future<Uint8List> getOrGenerateBytes(Certificate cert) async {
+    final existing = getBytes(cert);
+    if (existing != null && existing.isNotEmpty) {
+      return existing;
+    }
+    return await generateCertificatePdf(cert);
+  }
+
+  /// Downloads the certificate document (PDF or Image) to the user's device
   static Future<void> downloadDocument(
       BuildContext context, Certificate cert) async {
-    if (!cert.hasFile) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No document file attached to this credential.'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    final path = cert.localFilePath!;
     final fileName = cert.fileName;
-
     try {
+      final bytes = await getOrGenerateBytes(cert);
+
       if (kIsWeb) {
-        // On Web: Trigger browser download using the data URI or bytes
-        if (path.startsWith('data:')) {
-          final downloaded = await downloadWebFile(path, fileName);
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(downloaded
-                    ? 'Downloading "$fileName"...'
-                    : 'Download initiated for "$fileName"'),
-                behavior: SnackBarBehavior.floating,
-                backgroundColor: AppColors.success,
-              ),
-            );
-          }
-          return;
-        } else {
-          // If it's an external or blob url
-          await launchUrl(Uri.parse(path), mode: LaunchMode.externalApplication);
-          return;
+        final mime = cert.isImage ? 'image/png' : 'application/pdf';
+        final base64Content = base64Encode(bytes);
+        final dataUri =
+            'data:$mime;name=${Uri.encodeComponent(fileName)};base64,$base64Content';
+
+        final downloaded = await downloadWebFile(dataUri, fileName);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(downloaded
+                  ? 'Downloading "$fileName"...'
+                  : 'Download initiated for "$fileName"'),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: AppColors.success,
+            ),
+          );
         }
+        return;
       }
 
       // Native (Android/iOS)
-      final bytes = getBytes(cert);
-      if (bytes == null) {
-        throw Exception('Could not read file data from local storage.');
-      }
-
-      if (cert.isPdf) {
-        // Printing.sharePdf allows saving directly to device Downloads or Drive
+      if (cert.isPdf || !cert.hasFile) {
         await Printing.sharePdf(bytes: bytes, filename: fileName);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -96,7 +286,6 @@ class DocumentActionHelper {
           );
         }
       } else {
-        // Save image to downloads / documents
         Directory? targetDir;
         try {
           targetDir = await getDownloadsDirectory();
@@ -134,37 +323,78 @@ class DocumentActionHelper {
     }
   }
 
+  /// Shares the actual document file (Total File Share)
+  static Future<void> shareDocumentFile(
+      BuildContext context, Certificate cert) async {
+    final fileName = cert.fileName;
+    try {
+      final bytes = await getOrGenerateBytes(cert);
+
+      if (kIsWeb) {
+        final mime = cert.isImage ? 'image/png' : 'application/pdf';
+        final base64Content = base64Encode(bytes);
+        final dataUri =
+            'data:$mime;name=${Uri.encodeComponent(fileName)};base64,$base64Content';
+
+        // 1. Try modern Web Share API with attached file
+        final shared = await shareWebFile(
+          dataUri,
+          fileName,
+          title: cert.name,
+          text: cert.shareSummary,
+        );
+
+        if (!shared) {
+          // If browser doesn't support file sharing, trigger download
+          await downloadWebFile(dataUri, fileName);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                    'Downloaded "$fileName". You can now attach and send it directly!'),
+                backgroundColor: AppColors.success,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        }
+        return;
+      }
+
+      // Native (Android/iOS): Invokes native Android share sheet with file
+      await Printing.sharePdf(bytes: bytes, filename: fileName);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not share file: $e'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   /// Views the certificate document (Opens PDF viewer or Fullscreen Image viewer)
   static Future<void> viewDocument(
       BuildContext context, Certificate cert) async {
-    if (cert.isPdf) {
-      await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (ctx) => PdfDocumentViewerScreen(certificate: cert),
-        ),
-      );
-    } else if (cert.isImage) {
+    if (cert.hasFile && cert.isImage) {
       await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (ctx) => ImageDocumentViewerScreen(certificate: cert),
         ),
       );
-    } else if (cert.hasVerificationUrl) {
-      final uri = Uri.tryParse(cert.verificationUrl!);
-      if (uri != null && await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No document or verification link attached to view.'),
-          behavior: SnackBarBehavior.floating,
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (ctx) => PdfDocumentViewerScreen(certificate: cert),
         ),
       );
     }
   }
 
-  /// Opens the Share bottom sheet with multiple sharing options
+  /// Opens the Share bottom sheet with full file and direct sharing options
   static void showShareDialog(BuildContext context, Certificate cert) {
     showModalBottomSheet(
       context: context,
@@ -178,7 +408,7 @@ class DocumentActionHelper {
   }
 }
 
-/// Fullscreen interactive PDF viewer with page controls, zoom, print, and share
+/// Fullscreen interactive PDF viewer with page controls, zoom, print, and browser open
 class PdfDocumentViewerScreen extends StatelessWidget {
   final Certificate certificate;
 
@@ -186,8 +416,6 @@ class PdfDocumentViewerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bytes = DocumentActionHelper.getBytes(certificate);
-
     return Scaffold(
       backgroundColor: AppColors.mainBackground,
       appBar: AppBar(
@@ -198,6 +426,19 @@ class PdfDocumentViewerScreen extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
+          if (kIsWeb)
+            IconButton(
+              icon: const Icon(Icons.open_in_new_rounded),
+              tooltip: 'Open in Browser Tab',
+              onPressed: () async {
+                final bytes =
+                    await DocumentActionHelper.getOrGenerateBytes(certificate);
+                final base64Content = base64Encode(bytes);
+                final dataUri =
+                    'data:application/pdf;name=${Uri.encodeComponent(certificate.fileName)};base64,$base64Content';
+                openWebFileInNewTab(dataUri);
+              },
+            ),
           IconButton(
             icon: const Icon(Icons.download_rounded),
             tooltip: 'Download PDF',
@@ -206,27 +447,23 @@ class PdfDocumentViewerScreen extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.share_rounded),
-            tooltip: 'Share Credential',
+            tooltip: 'Share Document File',
             onPressed: () =>
-                DocumentActionHelper.showShareDialog(context, certificate),
+                DocumentActionHelper.shareDocumentFile(context, certificate),
           ),
         ],
       ),
-      body: bytes != null
-          ? PdfPreview(
-              build: (format) => bytes,
-              pdfFileName: certificate.fileName,
-              allowPrinting: true,
-              allowSharing: true,
-              canChangeOrientation: false,
-              canChangePageFormat: false,
-              canDebug: false,
-              actionBarTheme: const PdfActionBarTheme(
-                backgroundColor: AppColors.secondaryBackground,
-                iconColor: AppColors.primaryText,
-              ),
-            )
-          : Center(
+      body: FutureBuilder<Uint8List>(
+        future: DocumentActionHelper.getOrGenerateBytes(certificate),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.brightAccent),
+            );
+          }
+          final bytes = snapshot.data;
+          if (bytes == null || bytes.isEmpty) {
+            return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
@@ -236,28 +473,39 @@ class PdfDocumentViewerScreen extends StatelessWidget {
                         size: 48, color: AppColors.mutedText),
                     const SizedBox(height: 12),
                     const Text(
-                      'Unable to render PDF preview.',
+                      'Unable to render document preview.',
                       style: TextStyle(
                           color: AppColors.primaryText,
                           fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'You can still download the document to view it.',
-                      style: TextStyle(
-                          color: AppColors.secondaryText, fontSize: 12),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton.icon(
                       onPressed: () => DocumentActionHelper.downloadDocument(
                           context, certificate),
                       icon: const Icon(Icons.download_rounded, size: 18),
-                      label: const Text('Download PDF'),
+                      label: const Text('Download PDF Document'),
                     ),
                   ],
                 ),
               ),
+            );
+          }
+
+          return PdfPreview(
+            build: (format) => bytes,
+            pdfFileName: certificate.fileName,
+            allowPrinting: true,
+            allowSharing: true,
+            canChangeOrientation: false,
+            canChangePageFormat: false,
+            canDebug: false,
+            actionBarTheme: const PdfActionBarTheme(
+              backgroundColor: AppColors.secondaryBackground,
+              iconColor: AppColors.primaryText,
             ),
+          );
+        },
+      ),
     );
   }
 }
@@ -294,9 +542,9 @@ class ImageDocumentViewerScreen extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.share_rounded, color: Colors.white),
-            tooltip: 'Share Credential',
+            tooltip: 'Share Document File',
             onPressed: () =>
-                DocumentActionHelper.showShareDialog(context, certificate),
+                DocumentActionHelper.shareDocumentFile(context, certificate),
           ),
         ],
       ),
@@ -331,7 +579,8 @@ class ImageDocumentViewerScreen extends StatelessWidget {
   }
 }
 
-/// Bottom Sheet for sharing certificates, offer letters, and credentials
+/// Bottom Sheet for sharing certificates, offer letters, and credentials.
+/// Offers direct TOTAL FILE SHARING (sharing the actual PDF/image file) + text summary.
 class ShareCredentialSheet extends StatelessWidget {
   final Certificate certificate;
 
@@ -400,10 +649,10 @@ class ShareCredentialSheet extends StatelessWidget {
                       color: AppColors.primaryPurple, size: 22),
                   SizedBox(width: 8),
                   Text(
-                    'Share Credential',
+                    'Share Credential & Document',
                     style: TextStyle(
                       color: AppColors.primaryText,
-                      fontSize: 17,
+                      fontSize: 16.5,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -469,19 +718,17 @@ class ShareCredentialSheet extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (certificate.hasFile) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          'Attachment: ${certificate.fileName}',
-                          style: const TextStyle(
-                            color: AppColors.lightPurple,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      const SizedBox(height: 2),
+                      Text(
+                        'File: ${certificate.fileName}',
+                        style: const TextStyle(
+                          color: AppColors.lightPurple,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
                         ),
-                      ],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   ),
                 ),
@@ -490,19 +737,77 @@ class ShareCredentialSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Primary Actions
+          // PRIMARY PROMINENT ACTION: SHARE TOTAL FILE
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryPurple,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 2,
+              ),
+              icon: const Icon(Icons.send_rounded, size: 18),
+              label: const Text(
+                'Share Total Document File (PDF / Image)',
+                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+                DocumentActionHelper.shareDocumentFile(context, certificate);
+              },
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Secondary Action Buttons: Download & Copy Text Details
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    side: BorderSide(
+                      color: AppColors.brightAccent.withValues(alpha: 0.4),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  icon: const Icon(Icons.download_rounded,
+                      size: 16, color: AppColors.brightAccent),
+                  label: const Text(
+                    'Download File',
+                    style: TextStyle(
+                      color: AppColors.brightAccent,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    DocumentActionHelper.downloadDocument(context, certificate);
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    side: const BorderSide(color: AppColors.border),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   icon: const Icon(Icons.copy_rounded, size: 16),
-                  label: const Text('Copy Details'),
+                  label: const Text(
+                    'Copy Text',
+                    style: TextStyle(fontSize: 12.5),
+                  ),
                   onPressed: () async {
                     await Clipboard.setData(
                         ClipboardData(text: certificate.shareSummary));
@@ -510,7 +815,8 @@ class ShareCredentialSheet extends StatelessWidget {
                       Navigator.of(context).pop();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Credential details copied to clipboard!'),
+                          content:
+                              Text('Credential details copied to clipboard!'),
                           backgroundColor: AppColors.success,
                           behavior: SnackBarBehavior.floating,
                         ),
@@ -519,28 +825,6 @@ class ShareCredentialSheet extends StatelessWidget {
                   },
                 ),
               ),
-              if (certificate.hasFile) ...[
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryPurple,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    icon: const Icon(Icons.download_rounded, size: 16),
-                    label: const Text('Download File'),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      DocumentActionHelper.downloadDocument(
-                          context, certificate);
-                    },
-                  ),
-                ),
-              ],
             ],
           ),
           if (certificate.hasVerificationUrl) ...[
@@ -569,9 +853,9 @@ class ShareCredentialSheet extends StatelessWidget {
           ],
           const SizedBox(height: 14),
 
-          // Quick Share Channels
+          // Direct Channels
           const Text(
-            'Share Directly To:',
+            'Quick Message Share:',
             style: TextStyle(
               color: AppColors.secondaryText,
               fontSize: 12,

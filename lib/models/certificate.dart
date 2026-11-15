@@ -33,37 +33,69 @@ class Certificate {
 
   /// Returns the document file name (or extracts it from data URI / path)
   String get fileName {
-    if (!hasFile) return '';
+    final defaultExt = isPdf ? 'pdf' : (isImage ? 'png' : 'pdf');
+    final sanitizedName =
+        name.trim().replaceAll(RegExp(r'[^\w\-]'), '_');
+    if (!hasFile) {
+      return '$sanitizedName.pdf';
+    }
     final path = localFilePath!;
     if (path.startsWith('data:')) {
       final match = RegExp(r'name=([^;]+);').firstMatch(path);
       if (match != null) {
         return Uri.decodeComponent(match.group(1)!);
       }
-      return '${name.replaceAll(RegExp(r'[^\w\-]'), '_')}.${isPdf ? "pdf" : "png"}';
+      return '$sanitizedName.$defaultExt';
     }
-    return path.split(RegExp(r'[/\\]')).last;
+    final basename = path.split(RegExp(r'[/\\]')).last;
+    return basename.isNotEmpty ? basename : '$sanitizedName.$defaultExt';
   }
 
   /// True if the attached document is a PDF
   bool get isPdf {
     if (!hasFile) return false;
     final path = localFilePath!;
-    if (path.startsWith('data:application/pdf')) return true;
-    final lower = path.toLowerCase();
-    return lower.endsWith('.pdf');
+    final lowerPath = path.toLowerCase();
+    if (lowerPath.startsWith('data:application/pdf') ||
+        lowerPath.startsWith('data:application/x-pdf')) {
+      return true;
+    }
+    if (lowerPath.startsWith('data:')) {
+      final match = RegExp(r'name=([^;]+);').firstMatch(path);
+      if (match != null) {
+        final fName = Uri.decodeComponent(match.group(1)!).toLowerCase();
+        if (fName.endsWith('.pdf')) return true;
+      }
+    }
+    final clean = lowerPath.split('?').first;
+    return clean.endsWith('.pdf');
   }
 
   /// True if the attached document is an image (PNG, JPG, WebP)
   bool get isImage {
     if (!hasFile) return false;
     final path = localFilePath!;
-    if (path.startsWith('data:image/')) return true;
-    final lower = path.toLowerCase();
-    return lower.endsWith('.png') ||
-        lower.endsWith('.jpg') ||
-        lower.endsWith('.jpeg') ||
-        lower.endsWith('.webp');
+    final lowerPath = path.toLowerCase();
+    if (lowerPath.startsWith('data:image/')) return true;
+    if (lowerPath.startsWith('data:')) {
+      final match = RegExp(r'name=([^;]+);').firstMatch(path);
+      if (match != null) {
+        final fName = Uri.decodeComponent(match.group(1)!).toLowerCase();
+        if (fName.endsWith('.png') ||
+            fName.endsWith('.jpg') ||
+            fName.endsWith('.jpeg') ||
+            fName.endsWith('.webp') ||
+            fName.endsWith('.gif')) {
+          return true;
+        }
+      }
+    }
+    final clean = lowerPath.split('?').first;
+    return clean.endsWith('.png') ||
+        clean.endsWith('.jpg') ||
+        clean.endsWith('.jpeg') ||
+        clean.endsWith('.webp') ||
+        clean.endsWith('.gif');
   }
 
   /// Generates a clean, professional summary text suitable for sharing

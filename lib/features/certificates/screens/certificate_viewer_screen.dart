@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/custom_card.dart';
-import '../../../core/utils/file_utils.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/document_action_helper.dart';
 import '../../../models/certificate.dart';
@@ -32,8 +31,8 @@ class CertificateViewerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasFile = certificate.hasFile;
     final filePath = certificate.localFilePath ?? '';
-    final isImage = hasFile && FileUtils.isImageFile(filePath);
-    final isPdf = hasFile && FileUtils.isPdfFile(filePath);
+    final isImage = certificate.isImage;
+    final isPdf = certificate.isPdf;
 
     return Scaffold(
       appBar: AppBar(
@@ -43,16 +42,15 @@ class CertificateViewerScreen extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
-          if (hasFile)
-            IconButton(
-              icon: const Icon(Icons.download_rounded),
-              tooltip: 'Download Document',
-              onPressed: () =>
-                  DocumentActionHelper.downloadDocument(context, certificate),
-            ),
+          IconButton(
+            icon: const Icon(Icons.download_rounded),
+            tooltip: 'Download Document',
+            onPressed: () =>
+                DocumentActionHelper.downloadDocument(context, certificate),
+          ),
           IconButton(
             icon: const Icon(Icons.share_rounded),
-            tooltip: 'Share Credential',
+            tooltip: 'Share Document File',
             onPressed: () =>
                 DocumentActionHelper.showShareDialog(context, certificate),
           ),
@@ -215,6 +213,111 @@ class CertificateViewerScreen extends StatelessWidget {
                               ),
                             ),
                             icon: const Icon(Icons.visibility_rounded, size: 16),
+                            label: const Text('View PDF'),
+                            onPressed: () => DocumentActionHelper.viewDocument(
+                                context, certificate),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 4,
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            icon: const Icon(Icons.download_rounded, size: 16),
+                            label: const Text('Download'),
+                            onPressed: () =>
+                                DocumentActionHelper.downloadDocument(
+                                    context, certificate),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 3,
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            icon: const Icon(Icons.share_rounded, size: 16),
+                            label: const Text('Share'),
+                            onPressed: () =>
+                                DocumentActionHelper.showShareDialog(
+                                    context, certificate),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ] else ...[
+              CustomCard(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color:
+                                AppColors.primaryPurple.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.workspace_premium_rounded,
+                              color: AppColors.primaryPurple, size: 28),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                certificate.category.contains('Offer')
+                                    ? 'Verified Offer Letter Record'
+                                    : 'Verified Digital Credential (PDF)',
+                                style: const TextStyle(
+                                    color: AppColors.primaryText,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                certificate.fileName,
+                                style: const TextStyle(
+                                    color: AppColors.mutedText, fontSize: 11),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryPurple,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            icon:
+                                const Icon(Icons.visibility_rounded, size: 16),
                             label: const Text('View PDF'),
                             onPressed: () => DocumentActionHelper.viewDocument(
                                 context, certificate),

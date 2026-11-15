@@ -4,3 +4,15 @@ import 'web_file_downloader_stub.dart'
 /// Downloads a file in the browser using a Data URL / Blob URL and a target filename.
 Future<bool> downloadWebFile(String dataUrl, String fileName) =>
     downloadWebFilePlatform(dataUrl, fileName);
+
+/// Shares a file using the Web Share API (mobile Chrome / Safari).
+Future<bool> shareWebFile(
+  String dataUrl,
+  String fileName, {
+  String? title,
+  String? text,
+}) =>
+    shareWebFilePlatform(dataUrl, fileName, title: title, text: text);
+
+/// Opens a file in a new browser tab.
+bool openWebFileInNewTab(String dataUrl) => openWebFileInNewTabPlatform(dataUrl);

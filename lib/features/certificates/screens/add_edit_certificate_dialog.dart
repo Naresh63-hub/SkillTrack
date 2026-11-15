@@ -85,27 +85,63 @@ class _AddEditCertificateDialogState extends State<AddEditCertificateDialog> {
   Future<void> _pickCertificateFile() async {
     setState(() => _isPickingFile = true);
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg'],
-        withData: true,
-      );
+      FilePickerResult? result;
+      try {
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: [
+            'pdf',
+            'png',
+            'jpg',
+            'jpeg',
+            'PDF',
+            'PNG',
+            'JPG',
+            'JPEG'
+          ],
+          withData: true,
+        );
+      } catch (pickerErr) {
+        debugPrint(
+            'Custom file picker failed, falling back to any: $pickerErr');
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.any,
+          withData: true,
+        );
+      }
 
       if (result != null && result.files.isNotEmpty) {
         final file = result.files.single;
+        final name = file.name;
+        final ext = (file.extension ??
+                (name.contains('.') ? name.split('.').last : 'pdf'))
+            .toLowerCase();
+
         if (kIsWeb) {
-          if (file.bytes != null) {
-            final ext = (file.extension ?? 'pdf').toLowerCase();
+          final fileBytes = file.bytes;
+          if (fileBytes != null && fileBytes.isNotEmpty) {
             final mime = ext == 'pdf'
                 ? 'application/pdf'
-                : (ext == 'png' ? 'image/png' : 'image/jpeg');
-            final base64Content = base64Encode(file.bytes!);
+                : (ext == 'png'
+                    ? 'image/png'
+                    : (ext == 'webp' ? 'image/webp' : 'image/jpeg'));
+            final base64Content = base64Encode(fileBytes);
             final dataUri =
-                'data:$mime;name=${Uri.encodeComponent(file.name)};base64,$base64Content';
+                'data:$mime;name=${Uri.encodeComponent(name)};base64,$base64Content';
             setState(() {
               _localFilePath = dataUri;
-              _pickedFileName = file.name;
+              _pickedFileName = name;
             });
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Attached "$name" successfully'),
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: AppColors.success,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
           }
         } else if (file.path != null) {
           final originalPath = file.path!;
@@ -113,14 +149,28 @@ class _AddEditCertificateDialogState extends State<AddEditCertificateDialog> {
               await FileUtils.copyFileToAppStorage(originalPath);
           setState(() {
             _localFilePath = persistentPath ?? originalPath;
-            _pickedFileName = file.name;
+            _pickedFileName = name;
           });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Attached "$name" successfully'),
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: AppColors.success,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not pick file: $e')),
+          SnackBar(
+            content: Text('Could not pick file: $e'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } finally {
