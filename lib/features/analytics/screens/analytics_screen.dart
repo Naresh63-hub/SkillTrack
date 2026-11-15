@@ -617,4 +617,58 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       ],
     );
   }
+
+  void _showFormulaDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.calculate_outlined, color: AppColors.primaryPurple),
+            SizedBox(width: 10),
+            Text('Score Calculation Formula'),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Your Career Preparation Score is an objective, weighted average calculated from your actual records across four key pillars:\n',
+              style: TextStyle(
+                  color: AppColors.secondaryText, fontSize: 13, height: 1.45),
+            ),
+            Text(
+                '• Skills (25%): Average progress across all tracked technical skills.',
+                style: TextStyle(color: AppColors.primaryText, fontSize: 12.5)),
+            SizedBox(height: 6),
+            Text(
+                '• Projects (25%): Status-weighted portfolio completion (Completed: 100%, In Progress: 50%, Planned: 10%).',
+                style: TextStyle(color: AppColors.primaryText, fontSize: 12.5)),
+            SizedBox(height: 6),
+            Text('• Tasks (25%): Ratio of completed to total assigned tasks.',
+                style: TextStyle(color: AppColors.primaryText, fontSize: 12.5)),
+            SizedBox(height: 6),
+            Text(
+                '• Placement Prep (25%): Average readiness across Coding (DSA), Core CS, Aptitude, and Interview QA.',
+                style: TextStyle(color: AppColors.primaryText, fontSize: 12.5)),
+            SizedBox(height: 12),
+            Text(
+              'No sample or fabricated statistics are used. The score reflects only what you record in your database.',
+              style: TextStyle(
+                  color: AppColors.mutedText,
+                  fontSize: 11.5,
+                  fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Understood'),
+          ),
+        ],
+      ),
+    );
+  }
 }
