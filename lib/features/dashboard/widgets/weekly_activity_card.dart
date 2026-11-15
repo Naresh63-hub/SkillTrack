@@ -3,15 +3,20 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/custom_card.dart';
 import '../../../models/task_model.dart';
 import '../../../models/skill.dart';
+import '../../../models/project.dart';
 
 class WeeklyActivityCard extends StatelessWidget {
   final List<TaskModel> tasks;
   final List<Skill> skills;
+  final List<Project>? projects;
+  final Set<DateTime>? activeDates;
 
   const WeeklyActivityCard({
     super.key,
     required this.tasks,
     required this.skills,
+    this.projects,
+    this.activeDates,
   });
 
   @override
@@ -62,6 +67,31 @@ class WeeklyActivityCard extends StatelessWidget {
             count++;
           }
         } catch (_) {}
+      }
+
+      // Check projects updated or created on that day
+      if (projects != null) {
+        for (final p in projects!) {
+          try {
+            final up = DateTime.parse(p.updatedAt);
+            if (up.isAfter(dayStart) && up.isBefore(dayEnd)) {
+              count++;
+            }
+          } catch (_) {}
+          try {
+            final cr = DateTime.parse(p.createdAt);
+            if (cr.isAfter(dayStart) && cr.isBefore(dayEnd)) {
+              count++;
+            }
+          } catch (_) {}
+        }
+      }
+
+      // Check recorded active dates
+      if (activeDates != null &&
+          count == 0 &&
+          activeDates!.contains(DateTime(dayDate.year, dayDate.month, dayDate.day))) {
+        count++;
       }
 
       weekActivity[i] = count;
