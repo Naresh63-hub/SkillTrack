@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/custom_card.dart';
 import '../../../core/utils/progress_calculator.dart';
+import '../../analytics/screens/analytics_screen.dart';
 
 class OverallProgressCard extends StatelessWidget {
   final ProgressMetrics metrics;
+  final VoidCallback? onTap;
   final VoidCallback? onFormulaTap;
   final int? skillsCompleted;
   final int? projectsCompleted;
@@ -12,14 +14,26 @@ class OverallProgressCard extends StatelessWidget {
   const OverallProgressCard({
     super.key,
     required this.metrics,
+    this.onTap,
     this.onFormulaTap,
     this.skillsCompleted,
     this.projectsCompleted,
   });
 
+  void _handleOpenDetails(BuildContext context) {
+    if (onTap != null) {
+      onTap!();
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (ctx) => const AnalyticsScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return CustomCard(
+      onTap: () => _handleOpenDetails(context),
       gradient: const LinearGradient(
         colors: [Color(0xFF6D28D9), Color(0xFF7C3AED)],
         begin: Alignment.topLeft,
@@ -37,48 +51,70 @@ class OverallProgressCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.auto_graph_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Flexible(
+                      child: Text(
+                        'Career Preparation Score',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.1,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.18),
-                      shape: BoxShape.circle,
+                  IconButton(
+                    icon: const Icon(
+                      Icons.help_outline_rounded,
+                      color: Colors.white70,
+                      size: 17,
                     ),
-                    child: const Icon(
-                      Icons.auto_graph_rounded,
-                      color: Colors.white,
-                      size: 18,
-                    ),
+                    tooltip: 'Score Breakdown Info',
+                    onPressed: () {
+                      if (onFormulaTap != null) {
+                        onFormulaTap!();
+                      } else {
+                        _showFormulaDialog(context);
+                      }
+                    },
+                    padding: const EdgeInsets.all(4),
+                    constraints: const BoxConstraints(),
                   ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Career Preparation Score',
-                    style: TextStyle(
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.arrow_forward_ios_rounded,
                       color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.1,
+                      size: 16,
                     ),
+                    tooltip: 'Open Career Preparation Details',
+                    onPressed: () => _handleOpenDetails(context),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
                 ],
-              ),
-              IconButton(
-                icon: const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  color: Colors.white,
-                  size: 16,
-                ),
-                tooltip: 'Calculation Details',
-                onPressed: () {
-                  if (onFormulaTap != null) {
-                    onFormulaTap!();
-                  } else {
-                    _showFormulaDialog(context);
-                  }
-                },
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
               ),
             ],
           ),
@@ -192,13 +228,7 @@ class OverallProgressCard extends StatelessWidget {
               ),
               // View Details White Pill Button matching Screen 3
               InkWell(
-                onTap: () {
-                  if (onFormulaTap != null) {
-                    onFormulaTap!();
-                  } else {
-                    _showFormulaDialog(context);
-                  }
-                },
+                onTap: () => _handleOpenDetails(context),
                 borderRadius: BorderRadius.circular(16),
                 child: Container(
                   padding:

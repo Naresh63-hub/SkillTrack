@@ -7,6 +7,7 @@ import '../../../core/utils/validators.dart';
 import '../../../models/student_profile.dart';
 import '../../../repositories/profile_repository.dart';
 import '../../skills/screens/career_roadmaps_screen.dart';
+import '../../app_install/widgets/install_app_dialog.dart';
 import 'settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -655,6 +656,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ],
+
+                const SizedBox(height: 14),
+
+                // Download App & APK Card
+                CustomCard(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color:
+                              AppColors.primaryPurple.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.install_mobile_rounded,
+                          color: AppColors.primaryPurple,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Install App & Offline APK',
+                              style: TextStyle(
+                                color: AppColors.primaryText,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Get the APK or install to your Home Screen',
+                              style: TextStyle(
+                                color: AppColors.secondaryText,
+                                fontSize: 11.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          side: const BorderSide(color: AppColors.border),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: () => InstallAppDialog.show(context),
+                        child: const Text('Install / APK'),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ],
           ),

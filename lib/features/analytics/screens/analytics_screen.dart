@@ -78,7 +78,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Performance & Analytics')),
+        appBar: AppBar(title: const Text('Career Preparation Score')),
         body: const Center(
             child: CircularProgressIndicator(color: AppColors.brightAccent)),
       );
@@ -86,10 +86,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Performance & Analytics'),
+        title: const Text('Career Preparation Score'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.info_outline_rounded),
+            tooltip: 'Calculation Details',
+            onPressed: () => _showFormulaDialog(context),
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh',
             onPressed: _loadAnalytics,
           ),
         ],
@@ -137,7 +143,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Career Readiness Score',
+                          'Career Preparation Score',
                           style: TextStyle(
                               color: AppColors.primaryText,
                               fontSize: 16,

@@ -50,7 +50,6 @@ import '../../mock_interview/screens/mock_interview_setup_screen.dart';
 import '../../career_assistant/screens/career_assistant_screen.dart';
 import '../../notes_planner/screens/notes_planner_hub_screen.dart';
 import '../../app_install/widgets/install_app_dialog.dart';
-import '../../app_install/widgets/install_app_banner.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(int tabIndex)? onNavigateTab;
@@ -557,10 +556,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           color: AppColors.lightPurple,
           onTap: _quickGenerateResume),
       QuickActionItem(
-          label: 'Install App',
-          icon: Icons.install_mobile_rounded,
+          label: 'Certifications',
+          icon: Icons.workspace_premium_rounded,
           color: const Color(0xFF34D399),
-          onTap: () => InstallAppDialog.show(context)),
+          onTap: _openCertificatesScreen),
     ];
 
     final ongoingSkills =
@@ -895,9 +894,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Install App Banner (PWA / APK)
-                  const InstallAppBanner(),
 
                   // Upcoming Placement Interview Banner (if active)
                   if (_upcomingInterview != null) ...[
