@@ -32,6 +32,32 @@ void main() {
       expect(find.text('Placement Prep'), findsOneWidget);
     });
 
+    testWidgets('OverallProgressCard executes onTap when card or View Details is clicked',
+        (WidgetTester tester) async {
+      bool tapped = false;
+      const metrics = ProgressMetrics(
+        overallPercentage: 50.0,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: OverallProgressCard(
+              metrics: metrics,
+              onTap: () => tapped = true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('View Details'));
+      expect(tapped, isTrue);
+
+      tapped = false;
+      await tester.tap(find.text('Career Preparation Score'));
+      expect(tapped, isTrue);
+    });
+
     testWidgets('MetricSummaryGrid renders all 6 career metric cards',
         (WidgetTester tester) async {
       await tester.pumpWidget(

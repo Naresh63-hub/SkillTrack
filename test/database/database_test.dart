@@ -136,5 +136,42 @@ void main() {
 
       await certsRepo.deleteCertificate(id);
     });
+
+    test('Skills ordering by level_asc orders Beginner before Intermediate and Advanced', () async {
+      final sAdvanced = Skill(
+        name: 'Distributed Systems',
+        category: 'Computer Science Fundamentals',
+        proficiencyLevel: 'Advanced',
+      );
+      final sIntermediate = Skill(
+        name: 'JavaScript & Modern TypeScript',
+        category: 'Programming Languages',
+        proficiencyLevel: 'Intermediate',
+      );
+      final sBeginner = Skill(
+        name: 'HTML5, CSS3 & Responsive UI',
+        category: 'Web Development',
+        proficiencyLevel: 'Beginner',
+      );
+
+      final idAdv = await skillsRepo.addSkill(sAdvanced);
+      final idInt = await skillsRepo.addSkill(sIntermediate);
+      final idBeg = await skillsRepo.addSkill(sBeginner);
+
+      final orderedSkills = await skillsRepo.getAllSkills(sortBy: 'level_asc');
+      final relevant = orderedSkills.where((s) => [idAdv, idInt, idBeg].contains(s.id)).toList();
+
+      expect(relevant.length, 3);
+      expect(relevant[0].proficiencyLevel, 'Beginner');
+      expect(relevant[0].name, 'HTML5, CSS3 & Responsive UI');
+      expect(relevant[1].proficiencyLevel, 'Intermediate');
+      expect(relevant[1].name, 'JavaScript & Modern TypeScript');
+      expect(relevant[2].proficiencyLevel, 'Advanced');
+      expect(relevant[2].name, 'Distributed Systems');
+
+      await skillsRepo.deleteSkill(idAdv);
+      await skillsRepo.deleteSkill(idInt);
+      await skillsRepo.deleteSkill(idBeg);
+    });
   });
 }
