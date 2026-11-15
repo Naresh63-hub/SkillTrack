@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import '../core/database/database_helper.dart';
+import '../core/utils/streak_calculator.dart';
 import '../models/project.dart';
 
 class ProjectsRepository {
@@ -74,14 +75,18 @@ class ProjectsRepository {
 
   Future<int> addProject(Project project) async {
     final db = await _dbHelper.database;
+    await StreakCalculator.recordTodayActive();
     return await db.insert('projects', project.toMap());
   }
 
   Future<int> updateProject(Project project) async {
     final db = await _dbHelper.database;
+    final map = project.toMap();
+    map['updated_at'] = DateTime.now().toIso8601String();
+    await StreakCalculator.recordTodayActive();
     return await db.update(
       'projects',
-      project.toMap(),
+      map,
       where: 'id = ?',
       whereArgs: [project.id],
     );

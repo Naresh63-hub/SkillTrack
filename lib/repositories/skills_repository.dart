@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import '../core/database/database_helper.dart';
+import '../core/utils/streak_calculator.dart';
 import '../models/skill.dart';
 
 class SkillsRepository {
@@ -12,7 +13,7 @@ class SkillsRepository {
     String? category,
     String? searchQuery,
     String sortBy =
-        'progress_desc', // 'progress_desc', 'progress_asc', 'name_asc', 'target_date'
+        'level_asc', // 'level_asc', 'level_desc', 'progress_desc', 'progress_asc', 'name_asc', 'target_date'
   }) async {
     final db = await _dbHelper.database;
     String? whereClause;
@@ -33,8 +34,30 @@ class SkillsRepository {
 
     String orderBy;
     switch (sortBy) {
+      case 'level_asc':
+        orderBy = '''
+          CASE proficiency_level
+            WHEN 'Beginner' THEN 1
+            WHEN 'Intermediate' THEN 2
+            WHEN 'Advanced' THEN 3
+            WHEN 'Expert' THEN 4
+            ELSE 5
+          END ASC, progress_percentage DESC, name ASC
+        ''';
+        break;
+      case 'level_desc':
+        orderBy = '''
+          CASE proficiency_level
+            WHEN 'Expert' THEN 1
+            WHEN 'Advanced' THEN 2
+            WHEN 'Intermediate' THEN 3
+            WHEN 'Beginner' THEN 4
+            ELSE 5
+          END ASC, progress_percentage DESC, name ASC
+        ''';
+        break;
       case 'progress_asc':
-        orderBy = 'progress_percentage ASC';
+        orderBy = 'progress_percentage ASC, name ASC';
         break;
       case 'name_asc':
         orderBy = 'name ASC';
@@ -43,8 +66,18 @@ class SkillsRepository {
         orderBy = 'target_completion_date ASC';
         break;
       case 'progress_desc':
+        orderBy = 'progress_percentage DESC, name ASC';
+        break;
       default:
-        orderBy = 'progress_percentage DESC';
+        orderBy = '''
+          CASE proficiency_level
+            WHEN 'Beginner' THEN 1
+            WHEN 'Intermediate' THEN 2
+            WHEN 'Advanced' THEN 3
+            WHEN 'Expert' THEN 4
+            ELSE 5
+          END ASC, progress_percentage DESC, name ASC
+        ''';
         break;
     }
 
@@ -67,14 +100,18 @@ class SkillsRepository {
 
   Future<int> addSkill(Skill skill) async {
     final db = await _dbHelper.database;
+    await StreakCalculator.recordTodayActive();
     return await db.insert('skills', skill.toMap());
   }
 
   Future<int> updateSkill(Skill skill) async {
     final db = await _dbHelper.database;
+    final map = skill.toMap();
+    map['updated_at'] = DateTime.now().toIso8601String();
+    await StreakCalculator.recordTodayActive();
     return await db.update(
       'skills',
-      skill.toMap(),
+      map,
       where: 'id = ?',
       whereArgs: [skill.id],
     );
