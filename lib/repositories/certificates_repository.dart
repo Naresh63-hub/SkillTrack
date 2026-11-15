@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import '../core/database/database_helper.dart';
+import '../core/utils/streak_calculator.dart';
 import '../models/certificate.dart';
 
 class CertificatesRepository {
@@ -75,11 +76,13 @@ class CertificatesRepository {
 
   Future<int> addCertificate(Certificate certificate) async {
     final db = await _dbHelper.database;
+    await StreakCalculator.recordTodayActive();
     return await db.insert('certificates', certificate.toMap());
   }
 
   Future<int> updateCertificate(Certificate certificate) async {
     final db = await _dbHelper.database;
+    await StreakCalculator.recordTodayActive();
     return await db.update(
       'certificates',
       certificate.toMap(),
