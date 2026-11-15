@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import '../core/database/database_helper.dart';
+import '../core/utils/streak_calculator.dart';
 import '../models/task_model.dart';
 import '../models/learning_goal.dart';
 
@@ -79,11 +80,13 @@ class TasksRepository {
 
   Future<int> addTask(TaskModel task) async {
     final db = await _dbHelper.database;
+    await StreakCalculator.recordTodayActive();
     return await db.insert('tasks', task.toMap());
   }
 
   Future<int> updateTask(TaskModel task) async {
     final db = await _dbHelper.database;
+    await StreakCalculator.recordTodayActive();
     return await db.update(
       'tasks',
       task.toMap(),
@@ -95,6 +98,7 @@ class TasksRepository {
   Future<int> toggleTaskComplete(int id, bool currentStatus) async {
     final db = await _dbHelper.database;
     final now = DateTime.now().toIso8601String();
+    await StreakCalculator.recordTodayActive();
     return await db.update(
       'tasks',
       {
