@@ -57,10 +57,10 @@ class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, this.onNavigateTab});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  State<DashboardScreen> createState() => DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class DashboardScreenState extends State<DashboardScreen> {
   final ProfileRepository _profileRepo = ProfileRepository();
   final SkillsRepository _skillsRepo = SkillsRepository();
   final ProjectsRepository _projectsRepo = ProjectsRepository();
@@ -81,6 +81,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _pendingTasksCount = 0;
   int _completedTasksCount = 0;
   int _activeStreak = 0;
+  Set<DateTime> _savedActiveDates = {};
   JobApplication? _upcomingInterview;
   AiRoadmap? _activeAiRoadmap;
   GithubProfile? _githubProfile;
@@ -96,6 +97,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadDashboardData();
   }
 
+  void reload() {
+    _loadDashboardData();
+  }
+
   Future<void> _loadDashboardData() async {
     setState(() => _isLoading = true);
 
@@ -104,6 +109,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final projects = await _projectsRepo.getAllProjects();
     final tasks = await _tasksRepo.getAllTasks();
     final certsCount = await _certsRepo.getCertificatesCount();
+    final allCerts = await _certsRepo.getAllCertificates();
 
     final codingTopics = await _placementRepo.getTopicsByTrack('Coding');
     final coreCsTopics = await _placementRepo.getTopicsByTrack('CoreCS');
@@ -133,8 +139,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     }
 
-    final streak =
-        StreakCalculator.calculateStreak(tasks: tasks, skills: skills);
+    await StreakCalculator.recordTodayActive();
+    final savedActiveDates = await StreakCalculator.getSavedActiveDates();
+
+    final streak = StreakCalculator.calculateStreak(
+      tasks: tasks,
+      skills: skills,
+      projects: projects,
+      certificates: allCerts,
+      additionalDates: savedActiveDates,
+    );
 
     final completedSkills =
         skills.where((s) => s.progressPercentage >= 100).length;
@@ -162,6 +176,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _upcomingDeadlines = upcomingDeadlines;
         _recentProjects = recentProjects;
         _activeStreak = streak;
+        _savedActiveDates = savedActiveDates;
         _upcomingInterview = nextInterview;
         _activeAiRoadmap = activeAiRoadmap;
         _githubProfile = githubProfile;
@@ -173,6 +188,50 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
 
+
+  void _showStreakInfoDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            const Text('🔥', style: TextStyle(fontSize: 22)),
+            const SizedBox(width: 8),
+            Text('$_activeStreak Day Streak!'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _activeStreak > 0
+                  ? 'Great dedication! You have an active learning streak of $_activeStreak day${_activeStreak > 1 ? "s" : ""}.'
+                  : 'Start your streak today! Complete a task, build a project, or practice a skill to light the flame.',
+              style: const TextStyle(
+                  color: AppColors.primaryText, fontSize: 13, height: 1.4),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'How to maintain and build your streak:\n'
+              '• Log in & learn with SkillTrack every day\n'
+              '• Add or update technical skills\n'
+              '• Build and record portfolio projects\n'
+              '• Check off daily goals & tasks',
+              style: TextStyle(
+                  color: AppColors.secondaryText, fontSize: 12, height: 1.45),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Got It!'),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _showNotificationsSheet() {
     showModalBottomSheet(
@@ -856,36 +915,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(width: 8),
                             // Daily Streak Flame Badge (Matching Screen 3)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 9, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF59E0B)
-                                    .withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
+                            InkWell(
+                              onTap: _showStreakInfoDialog,
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 9, vertical: 5),
+                                decoration: BoxDecoration(
                                   color: const Color(0xFFF59E0B)
-                                      .withValues(alpha: 0.4),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Text('🔥',
-                                      style: TextStyle(fontSize: 12)),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    _activeStreak > 0
-                                        ? '$_activeStreak Day${_activeStreak > 1 ? "s" : ""}'
-                                        : '3 Days',
-                                    style: const TextStyle(
-                                      color: Color(0xFFFBBF24),
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                      .withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFFF59E0B)
+                                        .withValues(alpha: 0.4),
+                                    width: 1,
                                   ),
-                                ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Text('🔥',
+                                        style: TextStyle(fontSize: 12)),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '$_activeStreak Day${_activeStreak == 1 ? "" : "s"}',
+                                      style: const TextStyle(
+                                        color: Color(0xFFFBBF24),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
@@ -1003,6 +1064,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     metrics: _metrics,
                     skillsCompleted: _completedSkillsCount,
                     projectsCompleted: _completedProjectsCount,
+                    onTap: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (ctx) => const AnalyticsScreen()),
+                      );
+                      _loadDashboardData();
+                    },
                   ),
                   const SizedBox(height: 18),
 
@@ -1045,6 +1113,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   WeeklyActivityCard(
                     tasks: _allTasks,
                     skills: _allSkills,
+                    projects: _allProjects,
+                    activeDates: _savedActiveDates,
                   ),
                   const SizedBox(height: 20),
 

@@ -17,21 +17,25 @@ class SkillsScreen extends StatefulWidget {
   const SkillsScreen({super.key});
 
   @override
-  State<SkillsScreen> createState() => _SkillsScreenState();
+  State<SkillsScreen> createState() => SkillsScreenState();
 }
 
-class _SkillsScreenState extends State<SkillsScreen> {
+class SkillsScreenState extends State<SkillsScreen> {
   final SkillsRepository _repository = SkillsRepository();
   final TextEditingController _searchController = TextEditingController();
 
   List<Skill> _skills = [];
   bool _isLoading = true;
   String _selectedCategory = 'All';
-  String _sortBy = 'progress_desc';
+  String _sortBy = 'level_asc';
 
   @override
   void initState() {
     super.initState();
+    _loadSkills();
+  }
+
+  void reload() {
     _loadSkills();
   }
 
@@ -143,30 +147,179 @@ class _SkillsScreenState extends State<SkillsScreen> {
             icon: const Icon(Icons.sort, size: 20),
             tooltip: 'Sort By',
             color: AppColors.secondaryBackground,
+            initialValue: _sortBy,
             onSelected: (val) {
               setState(() => _sortBy = val);
               _loadSkills();
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
+                value: 'level_asc',
+                child: Row(
+                  children: [
+                    Icon(
+                      _sortBy == 'level_asc'
+                          ? Icons.check_circle_rounded
+                          : Icons.stairs_rounded,
+                      size: 18,
+                      color: _sortBy == 'level_asc'
+                          ? AppColors.brightAccent
+                          : AppColors.secondaryText,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Level (Beginner → Intermediate)',
+                      style: TextStyle(
+                        color: _sortBy == 'level_asc'
+                            ? AppColors.brightAccent
+                            : AppColors.primaryText,
+                        fontWeight: _sortBy == 'level_asc'
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'level_desc',
+                child: Row(
+                  children: [
+                    Icon(
+                      _sortBy == 'level_desc'
+                          ? Icons.check_circle_rounded
+                          : Icons.military_tech_rounded,
+                      size: 18,
+                      color: _sortBy == 'level_desc'
+                          ? AppColors.brightAccent
+                          : AppColors.secondaryText,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Level (Advanced → Beginner)',
+                      style: TextStyle(
+                        color: _sortBy == 'level_desc'
+                            ? AppColors.brightAccent
+                            : AppColors.primaryText,
+                        fontWeight: _sortBy == 'level_desc'
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
                 value: 'progress_desc',
-                child: Text('Highest Progress',
-                    style: TextStyle(color: AppColors.primaryText)),
+                child: Row(
+                  children: [
+                    Icon(
+                      _sortBy == 'progress_desc'
+                          ? Icons.check_circle_rounded
+                          : Icons.trending_up_rounded,
+                      size: 18,
+                      color: _sortBy == 'progress_desc'
+                          ? AppColors.brightAccent
+                          : AppColors.secondaryText,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Highest Progress',
+                      style: TextStyle(
+                        color: _sortBy == 'progress_desc'
+                            ? AppColors.brightAccent
+                            : AppColors.primaryText,
+                        fontWeight: _sortBy == 'progress_desc'
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'progress_asc',
-                child: Text('Lowest Progress',
-                    style: TextStyle(color: AppColors.primaryText)),
+                child: Row(
+                  children: [
+                    Icon(
+                      _sortBy == 'progress_asc'
+                          ? Icons.check_circle_rounded
+                          : Icons.trending_down_rounded,
+                      size: 18,
+                      color: _sortBy == 'progress_asc'
+                          ? AppColors.brightAccent
+                          : AppColors.secondaryText,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Lowest Progress',
+                      style: TextStyle(
+                        color: _sortBy == 'progress_asc'
+                            ? AppColors.brightAccent
+                            : AppColors.primaryText,
+                        fontWeight: _sortBy == 'progress_asc'
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'name_asc',
-                child: Text('Name (A-Z)',
-                    style: TextStyle(color: AppColors.primaryText)),
+                child: Row(
+                  children: [
+                    Icon(
+                      _sortBy == 'name_asc'
+                          ? Icons.check_circle_rounded
+                          : Icons.sort_by_alpha_rounded,
+                      size: 18,
+                      color: _sortBy == 'name_asc'
+                          ? AppColors.brightAccent
+                          : AppColors.secondaryText,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Name (A-Z)',
+                      style: TextStyle(
+                        color: _sortBy == 'name_asc'
+                            ? AppColors.brightAccent
+                            : AppColors.primaryText,
+                        fontWeight: _sortBy == 'name_asc'
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'target_date',
-                child: Text('Target Date',
-                    style: TextStyle(color: AppColors.primaryText)),
+                child: Row(
+                  children: [
+                    Icon(
+                      _sortBy == 'target_date'
+                          ? Icons.check_circle_rounded
+                          : Icons.calendar_today_rounded,
+                      size: 18,
+                      color: _sortBy == 'target_date'
+                          ? AppColors.brightAccent
+                          : AppColors.secondaryText,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Target Date',
+                      style: TextStyle(
+                        color: _sortBy == 'target_date'
+                            ? AppColors.brightAccent
+                            : AppColors.primaryText,
+                        fontWeight: _sortBy == 'target_date'
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
