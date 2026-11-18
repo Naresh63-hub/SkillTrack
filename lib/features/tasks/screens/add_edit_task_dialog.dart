@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/notifications/notification_service.dart';
 import '../../../core/utils/validators.dart';
 import '../../../models/task_model.dart';
 import '../../../services/draft_service.dart';
@@ -44,6 +45,16 @@ class _AddEditTaskDialogState extends State<AddEditTaskDialog>
         _dueDate = dt;
         _dueTime = TimeOfDay(hour: dt.hour, minute: dt.minute);
       } catch (_) {}
+    } else {
+      final now = DateTime.now();
+      final nextHour = now.add(const Duration(hours: 1));
+      if (now.hour >= 22) {
+        _dueDate = now.add(const Duration(days: 1));
+        _dueTime = const TimeOfDay(hour: 10, minute: 0);
+      } else {
+        _dueDate = now;
+        _dueTime = TimeOfDay(hour: nextHour.hour, minute: 0);
+      }
     }
     _setReminder = (t?.reminderDateTime != null && t!.reminderDateTime!.isNotEmpty) ||
         (t?.earlyReminderMinutes != null);
@@ -352,7 +363,29 @@ class _AddEditTaskDialogState extends State<AddEditTaskDialog>
                           Switch(
                             value: _setReminder,
                             activeColor: AppColors.brightAccent,
-                            onChanged: (v) => setState(() => _setReminder = v),
+                            onChanged: (v) async {
+                              if (v) {
+                                await NotificationService.instance.requestPermissions();
+                                final fullDue = DateTime(
+                                  _dueDate.year,
+                                  _dueDate.month,
+                                  _dueDate.day,
+                                  _dueTime.hour,
+                                  _dueTime.minute,
+                                );
+                                final alertAt = fullDue.subtract(
+                                    Duration(minutes: _earlyReminderMinutes));
+                                if (alertAt.isBefore(DateTime.now())) {
+                                  final futureTime =
+                                      DateTime.now().add(const Duration(hours: 1));
+                                  _dueDate = DateTime(
+                                      futureTime.year, futureTime.month, futureTime.day);
+                                  _dueTime = TimeOfDay(
+                                      hour: futureTime.hour, minute: futureTime.minute);
+                                }
+                              }
+                              setState(() => _setReminder = v);
+                            },
                           ),
                         ],
                       ),
@@ -479,6 +512,19 @@ class _AddEditTaskDialogState extends State<AddEditTaskDialog>
     );
 
     final earlyMins = _setReminder ? _earlyReminderMinutes : null;
+    if (_setReminder && earlyMins != null) {
+      final alertAt = fullDueDate.subtract(Duration(minutes: earlyMins));
+      if (alertAt.isBefore(DateTime.now())) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                '⚠️ Reminder time is in the past. Please choose a future time or turn off reminder.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
+    }
     final reminderDate = _setReminder
         ? fullDueDate.subtract(Duration(minutes: earlyMins!)).toIso8601String()
         : null;

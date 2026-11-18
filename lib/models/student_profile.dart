@@ -35,6 +35,29 @@ class StudentProfile {
     String? updatedAt,
   }) : updatedAt = updatedAt ?? DateTime.now().toIso8601String();
 
+  /// URL-friendly handle derived from email prefix or student name.
+  /// Used for sharable web portfolio link, e.g. "priya-sharma".
+  String get publicHandle {
+    String source = '';
+    if (email.isNotEmpty && email.contains('@')) {
+      source = email.split('@').first;
+    } else if (name.isNotEmpty) {
+      source = name;
+    } else {
+      source = 'student';
+    }
+    final cleaned = source
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'^-+|-+$'), '');
+    return cleaned.isNotEmpty ? cleaned : 'student';
+  }
+
+  /// Full sharable public web portfolio URL (e.g. for resume header or LinkedIn)
+  String get publicPortfolioUrl {
+    return 'https://skill-track-ashy.vercel.app/#/p/$publicHandle';
+  }
+
   Map<String, dynamic> toMap() {
     return {
       if (id != null) 'id': id,

@@ -38,6 +38,7 @@ import '../../profile/screens/profile_screen.dart';
 import '../../skills/screens/career_roadmaps_screen.dart';
 import '../../../core/utils/streak_calculator.dart';
 import '../../../core/widgets/celebration_dialog.dart';
+import '../../../core/notifications/notification_service.dart';
 import '../../../models/job_application.dart';
 import '../../../models/ai_roadmap.dart';
 import '../../../models/github_models.dart';
@@ -384,7 +385,20 @@ class DashboardScreenState extends State<DashboardScreen> {
       builder: (ctx) => const AddEditTaskDialog(),
     );
     if (newTask != null) {
-      await _tasksRepo.addTask(newTask);
+      final id = await _tasksRepo.addTask(newTask);
+      if (newTask.reminderDateTime != null) {
+        try {
+          final due = DateTime.parse(newTask.dueDate);
+          await NotificationService.instance.scheduleTaskReminder(
+            id: id,
+            title: newTask.title,
+            description: newTask.description,
+            dueDateTime: due,
+            earlyMinutes: newTask.earlyReminderMinutes,
+            category: newTask.category,
+          );
+        } catch (_) {}
+      }
       _loadDashboardData();
     }
   }

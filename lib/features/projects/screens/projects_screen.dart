@@ -9,6 +9,7 @@ import '../../../models/project.dart';
 import '../../../repositories/projects_repository.dart';
 import 'add_edit_project_screen.dart';
 import 'project_detail_screen.dart';
+import '../../portfolio/screens/public_portfolio_screen.dart';
 
 class ProjectsScreen extends StatefulWidget {
   const ProjectsScreen({super.key});
@@ -127,6 +128,20 @@ class ProjectsScreenState extends State<ProjectsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Project Portfolio'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.badge_outlined, size: 22),
+            tooltip: 'View Sharable Student Card / Web Portfolio',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (ctx) => const PublicPortfolioScreen(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.brightAccent,

@@ -97,7 +97,7 @@ class TasksScreenState extends State<TasksScreen>
       if (newTask.reminderDateTime != null) {
         try {
           final due = DateTime.parse(newTask.dueDate);
-          await NotificationService.instance.scheduleTaskReminder(
+          final scheduled = await NotificationService.instance.scheduleTaskReminder(
             id: id,
             title: newTask.title,
             description: newTask.description,
@@ -105,6 +105,17 @@ class TasksScreenState extends State<TasksScreen>
             earlyMinutes: newTask.earlyReminderMinutes,
             category: newTask.category,
           );
+          _loadData();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(scheduled
+                    ? 'Task added! Reminder scheduled ⏰'
+                    : 'Task added successfully'),
+              ),
+            );
+          }
+          return;
         } catch (_) {}
       }
       _loadData();
@@ -128,7 +139,7 @@ class TasksScreenState extends State<TasksScreen>
         if (updated.reminderDateTime != null && !updated.isCompleted) {
           try {
             final due = DateTime.parse(updated.dueDate);
-            await NotificationService.instance.scheduleTaskReminder(
+            final scheduled = await NotificationService.instance.scheduleTaskReminder(
               id: updated.id!,
               title: updated.title,
               description: updated.description,
@@ -136,6 +147,17 @@ class TasksScreenState extends State<TasksScreen>
               earlyMinutes: updated.earlyReminderMinutes,
               category: updated.category,
             );
+            _loadData();
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(scheduled
+                      ? 'Task updated! Reminder scheduled ⏰'
+                      : 'Task updated'),
+                ),
+              );
+            }
+            return;
           } catch (_) {}
         } else {
           await NotificationService.instance.cancelTaskReminder(updated.id!);
@@ -194,6 +216,36 @@ class TasksScreenState extends State<TasksScreen>
     }
     await _repository.toggleTaskComplete(task.id!, task.isCompleted);
     _loadData();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(newStatus
+              ? 'Task marked completed 🎉'
+              : 'Task marked as pending'),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () => _toggleComplete(task.copyWith(isCompleted: newStatus)),
+          ),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  Future<void> _testNotification() async {
+    final granted = await NotificationService.instance.requestPermissions();
+    await NotificationService.instance.sendTestNotification();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(granted
+              ? 'Test notification sent! Check your notification tray 🔔'
+              : 'Alert sent. If not visible, please enable notifications in phone Settings.'),
+          action: SnackBarAction(label: 'OK', onPressed: () {}),
+        ),
+      );
+    }
   }
 
   // --- Goal Actions ---
@@ -247,6 +299,11 @@ class TasksScreenState extends State<TasksScreen>
       appBar: AppBar(
         title: const Text('Tasks & Goals'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_active_outlined, size: 21),
+            tooltip: 'Test Reminder Notification',
+            onPressed: _testNotification,
+          ),
           IconButton(
             icon: const Icon(Icons.calendar_month_rounded, size: 21),
             tooltip: 'Future Study Planner',
@@ -564,6 +621,7 @@ class TasksScreenState extends State<TasksScreen>
     return CustomCard(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      onTap: () => _editTask(task),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

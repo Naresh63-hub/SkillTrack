@@ -14,37 +14,114 @@ class NotificationService {
   Future<void> init() async {
     if (_isInitialized) return;
 
+    // 1. Initialize timezone database and set tz.local to device timezone offset
     try {
       tz_data.initializeTimeZones();
+      final now = DateTime.now();
+      bool setLocation = false;
+      try {
+        final loc = tz.getLocation(now.timeZoneName);
+        tz.setLocalLocation(loc);
+        setLocation = true;
+      } catch (_) {}
+
+      if (!setLocation) {
+        // Fallback: match by current device timezone offset
+        for (final loc in tz.timeZoneDatabase.locations.values) {
+          if (loc.currentTimeZone.offset == now.timeZoneOffset.inMilliseconds) {
+            tz.setLocalLocation(loc);
+            setLocation = true;
+            break;
+          }
+        }
+      }
     } catch (e) {
       debugPrint('Timezone initialization notice: $e');
     }
 
+    // 2. Platform initialization settings
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-    const initSettings = InitializationSettings(android: androidSettings);
+    const darwinSettings = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
+
+    const initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: darwinSettings,
+      macOS: darwinSettings,
+    );
 
     try {
       await _notificationsPlugin.initialize(
         initSettings,
         onDidReceiveNotificationResponse: (response) {
-          // Handle tap on notification
+          debugPrint('Notification clicked: ${response.payload}');
         },
       );
+
+      // 3. Explicitly create notification channels for Android 8.0+
+      final androidPlugin =
+          _notificationsPlugin.resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        await androidPlugin.createNotificationChannel(
+          const AndroidNotificationChannel(
+            'task_reminders_channel',
+            'Task & Call Reminders',
+            description:
+                'Scheduled reminders for student tasks, mentor calls, and study sessions',
+            importance: Importance.max,
+            playSound: true,
+            enableVibration: true,
+          ),
+        );
+        await androidPlugin.createNotificationChannel(
+          const AndroidNotificationChannel(
+            'event_reminders_channel',
+            'Planner & Meeting Reminders',
+            description:
+                'Advance reminders for campus drives, tests, and meetings',
+            importance: Importance.max,
+            playSound: true,
+            enableVibration: true,
+          ),
+        );
+      }
+
       _isInitialized = true;
-    } catch (_) {
-      // Graceful fallback if notification subsystem is restricted
+    } catch (e) {
+      debugPrint('Notification initialization notice: $e');
       _isInitialized = false;
     }
   }
 
+  /// Requests notification and alarm permissions across Android & iOS
   Future<bool> requestPermissions() async {
     try {
       final androidPlugin =
           _notificationsPlugin.resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>();
       if (androidPlugin != null) {
-        final granted = await androidPlugin.requestNotificationsPermission();
+        final notifGranted =
+            await androidPlugin.requestNotificationsPermission() ?? false;
+        try {
+          await androidPlugin.requestExactAlarmsPermission();
+        } catch (_) {}
+        return notifGranted;
+      }
+
+      final iosPlugin =
+          _notificationsPlugin.resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>();
+      if (iosPlugin != null) {
+        final granted = await iosPlugin.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
         return granted ?? false;
       }
     } catch (_) {}
@@ -64,12 +141,21 @@ class NotificationService {
       'Task & Call Reminders',
       channelDescription:
           'Reminders for student tasks, deadlines, and study goals',
-      importance: Importance.high,
+      importance: Importance.max,
       priority: Priority.high,
       icon: '@mipmap/ic_launcher',
+      playSound: true,
+      enableVibration: true,
     );
 
-    const notificationDetails = NotificationDetails(android: androidDetails);
+    const notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
+    );
 
     try {
       await _notificationsPlugin.show(
@@ -78,11 +164,24 @@ class NotificationService {
         body,
         notificationDetails,
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Could not show task notification: $e');
+    }
+  }
+
+  /// Sends an immediate test notification to verify sounds, banners, and permissions
+  Future<bool> sendTestNotification() async {
+    await requestPermissions();
+    await showTaskNotification(
+      id: 999999,
+      title: '🔔 SkillTrack Notification Active',
+      body: 'Your task and study reminders are ready to alert you on time!',
+    );
+    return true;
   }
 
   /// Schedules a task or call reminder ahead of time
-  Future<void> scheduleTaskReminder({
+  Future<bool> scheduleTaskReminder({
     required int id,
     required String title,
     String? description,
@@ -90,13 +189,14 @@ class NotificationService {
     int? earlyMinutes,
     String? category,
   }) async {
-    if (kIsWeb) return;
+    if (kIsWeb) return false;
     if (!_isInitialized) await init();
 
     final early = earlyMinutes ?? 0;
     final reminderTime = dueDateTime.subtract(Duration(minutes: early));
     if (reminderTime.isBefore(DateTime.now())) {
-      return; // Cannot schedule in the past
+      debugPrint('Reminder time is in the past: $reminderTime');
+      return false; // Cannot schedule in the past
     }
 
     final notifId = 100000 + (id % 100000);
@@ -117,28 +217,54 @@ class NotificationService {
         ? '$earlyText • $description'
         : earlyText;
 
+    final scheduledTz = tz.TZDateTime.from(reminderTime, tz.local);
+    const androidDetails = AndroidNotificationDetails(
+      'task_reminders_channel',
+      'Task & Call Reminders',
+      channelDescription:
+          'Scheduled reminders for student tasks, mentor calls, and study sessions',
+      importance: Importance.max,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      playSound: true,
+      enableVibration: true,
+    );
+
+    const notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
+    );
+
     try {
-      final scheduledTz = tz.TZDateTime.from(reminderTime, tz.local);
       await _notificationsPlugin.zonedSchedule(
         notifId,
         notifTitle,
         notifBody,
         scheduledTz,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'task_reminders_channel',
-            'Task & Call Reminders',
-            channelDescription:
-                'Scheduled reminders for student tasks, mentor calls, and study sessions',
-            importance: Importance.high,
-            priority: Priority.high,
-            icon: '@mipmap/ic_launcher',
-          ),
-        ),
+        notificationDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
+      return true;
     } catch (e) {
-      debugPrint('Could not schedule task reminder: $e');
+      // Fallback if exact alarms are restricted
+      try {
+        await _notificationsPlugin.zonedSchedule(
+          notifId,
+          notifTitle,
+          notifBody,
+          scheduledTz,
+          notificationDetails,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        );
+        return true;
+      } catch (e2) {
+        debugPrint('Could not schedule task reminder: $e2');
+        return false;
+      }
     }
   }
 
@@ -151,7 +277,7 @@ class NotificationService {
   }
 
   /// Schedules a planner/calendar event reminder ahead of time
-  Future<void> scheduleEventReminder({
+  Future<bool> scheduleEventReminder({
     required int id,
     required String title,
     String? description,
@@ -159,12 +285,12 @@ class NotificationService {
     int? reminderMinutesBefore,
     String? eventType,
   }) async {
-    if (kIsWeb) return;
+    if (kIsWeb) return false;
     if (!_isInitialized) await init();
 
     final mins = reminderMinutesBefore ?? 0;
     final reminderTime = eventDateTime.subtract(Duration(minutes: mins));
-    if (reminderTime.isBefore(DateTime.now())) return;
+    if (reminderTime.isBefore(DateTime.now())) return false;
 
     final notifId = 200000 + (id % 100000);
     final isCall = eventType == 'Call / Meeting';
@@ -184,28 +310,54 @@ class NotificationService {
         ? '$earlyText • $description'
         : earlyText;
 
+    final scheduledTz = tz.TZDateTime.from(reminderTime, tz.local);
+    const androidDetails = AndroidNotificationDetails(
+      'event_reminders_channel',
+      'Planner & Meeting Reminders',
+      channelDescription:
+          'Advance reminders for campus drives, tests, and meetings',
+      importance: Importance.max,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      playSound: true,
+      enableVibration: true,
+    );
+
+    const notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
+    );
+
     try {
-      final scheduledTz = tz.TZDateTime.from(reminderTime, tz.local);
       await _notificationsPlugin.zonedSchedule(
         notifId,
         notifTitle,
         notifBody,
         scheduledTz,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'event_reminders_channel',
-            'Planner & Meeting Reminders',
-            channelDescription:
-                'Advance reminders for campus drives, tests, and meetings',
-            importance: Importance.high,
-            priority: Priority.high,
-            icon: '@mipmap/ic_launcher',
-          ),
-        ),
+        notificationDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
+      return true;
     } catch (e) {
-      debugPrint('Could not schedule event reminder: $e');
+      // Fallback if exact alarms are restricted
+      try {
+        await _notificationsPlugin.zonedSchedule(
+          notifId,
+          notifTitle,
+          notifBody,
+          scheduledTz,
+          notificationDetails,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        );
+        return true;
+      } catch (e2) {
+        debugPrint('Could not schedule event reminder: $e2');
+        return false;
+      }
     }
   }
 

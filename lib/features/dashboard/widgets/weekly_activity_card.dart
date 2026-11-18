@@ -222,7 +222,7 @@ class WeeklyActivityCard extends StatelessWidget {
                       // Bar / indicator column
                       Container(
                         width: 32,
-                        height: 64,
+                        height: 68,
                         decoration: BoxDecoration(
                           color: AppColors.secondaryCard,
                           borderRadius: BorderRadius.circular(16),
@@ -253,8 +253,8 @@ class WeeklyActivityCard extends StatelessWidget {
                             const Spacer(),
                             Container(
                               width: 24,
-                              height: (52 * heightRatio).clamp(10.0, 50.0),
-                              margin: const EdgeInsets.all(4),
+                              height: (34 * heightRatio).clamp(16.0, 34.0),
+                              margin: const EdgeInsets.fromLTRB(3, 0, 3, 3),
                               decoration: BoxDecoration(
                                 gradient: hasActivity
                                     ? AppColors.purpleProgressGradient

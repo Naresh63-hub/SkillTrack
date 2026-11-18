@@ -10,14 +10,46 @@ import 'features/intro/screens/splash_screen.dart';
 import 'features/notes_planner/screens/notes_planner_hub_screen.dart';
 import 'features/skills/screens/career_roadmaps_screen.dart';
 import 'features/resume/screens/resume_screen.dart';
+import 'features/portfolio/screens/public_portfolio_screen.dart';
 import 'services/navigation_state_service.dart';
 
 class SkillTrackApp extends StatelessWidget {
   final Widget? initialHome;
   const SkillTrackApp({super.key, this.initialHome});
 
+  /// Extracts a public portfolio handle from Uri, supporting both
+  /// hash routing (/#/p/username) and path routing (/p/username).
+  static String? extractPublicHandle(Uri uri) {
+    // 1. Check hash/fragment routing: e.g. #/p/priya-sharma
+    final fragment = uri.fragment;
+    if (fragment.isNotEmpty) {
+      final clean = fragment.startsWith('/') ? fragment : '/$fragment';
+      final fragUri = Uri.tryParse(clean);
+      if (fragUri != null && fragUri.pathSegments.isNotEmpty) {
+        if (fragUri.pathSegments.first == 'p' && fragUri.pathSegments.length >= 2) {
+          return fragUri.pathSegments[1];
+        }
+      }
+    }
+
+    // 2. Check path routing: e.g. /p/priya-sharma
+    if (uri.pathSegments.isNotEmpty &&
+        uri.pathSegments.first == 'p' &&
+        uri.pathSegments.length >= 2) {
+      return uri.pathSegments[1];
+    }
+
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final publicHandle = extractPublicHandle(Uri.base);
+    final homeWidget = initialHome ??
+        (publicHandle != null
+            ? PublicPortfolioScreen(handle: publicHandle)
+            : const SplashScreen());
+
     return MaterialApp(
       title: 'SkillTrack',
       restorationScopeId: 'skilltrack_app',
@@ -25,7 +57,17 @@ class SkillTrackApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
-      home: initialHome ?? const SplashScreen(),
+      home: homeWidget,
+      onGenerateRoute: (settings) {
+        if (settings.name != null && settings.name!.startsWith('/p/')) {
+          final handle = settings.name!.replaceFirst('/p/', '').split('?').first;
+          return MaterialPageRoute(
+            builder: (_) => PublicPortfolioScreen(handle: handle),
+            settings: settings,
+          );
+        }
+        return null;
+      },
     );
   }
 }

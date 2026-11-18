@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/custom_card.dart';
@@ -8,6 +9,9 @@ import '../../../models/student_profile.dart';
 import '../../../repositories/profile_repository.dart';
 import '../../skills/screens/career_roadmaps_screen.dart';
 import '../../app_install/widgets/install_app_dialog.dart';
+import '../../portfolio/screens/public_portfolio_screen.dart';
+import '../../portfolio/services/portfolio_repository.dart';
+import '../../portfolio/widgets/student_card_share_sheet.dart';
 import 'settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -148,6 +152,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (uri != null && await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
+  }
+
+  Future<void> _openShareSheet() async {
+    final portfolioData = await PortfolioRepository()
+        .loadPortfolio(handle: _profile?.publicHandle);
+    if (!mounted) return;
+    StudentCardShareSheet.show(context, portfolioData);
+  }
+
+  void _copyPortfolioLink() {
+    if (_profile == null) return;
+    final url = _profile!.publicPortfolioUrl;
+    Clipboard.setData(ClipboardData(text: url));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Colors.greenAccent),
+            const SizedBox(width: 8),
+            Expanded(child: Text('Portfolio URL copied: $url')),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
@@ -431,6 +460,152 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ] else ...[
                 // Read-only Display Mode
+                // Public Web Portfolio & Sharable Student Card
+                CustomCard(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.brightAccent
+                                  .withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.badge_rounded,
+                              color: AppColors.brightAccent,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Public Web Portfolio & Student Card',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primaryText,
+                                  ),
+                                ),
+                                Text(
+                                  'Read-only link for resumes, LinkedIn, & recruiters',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.secondaryText,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981)
+                                  .withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'LIVE',
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF10B981),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondaryBackground,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.link_rounded,
+                                size: 16, color: AppColors.brightAccent),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                p.publicPortfolioUrl,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  color: AppColors.lightPurple,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.copy_rounded, size: 16),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              tooltip: 'Copy Public URL',
+                              onPressed: _copyPortfolioLink,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (ctx) => PublicPortfolioScreen(
+                                        handle: p.publicHandle),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.visibility_rounded,
+                                  size: 15),
+                              label: const Text('Preview Portfolio'),
+                              style: OutlinedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8),
+                                textStyle: const TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _openShareSheet,
+                              icon: const Icon(Icons.share_rounded, size: 15),
+                              label: const Text('Share Card'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryPurple,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8),
+                                textStyle: const TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
                 CustomCard(
                   padding: const EdgeInsets.all(14),
                   child: Row(

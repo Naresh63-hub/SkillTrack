@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
 import 'core/config/supabase_config.dart';
 import 'core/notifications/notification_service.dart';
+import 'features/portfolio/screens/public_portfolio_screen.dart';
 import 'models/student_profile.dart';
 import 'repositories/profile_repository.dart';
 import 'services/supabase_auth_service.dart';
@@ -37,7 +38,9 @@ void main() async {
           debugPrint('Supabase initialization notice: $e');
           return Supabase.instance;
         }),
-      NotificationService.instance.init().catchError((_) {}),
+      NotificationService.instance.init().then((_) {
+        NotificationService.instance.requestPermissions().catchError((_) => false);
+      }).catchError((_) {}),
       SharedPreferences.getInstance(),
       ProfileRepository()
           .getProfile()
@@ -47,21 +50,27 @@ void main() async {
     final prefs = results[2] as SharedPreferences;
     final profile = results[3] as StudentProfile;
 
-    final hasOnboarded = prefs.getBool('has_onboarded') ?? false;
-    final hasValidProfile = profile.name.trim().isNotEmpty;
-    final isGuest = prefs.getBool('is_guest_mode') ?? false;
-    final isAuth = SupabaseAuthService.instance.isAuthenticated;
+    // Check if app was launched via public student portfolio URL (e.g. /#/p/username or /p/username)
+    final publicHandle = SkillTrackApp.extractPublicHandle(Uri.base);
+    if (publicHandle != null && publicHandle.isNotEmpty) {
+      fastHome = PublicPortfolioScreen(handle: publicHandle);
+    } else {
+      final hasOnboarded = prefs.getBool('has_onboarded') ?? false;
+      final hasValidProfile = profile.name.trim().isNotEmpty;
+      final isGuest = prefs.getBool('is_guest_mode') ?? false;
+      final isAuth = SupabaseAuthService.instance.isAuthenticated;
 
-    // Direct Instant Resume: If the student is already an active user,
-    // mount MainNavigationShell immediately on frame 1 without showing SplashScreen.
-    if (hasOnboarded && (hasValidProfile || isGuest || isAuth)) {
-      if (hasValidProfile) {
-        final savedTab = prefs.getInt('last_active_tab_index') ?? 0;
-        final savedRoute = prefs.getString('last_active_route');
-        fastHome = MainNavigationShell(
-          initialIndex: savedTab,
-          initialRoute: savedRoute,
-        );
+      // Direct Instant Resume: If the student is already an active user,
+      // mount MainNavigationShell immediately on frame 1 without showing SplashScreen.
+      if (hasOnboarded && (hasValidProfile || isGuest || isAuth)) {
+        if (hasValidProfile) {
+          final savedTab = prefs.getInt('last_active_tab_index') ?? 0;
+          final savedRoute = prefs.getString('last_active_route');
+          fastHome = MainNavigationShell(
+            initialIndex: savedTab,
+            initialRoute: savedRoute,
+          );
+        }
       }
     }
   } catch (e) {

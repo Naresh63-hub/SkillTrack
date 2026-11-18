@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../models/planner_event.dart';
+import '../../../core/notifications/notification_service.dart';
+import 'package:skilltrack/models/planner_event.dart';
 import '../../../services/draft_service.dart';
 
 class AddEditEventDialog extends StatefulWidget {
@@ -613,7 +614,11 @@ class _AddEditEventDialogState extends State<AddEditEventDialog>
                                   Switch(
                                     value: _reminderMinutesBefore != null,
                                     activeColor: AppColors.brightAccent,
-                                    onChanged: (val) {
+                                    onChanged: (val) async {
+                                      if (val) {
+                                        await NotificationService.instance
+                                            .requestPermissions();
+                                      }
                                       setState(() {
                                         _reminderMinutesBefore =
                                             val ? 15 : null;
