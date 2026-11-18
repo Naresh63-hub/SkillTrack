@@ -239,11 +239,14 @@ class _CertificatesScreenState extends State<CertificatesScreen> {
 
     return CustomCard(
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => CertificateViewerScreen(certificate: cert),
-          ),
-        );
+        Navigator.of(context)
+            .push(
+              MaterialPageRoute(
+                builder: (context) =>
+                    CertificateViewerScreen(certificate: cert),
+              ),
+            )
+            .then((_) => _loadCertificates());
       },
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),

@@ -74,17 +74,21 @@ class MockInterviewRepository {
     required double score,
     required String feedback,
     required String improvementTips,
+    String? rubricsJson,
   }) async {
     final db = await _dbHelper.database;
     await db.transaction((txn) async {
+      final updateData = <String, dynamic>{
+        'user_answer': userAnswer,
+        'score': score,
+        'feedback': feedback,
+        'improvement_tips': improvementTips,
+        if (rubricsJson != null) 'rubrics_json': rubricsJson,
+      };
+
       await txn.update(
         'mock_interview_answers',
-        {
-          'user_answer': userAnswer,
-          'score': score,
-          'feedback': feedback,
-          'improvement_tips': improvementTips,
-        },
+        updateData,
         where: 'id = ?',
         whereArgs: [answerId],
       );

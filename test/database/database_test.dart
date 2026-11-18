@@ -24,8 +24,7 @@ void main() {
     late CertificatesRepository certsRepo;
 
     setUp(() async {
-      // Run helper onCreate
-      await DatabaseHelper.instance.database; // Initializes tables
+      await DatabaseHelper.instance.clearAllData();
       skillsRepo = SkillsRepository();
       projectsRepo = ProjectsRepository();
       tasksRepo = TasksRepository();

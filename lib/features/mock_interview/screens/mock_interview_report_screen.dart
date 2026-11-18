@@ -135,7 +135,7 @@ class MockInterviewReportScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: interview.isAiEvaluated
-                      ? AppColors.primaryPurple.withValues(alpha: 0.4)
+                       ? AppColors.primaryPurple.withValues(alpha: 0.4)
                       : const Color(0xFFD97706).withValues(alpha: 0.4),
                 ),
               ),
@@ -168,6 +168,10 @@ class MockInterviewReportScreen extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 16),
+
+            // 3-Rubric Aggregate Breakdown Card
+            _buildAggregateRubricsCard(interview),
             const SizedBox(height: 16),
 
             // Strengths & Weaknesses
@@ -370,6 +374,92 @@ class MockInterviewReportScreen extends StatelessWidget {
                         ],
                       ),
                     ),
+                    if (ans.rubrics != null) ...[
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryPurple
+                                  .withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'STAR: ${ans.rubrics!.starAdherence}',
+                              style: const TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryPurple,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF059669)
+                                  .withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'Accuracy: ${ans.rubrics!.technicalAccuracy}',
+                              style: const TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF059669),
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2563EB)
+                                  .withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'Terms: ${ans.rubrics!.detectedTerms.length} Detected',
+                              style: const TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF2563EB),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (ans.rubrics!.detectedTerms.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 4,
+                          runSpacing: 4,
+                          children: ans.rubrics!.detectedTerms.map((term) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF059669)
+                                    .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                '✓ $term',
+                                style: const TextStyle(
+                                  fontSize: 9.5,
+                                  color: Color(0xFF059669),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ],
                     if (ans.feedback != null && ans.feedback!.isNotEmpty) ...[
                       const SizedBox(height: 10),
                       Text(
@@ -410,6 +500,144 @@ class MockInterviewReportScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAggregateRubricsCard(MockInterview interview) {
+    double commTotal = 0.0;
+    double techTotal = 0.0;
+    double termTotal = 0.0;
+    int count = 0;
+
+    for (final ans in interview.answers) {
+      if (ans.rubrics != null) {
+        commTotal += ans.rubrics!.communicationScore;
+        techTotal += ans.rubrics!.technicalScore;
+        termTotal += ans.rubrics!.terminologyScore;
+        count++;
+      }
+    }
+
+    final commAvg = count > 0 ? (commTotal / count) : 75.0;
+    final techAvg = count > 0 ? (techTotal / count) : 75.0;
+    final termAvg = count > 0 ? (termTotal / count) : 75.0;
+
+    return CustomCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.analytics_outlined,
+                  size: 18, color: AppColors.primaryPurple),
+              SizedBox(width: 8),
+              Text(
+                '3-Rubric Skill Evaluation',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primaryText,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Objective evaluation across verbal delivery, technical depth, and industry vocabulary:',
+            style: TextStyle(
+              fontSize: 11.5,
+              color: AppColors.mutedText,
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // 1. Communication & Structure (STAR)
+          _buildRubricScoreBar(
+            title: '1. Communication & Structure (STAR)',
+            score: commAvg,
+            color: const Color(0xFF8B5CF6),
+            subtitle: commAvg >= 80
+                ? 'Strong situational context, logical flow & impact'
+                : 'Good delivery; practice concise STAR framing',
+          ),
+          const SizedBox(height: 12),
+
+          // 2. Technical Accuracy
+          _buildRubricScoreBar(
+            title: '2. Technical Accuracy',
+            score: techAvg,
+            color: const Color(0xFF059669),
+            subtitle: techAvg >= 80
+                ? 'High conceptual accuracy & solid reasoning'
+                : 'Proficient grasp with minor edge-case gaps',
+          ),
+          const SizedBox(height: 12),
+
+          // 3. Key Terminology Used
+          _buildRubricScoreBar(
+            title: '3. Key Terminology Density',
+            score: termAvg,
+            color: const Color(0xFF2563EB),
+            subtitle: termAvg >= 80
+                ? 'Rich domain-specific vocabulary and keywords'
+                : 'Incorporate more industry terminology',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRubricScoreBar({
+    required String title,
+    required double score,
+    required Color color,
+    required String subtitle,
+  }) {
+    final clamped = score.clamp(0.0, 100.0);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primaryText,
+              ),
+            ),
+            Text(
+              '${clamped.toInt()}%',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 5),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: clamped / 100.0,
+            minHeight: 6,
+            backgroundColor: AppColors.progressTrack,
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          subtitle,
+          style: const TextStyle(
+            fontSize: 10.5,
+            color: AppColors.mutedText,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -221,21 +221,33 @@ Respond ONLY in valid JSON with this format:
 
     try {
       final prompt = '''
-You are a senior tech hiring interviewer evaluating a candidate's answer.
+You are a senior tech hiring interviewer evaluating a candidate's verbal/written answer.
 Question: "$question"
 Category: $category ($difficulty)
 Candidate's Answer: "$cleanAnswer"
 
-Evaluate the response objectively on:
-1. Technical accuracy
-2. Conceptual depth
-3. Clarity and structure
+Evaluate the response objectively on 3 distinct rubrics:
+1. Communication & Structure (STAR method adherence: Situation, Task, Action, Result / Problem, Approach, Outcome)
+2. Technical Accuracy (conceptual correctness, depth, validity of explanation)
+3. Key Terminology (industry-standard technical terms used vs omitted)
 
 Respond ONLY in valid JSON:
 {
-  "score": 82.0, // Float from 0.0 to 100.0 based strictly on quality of answer
+  "score": 82.0, // Overall score float from 0.0 to 100.0
   "feedback": "2-3 sentences evaluating what was accurate and what was missing",
-  "improvement_tips": "1-2 concrete suggestions to deliver a 100% textbook answer"
+  "improvement_tips": "1-2 concrete suggestions to deliver a 100% textbook answer",
+  "rubrics": {
+    "communication_score": 85.0,
+    "star_adherence": "Strong", // "Strong", "Good", or "Developing"
+    "communication_feedback": "Clear explanation with good structure and logical flow.",
+    "technical_score": 82.0,
+    "technical_accuracy": "Proficient", // "Exemplary", "Proficient", "Partial", "Needs Review"
+    "technical_feedback": "Accurately explained core concepts with minor edge-case omission.",
+    "terminology_score": 80.0,
+    "detected_terms": ["term1", "term2"],
+    "missing_terms": ["term3"],
+    "terminology_feedback": "Good use of domain terminology."
+  }
 }
 ''';
 
@@ -255,10 +267,19 @@ Respond ONLY in valid JSON:
         final tips = data['improvement_tips'] as String? ??
             'Add a real-world code example or edge case consideration.';
 
+        InterviewRubrics rubricsObj;
+        if (data['rubrics'] is Map<String, dynamic>) {
+          rubricsObj = InterviewRubrics.fromMap(data['rubrics']);
+        } else {
+          rubricsObj = _buildRubricsFromHeuristic(question, cleanAnswer, category, score);
+        }
+
         return {
           'score': score.clamp(0.0, 100.0),
           'feedback': feedback,
           'improvement_tips': tips,
+          'rubrics': rubricsObj,
+          'rubrics_json': jsonEncode(rubricsObj.toMap()),
           'is_ai': true,
         };
       }
@@ -291,50 +312,149 @@ Respond ONLY in valid JSON:
       baseScore += 5.0;
     }
 
-    // Technical clarity heuristics
-    final lower = answer.toLowerCase();
-    int techMatches = 0;
-    final keywords = [
-      'because',
-      'example',
-      'memory',
-      'performance',
-      'complexity',
-      'object',
-      'class',
-      'method',
-      'data',
-      'function',
-      'return',
-      'interface',
-      'algorithm',
-      'time',
-      'space',
-      'database',
-      'index',
-      'table',
-      'thread',
-      'process',
-      'async',
-      'await',
-      'api',
-      'state'
-    ];
-    for (final kw in keywords) {
-      if (lower.contains(kw)) techMatches++;
-    }
-
-    baseScore += (techMatches * 3.5).clamp(0.0, 20.0);
-    final finalScore = baseScore.clamp(35.0, 95.0);
+    final rubrics = _buildRubricsFromHeuristic(question, answer, category, baseScore);
+    final finalScore = ((rubrics.communicationScore + rubrics.technicalScore + rubrics.terminologyScore) / 3.0)
+        .clamp(35.0, 95.0);
 
     return {
       'score': finalScore,
       'feedback': words > 30
-          ? 'Strong conceptual explanation demonstrating solid foundational grasp of the problem.'
+          ? 'Strong explanation demonstrating solid foundational grasp of the problem.'
           : 'Concise response touching on core concepts, but would benefit from further technical elaboration.',
       'improvement_tips':
-          'To impress interviewers, structure your answer with: 1) High-level definition, 2) Key trade-offs/complexity, 3) Real-world implementation example.',
+          'To impress interviewers, structure your answer using STAR: 1) State context/problem, 2) Explain technical implementation & trade-offs, 3) Share measurable outcome.',
+      'rubrics': rubrics,
+      'rubrics_json': jsonEncode(rubrics.toMap()),
     };
+  }
+
+  InterviewRubrics _buildRubricsFromHeuristic(
+    String question,
+    String answer,
+    String category,
+    double overallBaseScore,
+  ) {
+    final lower = answer.toLowerCase();
+    final words = answer.split(RegExp(r'\s+')).length;
+
+    // 1. Communication & Structure (STAR method adherence)
+    int starMarkers = 0;
+    final starIndicators = [
+      'when i', 'during', 'situation', 'problem was', 'task was', 'needed to',
+      'i implemented', 'i decided', 'i built', 'i designed', 'my approach',
+      'as a result', 'outcome was', 'impact', 'because', 'for example', 'trade-off'
+    ];
+    for (final indicator in starIndicators) {
+      if (lower.contains(indicator)) starMarkers++;
+    }
+
+    String starAdherence;
+    double commScore;
+    String commFeedback;
+    if (words >= 45 && starMarkers >= 2) {
+      starAdherence = 'Strong';
+      commScore = (85.0 + (starMarkers * 2)).clamp(85.0, 96.0);
+      commFeedback = 'Excellent structure! Follows STAR method with clear context, action taken, and outcome.';
+    } else if (words >= 20 || starMarkers >= 1) {
+      starAdherence = 'Good';
+      commScore = (72.0 + (starMarkers * 3)).clamp(70.0, 84.0);
+      commFeedback = 'Good flow. To make it stronger, explicitly mention the measurable outcome or trade-offs.';
+    } else {
+      starAdherence = 'Developing';
+      commScore = (50.0 + (words * 0.8)).clamp(45.0, 68.0);
+      commFeedback = 'Too brief. Frame responses using STAR: Situation -> Task -> Action -> Result.';
+    }
+
+    // 2. Key Terminology Used
+    final domainDict = _getDomainTerminology(category);
+    final detected = <String>[];
+    final missing = <String>[];
+
+    for (final term in domainDict) {
+      if (lower.contains(term.toLowerCase())) {
+        if (!detected.contains(term)) detected.add(term);
+      } else {
+        if (missing.length < 3 && !missing.contains(term)) missing.add(term);
+      }
+    }
+
+    final termDensity = (detected.length / 4.0).clamp(0.0, 1.0);
+    final termScore = (55.0 + (termDensity * 40.0)).clamp(50.0, 95.0);
+    final termFeedback = detected.isNotEmpty
+        ? 'Used key technical terms: ${detected.take(3).join(", ")}.'
+        : 'Missing specialized technical vocabulary. Incorporate domain keywords.';
+
+    // 3. Technical Accuracy
+    double techScore = (overallBaseScore + (detected.length * 2)).clamp(40.0, 95.0);
+    String techAccuracy;
+    String techFeedback;
+    if (techScore >= 85) {
+      techAccuracy = 'Exemplary';
+      techFeedback = 'Demonstrates deep conceptual understanding and correct technical reasoning.';
+    } else if (techScore >= 70) {
+      techAccuracy = 'Proficient';
+      techFeedback = 'Technically sound explanation with the primary principles covered accurately.';
+    } else if (techScore >= 55) {
+      techAccuracy = 'Partial';
+      techFeedback = 'Partially accurate explanation; review edge cases and deeper architectural mechanics.';
+    } else {
+      techAccuracy = 'Needs Review';
+      techFeedback = 'Core conceptual inaccuracies or missing definitions detected. Revise foundational topics.';
+    }
+
+    return InterviewRubrics(
+      communicationScore: commScore,
+      starAdherence: starAdherence,
+      communicationFeedback: commFeedback,
+      technicalScore: techScore,
+      technicalAccuracy: techAccuracy,
+      technicalFeedback: techFeedback,
+      terminologyScore: termScore,
+      detectedTerms: detected,
+      missingTerms: missing,
+      terminologyFeedback: termFeedback,
+    );
+  }
+
+  List<String> _getDomainTerminology(String category) {
+    switch (category) {
+      case 'Python':
+        return [
+          'GIL', 'Multithreading', 'Decorators', 'Generators', 'Yield',
+          'Context Manager', 'Metaclasses', 'List Comprehensions', 'AsyncIO'
+        ];
+      case 'Java':
+        return [
+          'JVM', 'Heap & Stack', 'Garbage Collection', 'Polymorphism',
+          'Interfaces', 'Streams API', 'Concurrency', 'ReentrantLock', 'Spring Boot'
+        ];
+      case 'SQL':
+        return [
+          'Inner Join', 'Outer Join', 'B-Tree Index', 'Normalization',
+          'ACID Properties', 'Transactions', 'Window Functions', 'Query Optimization'
+        ];
+      case 'Data Structures and Algorithms':
+        return [
+          'Time Complexity', 'Space Complexity', 'Big-O', 'Hash Table',
+          'Linked List', 'BFS/DFS', 'Divide & Conquer', 'Dynamic Programming', 'Memoization'
+        ];
+      case 'HTML/CSS/JavaScript':
+        return [
+          'Event Loop', 'Call Stack', 'Promises', 'Async/Await', 'Closures',
+          'Box Model', 'Flexbox/Grid', 'Event Bubbling', 'DOM Manipulation'
+        ];
+      case 'AI/ML':
+        return [
+          'Supervised Learning', 'Overfitting', 'Bias-Variance', 'Regularization',
+          'Activation Function', 'ReLU', 'Precision & Recall', 'Transformers', 'Attention'
+        ];
+      case 'HR & Behavioral':
+      default:
+        return [
+          'Situation', 'Action Taken', 'Measurable Impact', 'Cross-functional Collaboration',
+          'Conflict Resolution', 'Ownership', 'Continuous Learning', 'Initiative'
+        ];
+    }
   }
 
   /// Concludes the interview and records aggregate strengths, weaknesses, and revision suggestions

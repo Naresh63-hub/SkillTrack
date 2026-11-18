@@ -16,10 +16,10 @@ class PlacementScreen extends StatefulWidget {
   const PlacementScreen({super.key, this.initialTabIndex = 0});
 
   @override
-  State<PlacementScreen> createState() => _PlacementScreenState();
+  State<PlacementScreen> createState() => PlacementScreenState();
 }
 
-class _PlacementScreenState extends State<PlacementScreen>
+class PlacementScreenState extends State<PlacementScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final PlacementRepository _repository = PlacementRepository();
@@ -44,6 +44,10 @@ class _PlacementScreenState extends State<PlacementScreen>
       vsync: this,
       initialIndex: widget.initialTabIndex.clamp(0, 4),
     );
+    _loadMetrics();
+  }
+
+  void reload() {
     _loadMetrics();
   }
 

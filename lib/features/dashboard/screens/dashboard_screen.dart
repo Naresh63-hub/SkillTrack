@@ -22,6 +22,7 @@ import '../widgets/upcoming_deadlines_list.dart';
 import '../widgets/recent_projects_list.dart';
 import '../widgets/weekly_activity_card.dart';
 import '../widgets/continue_learning_section.dart';
+import 'weekly_plans_screen.dart';
 import '../widgets/placement_prep_modules_section.dart';
 
 import '../../skills/screens/add_edit_skill_dialog.dart';
@@ -1115,6 +1116,39 @@ class DashboardScreenState extends State<DashboardScreen> {
                     skills: _allSkills,
                     projects: _allProjects,
                     activeDates: _savedActiveDates,
+                    onNavigateTab: widget.onNavigateTab,
+                    onTap: () {
+                      Navigator.of(context)
+                          .push(
+                            MaterialPageRoute(
+                              builder: (ctx) => WeeklyPlansScreen(
+                                initialTasks: _allTasks,
+                                initialSkills: _allSkills,
+                                initialProjects: _allProjects,
+                                activeDates: _savedActiveDates,
+                                initialDayIndex: -1,
+                                onNavigateTab: widget.onNavigateTab,
+                              ),
+                            ),
+                          )
+                          .then((_) => _loadDashboardData());
+                    },
+                    onDayTap: (dayIdx) {
+                      Navigator.of(context)
+                          .push(
+                            MaterialPageRoute(
+                              builder: (ctx) => WeeklyPlansScreen(
+                                initialTasks: _allTasks,
+                                initialSkills: _allSkills,
+                                initialProjects: _allProjects,
+                                activeDates: _savedActiveDates,
+                                initialDayIndex: dayIdx,
+                                onNavigateTab: widget.onNavigateTab,
+                              ),
+                            ),
+                          )
+                          .then((_) => _loadDashboardData());
+                    },
                   ),
                   const SizedBox(height: 20),
 

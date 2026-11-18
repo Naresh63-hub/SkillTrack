@@ -129,6 +129,91 @@ class MockInterview {
   }
 }
 
+/// Structured 3-dimension evaluation rubrics for interview responses
+class InterviewRubrics {
+  final double communicationScore; // 0.0 - 100.0
+  final String starAdherence; // 'Strong', 'Good', 'Developing'
+  final String communicationFeedback;
+
+  final double technicalScore; // 0.0 - 100.0
+  final String technicalAccuracy; // 'Exemplary', 'Proficient', 'Partial', 'Needs Review'
+  final String technicalFeedback;
+
+  final double terminologyScore; // 0.0 - 100.0
+  final List<String> detectedTerms;
+  final List<String> missingTerms;
+  final String terminologyFeedback;
+
+  const InterviewRubrics({
+    this.communicationScore = 75.0,
+    this.starAdherence = 'Good',
+    this.communicationFeedback = '',
+    this.technicalScore = 75.0,
+    this.technicalAccuracy = 'Proficient',
+    this.technicalFeedback = '',
+    this.terminologyScore = 75.0,
+    this.detectedTerms = const [],
+    this.missingTerms = const [],
+    this.terminologyFeedback = '',
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'communication_score': communicationScore,
+      'star_adherence': starAdherence,
+      'communication_feedback': communicationFeedback,
+      'technical_score': technicalScore,
+      'technical_accuracy': technicalAccuracy,
+      'technical_feedback': technicalFeedback,
+      'terminology_score': terminologyScore,
+      'detected_terms': detectedTerms,
+      'missing_terms': missingTerms,
+      'terminology_feedback': terminologyFeedback,
+    };
+  }
+
+  factory InterviewRubrics.fromMap(Map<String, dynamic> map) {
+    List<String> parseList(dynamic raw) {
+      if (raw == null) return [];
+      if (raw is List) return raw.map((e) => e.toString()).toList();
+      try {
+        final decoded = jsonDecode(raw.toString());
+        if (decoded is List) return decoded.map((e) => e.toString()).toList();
+      } catch (_) {}
+      return [];
+    }
+
+    return InterviewRubrics(
+      communicationScore:
+          (map['communication_score'] as num?)?.toDouble() ?? 75.0,
+      starAdherence: map['star_adherence'] as String? ?? 'Good',
+      communicationFeedback: map['communication_feedback'] as String? ?? '',
+      technicalScore: (map['technical_score'] as num?)?.toDouble() ?? 75.0,
+      technicalAccuracy:
+          map['technical_accuracy'] as String? ?? 'Proficient',
+      technicalFeedback: map['technical_feedback'] as String? ?? '',
+      terminologyScore:
+          (map['terminology_score'] as num?)?.toDouble() ?? 75.0,
+      detectedTerms: parseList(map['detected_terms']),
+      missingTerms: parseList(map['missing_terms']),
+      terminologyFeedback: map['terminology_feedback'] as String? ?? '',
+    );
+  }
+
+  factory InterviewRubrics.fromJsonString(String? jsonStr) {
+    if (jsonStr == null || jsonStr.trim().isEmpty) {
+      return const InterviewRubrics();
+    }
+    try {
+      final decoded = jsonDecode(jsonStr);
+      if (decoded is Map<String, dynamic>) {
+        return InterviewRubrics.fromMap(decoded);
+      }
+    } catch (_) {}
+    return const InterviewRubrics();
+  }
+}
+
 class MockInterviewAnswer {
   final int? id;
   final int interviewId;
@@ -139,6 +224,8 @@ class MockInterviewAnswer {
   final double score; // 0.0 - 100.0
   final String? feedback;
   final String? improvementTips;
+  final String? rubricsJson;
+  final InterviewRubrics? rubrics;
 
   const MockInterviewAnswer({
     this.id,
@@ -150,6 +237,8 @@ class MockInterviewAnswer {
     this.score = 0.0,
     this.feedback,
     this.improvementTips,
+    this.rubricsJson,
+    this.rubrics,
   });
 
   Map<String, dynamic> toMap() {
@@ -163,10 +252,18 @@ class MockInterviewAnswer {
       'score': score,
       'feedback': feedback,
       'improvement_tips': improvementTips,
+      'rubrics_json':
+          rubricsJson ?? (rubrics != null ? jsonEncode(rubrics!.toMap()) : null),
     };
   }
 
   factory MockInterviewAnswer.fromMap(Map<String, dynamic> map) {
+    final rawRubrics = map['rubrics_json'] as String?;
+    InterviewRubrics? parsedRubrics;
+    if (rawRubrics != null && rawRubrics.isNotEmpty) {
+      parsedRubrics = InterviewRubrics.fromJsonString(rawRubrics);
+    }
+
     return MockInterviewAnswer(
       id: map['id'] as int?,
       interviewId: map['interview_id'] as int? ?? 0,
@@ -177,6 +274,8 @@ class MockInterviewAnswer {
       score: (map['score'] as num?)?.toDouble() ?? 0.0,
       feedback: map['feedback'] as String?,
       improvementTips: map['improvement_tips'] as String?,
+      rubricsJson: rawRubrics,
+      rubrics: parsedRubrics,
     );
   }
 
@@ -190,6 +289,8 @@ class MockInterviewAnswer {
     double? score,
     String? feedback,
     String? improvementTips,
+    String? rubricsJson,
+    InterviewRubrics? rubrics,
   }) {
     return MockInterviewAnswer(
       id: id ?? this.id,
@@ -201,6 +302,8 @@ class MockInterviewAnswer {
       score: score ?? this.score,
       feedback: feedback ?? this.feedback,
       improvementTips: improvementTips ?? this.improvementTips,
+      rubricsJson: rubricsJson ?? this.rubricsJson,
+      rubrics: rubrics ?? this.rubrics,
     );
   }
 }

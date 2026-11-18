@@ -19,10 +19,10 @@ class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
 
   @override
-  State<TasksScreen> createState() => _TasksScreenState();
+  State<TasksScreen> createState() => TasksScreenState();
 }
 
-class _TasksScreenState extends State<TasksScreen>
+class TasksScreenState extends State<TasksScreen>
     with SingleTickerProviderStateMixin {
   final TasksRepository _repository = TasksRepository();
   final TextEditingController _searchController = TextEditingController();
@@ -42,6 +42,10 @@ class _TasksScreenState extends State<TasksScreen>
         setState(() {});
       }
     });
+    _loadData();
+  }
+
+  void reload() {
     _loadData();
   }
 

@@ -4,12 +4,16 @@ import '../../../core/widgets/custom_card.dart';
 import '../../../models/task_model.dart';
 import '../../../models/skill.dart';
 import '../../../models/project.dart';
+import '../screens/weekly_plans_screen.dart';
 
 class WeeklyActivityCard extends StatelessWidget {
   final List<TaskModel> tasks;
   final List<Skill> skills;
   final List<Project>? projects;
   final Set<DateTime>? activeDates;
+  final Function(int dayIndex)? onDayTap;
+  final VoidCallback? onTap;
+  final Function(int tabIndex)? onNavigateTab;
 
   const WeeklyActivityCard({
     super.key,
@@ -17,7 +21,33 @@ class WeeklyActivityCard extends StatelessWidget {
     required this.skills,
     this.projects,
     this.activeDates,
+    this.onDayTap,
+    this.onTap,
+    this.onNavigateTab,
   });
+
+  void _openPlans(BuildContext context, int dayIndex) {
+    if (dayIndex >= 0 && onDayTap != null) {
+      onDayTap!(dayIndex);
+      return;
+    }
+    if (onTap != null) {
+      onTap!();
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (ctx) => WeeklyPlansScreen(
+          initialTasks: tasks,
+          initialSkills: skills,
+          initialProjects: projects,
+          activeDates: activeDates,
+          initialDayIndex: dayIndex,
+          onNavigateTab: onNavigateTab,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,194 +132,217 @@ class WeeklyActivityCard extends StatelessWidget {
     final maxActivity =
         weekActivity.fold<int>(1, (max, c) => c > max ? c : max);
 
-    return CustomCard(
-      padding: const EdgeInsets.all(20),
-      borderRadius: 22,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryPurple.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.calendar_today_rounded,
-                      color: AppColors.lightPurple,
-                      size: 16,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Weekly Learning Activity',
-                    style: TextStyle(
-                      color: AppColors.primaryText,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.secondaryCard,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border, width: 1),
-                ),
-                child: Text(
-                  totalWeekActivity > 0
-                      ? '$totalWeekActivity completed'
-                      : 'This Week',
-                  style: const TextStyle(
-                    color: AppColors.secondaryText,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-
-          // Days Mon to Sun columns / indicators
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(7, (index) {
-              final isToday = index == (currentWeekday - 1);
-              final isPastOrToday = index <= (currentWeekday - 1);
-              final activityCount = weekActivity[index];
-              final hasActivity = activityCount > 0;
-              final heightRatio = hasActivity
-                  ? (activityCount / maxActivity).clamp(0.3, 1.0)
-                  : 0.1;
-
-              return Column(
-                children: [
-                  // Bar / indicator column
-                  Container(
-                    width: 32,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: AppColors.secondaryCard,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isToday
-                            ? AppColors.primaryPurple
-                            : (hasActivity
-                                ? AppColors.border
-                                : Colors.transparent),
-                        width: isToday ? 1.5 : 1,
+    return InkWell(
+      onTap: () => _openPlans(context, -1),
+      borderRadius: BorderRadius.circular(22),
+      child: CustomCard(
+        padding: const EdgeInsets.all(20),
+        borderRadius: 22,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryPurple.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.calendar_today_rounded,
+                        color: AppColors.lightPurple,
+                        size: 16,
                       ),
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        if (hasActivity)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              '$activityCount',
-                              style: const TextStyle(
-                                color: AppColors.gradientHighlight,
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        const Spacer(),
-                        Container(
-                          width: 24,
-                          height: (52 * heightRatio).clamp(10.0, 50.0),
-                          margin: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            gradient: hasActivity
-                                ? AppColors.purpleProgressGradient
-                                : null,
-                            color: hasActivity
-                                ? null
-                                : (isPastOrToday
-                                    ? AppColors.progressTrack
-                                    : AppColors.progressTrack
-                                        .withValues(alpha: 0.4)),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Center(
-                            child: hasActivity
-                                ? const Icon(
-                                    Icons.check,
-                                    size: 12,
-                                    color: Colors.white,
-                                  )
-                                : null,
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Weekly Learning Activity',
+                      style: TextStyle(
+                        color: AppColors.primaryText,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.secondaryCard,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border, width: 1),
+                      ),
+                      child: Text(
+                        totalWeekActivity > 0
+                            ? '$totalWeekActivity completed'
+                            : 'This Week',
+                        style: const TextStyle(
+                          color: AppColors.secondaryText,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 12,
+                      color: AppColors.lightPurple,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+
+            // Days Mon to Sun columns / indicators
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(7, (index) {
+                final isToday = index == (currentWeekday - 1);
+                final isPastOrToday = index <= (currentWeekday - 1);
+                final activityCount = weekActivity[index];
+                final hasActivity = activityCount > 0;
+                final heightRatio = hasActivity
+                    ? (activityCount / maxActivity).clamp(0.3, 1.0)
+                    : 0.1;
+
+                return GestureDetector(
+                  onTap: () => _openPlans(context, index),
+                  behavior: HitTestBehavior.opaque,
+                  child: Column(
+                    children: [
+                      // Bar / indicator column
+                      Container(
+                        width: 32,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: AppColors.secondaryCard,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isToday
+                                ? AppColors.primaryPurple
+                                : (hasActivity
+                                    ? AppColors.border
+                                    : Colors.transparent),
+                            width: isToday ? 1.5 : 1,
                           ),
                         ),
-                      ],
-                    ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (hasActivity)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  '$activityCount',
+                                  style: const TextStyle(
+                                    color: AppColors.gradientHighlight,
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            const Spacer(),
+                            Container(
+                              width: 24,
+                              height: (52 * heightRatio).clamp(10.0, 50.0),
+                              margin: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                gradient: hasActivity
+                                    ? AppColors.purpleProgressGradient
+                                    : null,
+                                color: hasActivity
+                                    ? null
+                                    : (isPastOrToday
+                                        ? AppColors.progressTrack
+                                        : AppColors.progressTrack
+                                            .withValues(alpha: 0.4)),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: hasActivity
+                                    ? const Icon(
+                                        Icons.check,
+                                        size: 12,
+                                        color: Colors.white,
+                                      )
+                                    : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        dayLabels[index],
+                        style: TextStyle(
+                          color: isToday
+                              ? AppColors.primaryText
+                              : (hasActivity
+                                  ? AppColors.lightPurple
+                                  : AppColors.mutedText),
+                          fontSize: 12,
+                          fontWeight: isToday ? FontWeight.bold : FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        dayNames[index],
+                        style: TextStyle(
+                          color:
+                              isToday ? AppColors.lightPurple : AppColors.mutedText,
+                          fontSize: 9.5,
+                          fontWeight: isToday ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    dayLabels[index],
-                    style: TextStyle(
-                      color: isToday
-                          ? AppColors.primaryText
-                          : (hasActivity
-                              ? AppColors.lightPurple
-                              : AppColors.mutedText),
-                      fontSize: 12,
-                      fontWeight: isToday ? FontWeight.bold : FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    dayNames[index],
-                    style: TextStyle(
-                      color:
-                          isToday ? AppColors.lightPurple : AppColors.mutedText,
-                      fontSize: 9.5,
-                      fontWeight: isToday ? FontWeight.w600 : FontWeight.normal,
-                    ),
-                  ),
-                ],
-              );
-            }),
-          ),
+                );
+              }),
+            ),
 
-          if (totalWeekActivity == 0) ...[
             const SizedBox(height: 14),
+
+            // Tap hint container to see future plans & tasks
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.secondaryCard,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.border, width: 1),
+                color: AppColors.secondaryCard.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.primaryPurple.withValues(alpha: 0.25),
+                  width: 0.8,
+                ),
               ),
               child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.info_outline,
-                      size: 16, color: AppColors.mutedText),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'No learning activity recorded yet this week. Complete tasks or update skills to build your streak!',
-                      style: TextStyle(
-                        color: AppColors.mutedText,
-                        fontSize: 11.5,
-                        height: 1.35,
-                      ),
+                  Icon(Icons.touch_app_outlined,
+                      size: 13, color: AppColors.lightPurple),
+                  SizedBox(width: 6),
+                  Text(
+                    'Tap to view this week\'s plans, tasks & schedule',
+                    style: TextStyle(
+                      color: AppColors.lightPurple,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
+                  SizedBox(width: 4),
+                  Icon(Icons.arrow_forward_rounded,
+                      size: 12, color: AppColors.lightPurple),
                 ],
               ),
             ),
           ],
-        ],
+        ),
       ),
     );
   }

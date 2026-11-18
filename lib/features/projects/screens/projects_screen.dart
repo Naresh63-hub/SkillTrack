@@ -14,10 +14,10 @@ class ProjectsScreen extends StatefulWidget {
   const ProjectsScreen({super.key});
 
   @override
-  State<ProjectsScreen> createState() => _ProjectsScreenState();
+  State<ProjectsScreen> createState() => ProjectsScreenState();
 }
 
-class _ProjectsScreenState extends State<ProjectsScreen> {
+class ProjectsScreenState extends State<ProjectsScreen> {
   final ProjectsRepository _repository = ProjectsRepository();
   final TextEditingController _searchController = TextEditingController();
 
@@ -36,6 +36,10 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   @override
   void initState() {
     super.initState();
+    _loadProjects();
+  }
+
+  void reload() {
     _loadProjects();
   }
 
@@ -234,14 +238,12 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
     return CustomCard(
       onTap: () async {
-        final result = await Navigator.of(context).push(
+        await Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => ProjectDetailScreen(initialProject: project),
           ),
         );
-        if (result == true || result != null) {
-          _loadProjects();
-        }
+        _loadProjects();
       },
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
