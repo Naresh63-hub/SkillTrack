@@ -22,6 +22,8 @@ import '../widgets/upcoming_deadlines_list.dart';
 import '../widgets/recent_projects_list.dart';
 import '../widgets/weekly_activity_card.dart';
 import '../widgets/continue_learning_section.dart';
+import '../widgets/bento_profile_header.dart';
+import '../widgets/daily_focus_checklist.dart';
 import 'weekly_plans_screen.dart';
 import '../widgets/placement_prep_modules_section.dart';
 
@@ -585,8 +587,6 @@ class DashboardScreenState extends State<DashboardScreen> {
     }
 
     final p = _profile!;
-    final firstName =
-        p.name.trim().isNotEmpty ? p.name.trim().split(" ").first : 'Student';
 
     final quickActions = [
       QuickActionItem(
@@ -764,210 +764,26 @@ class DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // A. Header (Personalized Greeting, Avatar, Target Role & Streak Badge)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: AppColors.headerGradient,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.border, width: 1),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            InkWell(
-                              onTap: () async {
-                                await Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                      builder: (ctx) => const ProfileScreen()),
-                                );
-                                _loadDashboardData();
-                              },
-                              borderRadius: BorderRadius.circular(24),
-                              child: Container(
-                                width: 50,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: AppColors.secondaryCard,
-                                  border: Border.all(
-                                    color: AppColors.primaryPurple,
-                                    width: 2,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.primaryPurple
-                                          .withValues(alpha: 0.35),
-                                      blurRadius: 10,
-                                    ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: firstName.isNotEmpty
-                                      ? Text(
-                                          firstName[0].toUpperCase(),
-                                          style: const TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.primaryPurple,
-                                          ),
-                                        )
-                                      : const Icon(
-                                          Icons.person_rounded,
-                                          color: AppColors.primaryPurple,
-                                          size: 24,
-                                        ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    p.name.trim().isNotEmpty
-                                        ? p.name.trim()
-                                        : 'Student Developer',
-                                    style: const TextStyle(
-                                      color: AppColors.primaryText,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: -0.2,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    p.college.isNotEmpty
-                                        ? p.college
-                                        : 'Student Developer',
-                                    style: const TextStyle(
-                                      color: AppColors.secondaryText,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              icon: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: AppColors.secondaryCard,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppColors.border,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.notifications_outlined,
-                                  color: AppColors.lightPurple,
-                                  size: 18,
-                                ),
-                              ),
-                              onPressed: _showNotificationsSheet,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        const Divider(color: AppColors.border, height: 1),
-                        const SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            // Target Role Pill (Matching Screen 3 of reference mockup)
-                            Flexible(
-                              child: InkWell(
-                                onTap: () => _showTargetRoleSelector(p),
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.secondaryCard,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: AppColors.primaryPurple
-                                          .withValues(alpha: 0.35),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.gps_fixed_rounded,
-                                        size: 12,
-                                        color: AppColors.lightPurple,
-                                      ),
-                                      const SizedBox(width: 5),
-                                      Flexible(
-                                        child: Text(
-                                          'Target: ${p.targetJobRole.trim().isNotEmpty ? p.targetJobRole : "Full Stack Developer"}',
-                                          style: const TextStyle(
-                                            color: AppColors.lightPurple,
-                                            fontSize: 11.5,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      const Icon(
-                                        Icons.arrow_forward_ios_rounded,
-                                        size: 9,
-                                        color: AppColors.lightPurple,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            // Daily Streak Flame Badge (Matching Screen 3)
-                            InkWell(
-                              onTap: _showStreakInfoDialog,
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 9, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF59E0B)
-                                      .withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: const Color(0xFFF59E0B)
-                                        .withValues(alpha: 0.4),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Text('🔥',
-                                        style: TextStyle(fontSize: 12)),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '$_activeStreak Day${_activeStreak == 1 ? "" : "s"}',
-                                      style: const TextStyle(
-                                        color: Color(0xFFFBBF24),
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                  // A. Bento-Grid Header with Animated Flame Pulse & Target Role
+                  BentoProfileHeader(
+                    profile: p,
+                    streakDays: _activeStreak,
+                    onAvatarTap: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (ctx) => const ProfileScreen()),
+                      );
+                      _loadDashboardData();
+                    },
+                    onRoleTap: () => _showTargetRoleSelector(p),
+                    onStreakTap: _showStreakInfoDialog,
+                    onNotificationTap: _showNotificationsSheet,
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Today's 3 Non-Negotiables Daily Checklist & POTD
+                  DailyFocusChecklist(
+                    onStreakActivity: _loadDashboardData,
                   ),
                   const SizedBox(height: 16),
 

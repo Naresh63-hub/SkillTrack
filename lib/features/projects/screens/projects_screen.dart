@@ -5,6 +5,7 @@ import '../../../core/widgets/custom_card.dart';
 import '../../../core/widgets/search_filter_bar.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/confirm_dialog.dart';
+import '../../../core/widgets/pulsing_dot.dart';
 import '../../../models/project.dart';
 import '../../../repositories/projects_repository.dart';
 import 'add_edit_project_screen.dart';
@@ -380,10 +381,47 @@ class ProjectsScreenState extends State<ProjectsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                project.category,
-                style:
-                    const TextStyle(color: AppColors.mutedText, fontSize: 11),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    project.category,
+                    style:
+                        const TextStyle(color: AppColors.mutedText, fontSize: 11),
+                  ),
+                  if (project.liveDemoUrl?.isNotEmpty == true ||
+                      project.vercelUrl?.isNotEmpty == true ||
+                      project.renderUrl?.isNotEmpty == true) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.4),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          PulsingDot(size: 6, color: Color(0xFF10B981)),
+                          SizedBox(width: 4),
+                          Text(
+                            'Live App',
+                            style: TextStyle(
+                              color: Color(0xFF059669),
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
               ),
               Row(
                 children: [

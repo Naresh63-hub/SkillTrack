@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/widgets/custom_card.dart';
-import '../../../core/widgets/progress_bar.dart';
+import '../../../core/widgets/dynamic_gradient_progress_bar.dart';
 import '../../../core/widgets/search_filter_bar.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/confirm_dialog.dart';
@@ -623,7 +623,7 @@ class SkillsScreenState extends State<SkillsScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          CustomProgressBar(
+          DynamicGradientProgressBar(
             percentage: skill.progressPercentage,
             showLabel: true,
             height: 7,

@@ -6,7 +6,8 @@ import '../../../core/widgets/custom_card.dart';
 import '../../../core/widgets/search_filter_bar.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/confirm_dialog.dart';
-import '../../../core/widgets/progress_bar.dart';
+import '../../../core/widgets/spring_checkbox.dart';
+import '../../../core/widgets/confetti_overlay.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/notifications/notification_service.dart';
 import '../../../models/task_model.dart';
@@ -220,6 +221,13 @@ class TasksScreenState extends State<TasksScreen>
     _loadData();
 
     if (mounted) {
+      if (newStatus) {
+        final remainingPending =
+            _allTasks.where((t) => !t.isCompleted && t.id != task.id).length;
+        if (remainingPending == 0 && _allTasks.isNotEmpty) {
+          ConfettiOverlay.show(context);
+        }
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(newStatus
@@ -271,6 +279,11 @@ class TasksScreenState extends State<TasksScreen>
   Future<void> _incrementGoal(LearningGoal goal) async {
     HapticFeedback.lightImpact();
     await _repository.incrementGoal(goal.id!);
+    if (goal.currentCount + 1 >= goal.targetCount) {
+      if (mounted) {
+        ConfettiOverlay.show(context);
+      }
+    }
     _loadData();
   }
 
@@ -493,13 +506,29 @@ class TasksScreenState extends State<TasksScreen>
   Widget _buildGoalCard(LearningGoal goal) {
     final isDone = goal.isCompleted || goal.currentCount >= goal.targetCount;
 
-    return Container(
-      width: 240,
-      margin: const EdgeInsets.only(right: 10),
-      child: CustomCard(
-        margin: EdgeInsets.zero,
+    return Padding(
+      padding: const EdgeInsets.only(right: 12),
+      child: Container(
+        width: 205,
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDone
+                ? AppColors.success.withValues(alpha: 0.35)
+                : AppColors.border,
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: (isDone ? AppColors.success : AppColors.primaryPurple)
+                  .withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         padding: const EdgeInsets.all(12),
-        backgroundColor: AppColors.cardBackground,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -509,17 +538,20 @@ class TasksScreenState extends State<TasksScreen>
               children: [
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceVariant,
-                    borderRadius: BorderRadius.circular(4),
+                    color: isDone
+                        ? AppColors.success.withValues(alpha: 0.12)
+                        : const Color(0xFFEDE9FE),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     goal.goalType,
-                    style: const TextStyle(
-                        color: AppColors.brightAccent,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: isDone ? AppColors.success : AppColors.primaryPurple,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -544,38 +576,64 @@ class TasksScreenState extends State<TasksScreen>
             ),
             Row(
               children: [
-                Expanded(
-                  child: CustomProgressBar(
-                    percentage: goal.progressPercentage,
-                    height: 5,
-                    color: isDone ? AppColors.success : AppColors.brightAccent,
+                // Duolingo-style mini Activity Ring
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                        value: (goal.progressPercentage / 100.0).clamp(0.0, 1.0),
+                        strokeWidth: 3.5,
+                        backgroundColor: AppColors.surfaceVariant,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          isDone ? AppColors.success : const Color(0xFF7C3AED),
+                        ),
+                      ),
+                      if (isDone)
+                        const Icon(Icons.check, size: 14, color: AppColors.success)
+                      else
+                        Text(
+                          '${goal.currentCount}',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryPurple,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  '${goal.currentCount}/${goal.targetCount}',
-                  style: TextStyle(
-                    color: isDone ? AppColors.success : AppColors.secondaryText,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    '${goal.currentCount}/${goal.targetCount} target',
+                    style: TextStyle(
+                      color: isDone ? AppColors.success : AppColors.secondaryText,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 6),
                 InkWell(
                   onTap: isDone ? null : () => _incrementGoal(goal),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: isDone
                           ? AppColors.surfaceVariant
-                          : AppColors.brightAccent,
-                      shape: BoxShape.circle,
+                          : AppColors.primaryPurple,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(
-                      isDone ? Icons.check : Icons.add,
-                      size: 14,
-                      color: Colors.white,
+                    child: Text(
+                      isDone ? 'Done' : '+1',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: isDone ? AppColors.mutedText : Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -613,21 +671,53 @@ class TasksScreenState extends State<TasksScreen>
     );
   }
 
-  Widget _buildTaskCard(TaskModel task) {
-    Color priorityColor;
-    switch (task.priority) {
+  Widget _buildVisualPriorityBadge(String priority) {
+    Color bg;
+    Color text;
+    Color border;
+    String label;
+
+    switch (priority) {
       case 'High':
-        priorityColor = AppColors.priorityHigh;
+        bg = const Color(0xFFFEE2E2);
+        text = const Color(0xFFDC2626);
+        border = const Color(0xFFFCA5A5);
+        label = '🔥 High';
         break;
       case 'Medium':
-        priorityColor = AppColors.priorityMedium;
+        bg = const Color(0xFFFEF3C7);
+        text = const Color(0xFFD97706);
+        border = const Color(0xFFFDE68A);
+        label = '⚡ Med';
         break;
       case 'Low':
       default:
-        priorityColor = AppColors.priorityLow;
+        bg = const Color(0xFFD1FAE5);
+        text = const Color(0xFF059669);
+        border = const Color(0xFFA7F3D0);
+        label = '☕ Low';
         break;
     }
 
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: border, width: 0.8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: text,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTaskCard(TaskModel task) {
     final isOverdue = task.isOverdue;
 
     return CustomCard(
@@ -637,19 +727,15 @@ class TasksScreenState extends State<TasksScreen>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Completion Checkbox
+          // Spring-Animated Circular Completion Checkbox
           Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Checkbox(
+            padding: const EdgeInsets.only(top: 3, right: 6),
+            child: SpringCheckbox(
               value: task.isCompleted,
-              activeColor: AppColors.success,
-              checkColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4)),
               onChanged: (_) => _toggleComplete(task),
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -680,24 +766,7 @@ class TasksScreenState extends State<TasksScreen>
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: priorityColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                            color: priorityColor.withValues(alpha: 0.4),
-                            width: 0.7),
-                      ),
-                      child: Text(
-                        task.priority,
-                        style: TextStyle(
-                            color: priorityColor,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ),
+                    _buildVisualPriorityBadge(task.priority),
                     const SizedBox(width: 8),
                     if (task.category == 'Call / Meeting') ...[
                       const Icon(Icons.phone_in_talk,

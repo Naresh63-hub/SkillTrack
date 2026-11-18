@@ -40,37 +40,44 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   Future<void> _loadAnalytics() async {
     setState(() => _isLoading = true);
 
-    final skills = await _skillsRepo.getAllSkills();
-    final projects = await _projectsRepo.getAllProjects();
-    final tasks = await _tasksRepo.getAllTasks();
-    final codingTopics = await _placementRepo.getTopicsByTrack('Coding');
-    final coreCsTopics = await _placementRepo.getTopicsByTrack('CoreCS');
-    final aptitudeTopics = await _placementRepo.getTopicsByTrack('Aptitude');
-    final interviewQuestions = await _placementRepo.getInterviewQuestions();
+    try {
+      final skills = await _skillsRepo.getAllSkills();
+      final projects = await _projectsRepo.getAllProjects();
+      final tasks = await _tasksRepo.getAllTasks();
+      final codingTopics = await _placementRepo.getTopicsByTrack('Coding');
+      final coreCsTopics = await _placementRepo.getTopicsByTrack('CoreCS');
+      final aptitudeTopics = await _placementRepo.getTopicsByTrack('Aptitude');
+      final interviewQuestions = await _placementRepo.getInterviewQuestions();
 
-    final allTopics = [...codingTopics, ...coreCsTopics, ...aptitudeTopics];
+      final allTopics = [...codingTopics, ...coreCsTopics, ...aptitudeTopics];
 
-    final metrics = ProgressCalculator.calculateAll(
-      skills: skills,
-      projects: projects,
-      tasks: tasks,
-      placementTopics: allTopics,
-      interviewQuestions: interviewQuestions,
-    );
+      final metrics = ProgressCalculator.calculateAll(
+        skills: skills,
+        projects: projects,
+        tasks: tasks,
+        placementTopics: allTopics,
+        interviewQuestions: interviewQuestions,
+      );
 
-    final projectStatuses = await _projectsRepo.getStatusCounts();
-    final taskCounts = await _tasksRepo.getTaskCounts();
-    final certCategories = await _certsRepo.getCategoryCounts();
+      final projectStatuses = await _projectsRepo.getStatusCounts();
+      final taskCounts = await _tasksRepo.getTaskCounts();
+      final certCategories = await _certsRepo.getCategoryCounts();
 
-    if (mounted) {
-      setState(() {
-        _skills = skills;
-        _metrics = metrics;
-        _projectStatuses = projectStatuses;
-        _taskCounts = taskCounts;
-        _certCategories = certCategories;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _skills = skills;
+          _metrics = metrics;
+          _projectStatuses = projectStatuses;
+          _taskCounts = taskCounts;
+          _certCategories = certCategories;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading analytics: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

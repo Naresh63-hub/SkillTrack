@@ -12,6 +12,8 @@ import '../../app_install/widgets/install_app_dialog.dart';
 import '../../portfolio/screens/public_portfolio_screen.dart';
 import '../../portfolio/services/portfolio_repository.dart';
 import '../../portfolio/widgets/student_card_share_sheet.dart';
+import '../../../services/backup_restore_service.dart';
+import '../../../core/widgets/confetti_overlay.dart';
 import 'settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -892,12 +894,244 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 14),
+
+                // Encrypted Backup & Vault Card (.skilltrack)
+                CustomCard(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981)
+                                  .withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.security_rounded,
+                              color: Color(0xFF059669),
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Encrypted Backup & Vault (.skilltrack)',
+                                  style: TextStyle(
+                                    color: AppColors.primaryText,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'One-tap offline database backup with SHA-256 integrity',
+                                  style: TextStyle(
+                                    color: AppColors.secondaryText,
+                                    fontSize: 11.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryPurple,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              icon: const Icon(Icons.file_upload_outlined,
+                                  size: 16),
+                              label: const Text(
+                                'Export Backup',
+                                style: TextStyle(
+                                    fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                              onPressed: _exportEncryptedBackup,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.primaryPurple,
+                                side: const BorderSide(
+                                    color: AppColors.primaryPurple),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              icon: const Icon(Icons.file_download_outlined,
+                                  size: 16),
+                              label: const Text(
+                                'Restore Backup',
+                                style: TextStyle(
+                                    fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                              onPressed: _restoreEncryptedBackup,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _exportEncryptedBackup() async {
+    try {
+      final encryptedContent =
+          await BackupRestoreService.instance.createEncryptedBackupString();
+      final path = await BackupRestoreService.instance.exportBackupFile();
+
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.shield_rounded, color: Color(0xFF10B981)),
+              SizedBox(width: 8),
+              Text('Encrypted Backup Ready', style: TextStyle(fontSize: 16)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Your entire SkillTrack database has been encrypted with SHA-256 integrity protection and formatted into a .skilltrack package.',
+                style:
+                    TextStyle(fontSize: 12.5, color: AppColors.secondaryText),
+              ),
+              const SizedBox(height: 12),
+              if (path != null)
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceVariant,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle_rounded,
+                          color: Color(0xFF10B981), size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Saved to:\n$path',
+                          style: const TextStyle(
+                              fontSize: 11, color: AppColors.primaryText),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton.icon(
+              icon: const Icon(Icons.copy_rounded, size: 16),
+              label: const Text('Copy Vault Key'),
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: encryptedContent));
+                Navigator.of(ctx).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                        'Encrypted backup string copied to clipboard! Save to Google Drive or Notes.'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              },
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryPurple,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Done'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Backup creation failed: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _restoreEncryptedBackup() async {
+    try {
+      final success =
+          await BackupRestoreService.instance.pickAndRestoreBackup();
+      if (success == null) return;
+      if (!mounted) return;
+
+      if (success) {
+        ConfettiOverlay.show(context);
+        await _loadProfile();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Database restored successfully from .skilltrack backup! 🎉'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Failed to restore: backup file is invalid, corrupted, or tampered with.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Restore error: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildInfoRow(String label, String value) {
