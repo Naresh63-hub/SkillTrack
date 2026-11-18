@@ -502,19 +502,24 @@ class SkillsScreenState extends State<SkillsScreen> {
 
   Widget _buildSkillCard(Skill skill) {
     Color profColor;
+    Color profBg;
     switch (skill.proficiencyLevel) {
       case 'Expert':
-        profColor = const Color(0xFFC084FC);
+        profColor = const Color(0xFFD97706);
+        profBg = const Color(0xFFFEF3C7);
         break;
       case 'Advanced':
         profColor = AppColors.brightAccent;
+        profBg = const Color(0xFFEDE9FE);
         break;
       case 'Intermediate':
-        profColor = AppColors.secondaryAccent;
+        profColor = const Color(0xFF2563EB);
+        profBg = const Color(0xFFDBEAFE);
         break;
       case 'Beginner':
       default:
-        profColor = AppColors.info;
+        profColor = const Color(0xFF059669);
+        profBg = const Color(0xFFD1FAE5);
         break;
     }
 
@@ -550,12 +555,12 @@ class SkillsScreenState extends State<SkillsScreen> {
               ),
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: profColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
+                  color: profBg,
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                      color: profColor.withValues(alpha: 0.4), width: 0.8),
+                      color: profColor.withValues(alpha: 0.35), width: 0.8),
                 ),
                 child: Text(
                   skill.proficiencyLevel,

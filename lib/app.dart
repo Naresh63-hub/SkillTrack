@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'core/constants/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'features/dashboard/screens/dashboard_screen.dart';
@@ -93,6 +94,12 @@ class _MainNavigationShellState extends State<MainNavigationShell>
       GlobalKey<DashboardScreenState>();
   final GlobalKey<SkillsScreenState> _skillsKey =
       GlobalKey<SkillsScreenState>();
+  final GlobalKey<ProjectsScreenState> _projectsKey =
+      GlobalKey<ProjectsScreenState>();
+  final GlobalKey<TasksScreenState> _tasksKey =
+      GlobalKey<TasksScreenState>();
+  final GlobalKey<PlacementScreenState> _placementKey =
+      GlobalKey<PlacementScreenState>();
 
   @override
   void initState() {
@@ -157,6 +164,7 @@ class _MainNavigationShellState extends State<MainNavigationShell>
   }
 
   void _onTabSelected(int index) {
+    HapticFeedback.selectionClick();
     final clamped = index.clamp(0, 4);
     setState(() {
       _currentIndex = clamped;
@@ -166,6 +174,12 @@ class _MainNavigationShellState extends State<MainNavigationShell>
       _dashboardKey.currentState?.reload();
     } else if (clamped == 1) {
       _skillsKey.currentState?.reload();
+    } else if (clamped == 2) {
+      _projectsKey.currentState?.reload();
+    } else if (clamped == 3) {
+      _tasksKey.currentState?.reload();
+    } else if (clamped == 4) {
+      _placementKey.currentState?.reload();
     }
   }
 
@@ -177,9 +191,9 @@ class _MainNavigationShellState extends State<MainNavigationShell>
         onNavigateTab: _onTabSelected,
       ),
       SkillsScreen(key: _skillsKey),
-      const ProjectsScreen(),
-      const TasksScreen(),
-      const PlacementScreen(),
+      ProjectsScreen(key: _projectsKey),
+      TasksScreen(key: _tasksKey),
+      PlacementScreen(key: _placementKey),
     ];
 
     return Scaffold(

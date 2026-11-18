@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/custom_card.dart';
 import '../../../core/utils/progress_calculator.dart';
@@ -9,6 +10,8 @@ import 'core_cs_screen.dart';
 import 'aptitude_prep_screen.dart';
 import 'interview_prep_screen.dart';
 import 'job_applications_screen.dart';
+import '../../mock_interview/screens/mock_interview_setup_screen.dart';
+import '../../career_assistant/screens/career_assistant_screen.dart';
 
 class PlacementScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -44,6 +47,11 @@ class PlacementScreenState extends State<PlacementScreen>
       vsync: this,
       initialIndex: widget.initialTabIndex.clamp(0, 4),
     );
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        HapticFeedback.selectionClick();
+      }
+    });
     _loadMetrics();
   }
 
@@ -107,6 +115,31 @@ class PlacementScreenState extends State<PlacementScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Placement Preparation'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.psychology_outlined, size: 21),
+            tooltip: 'AI Mock Interview',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (ctx) => const MockInterviewSetupScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.smart_toy_outlined, size: 21),
+            tooltip: 'AI Career Assistant',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (ctx) => const CareerAssistantScreen(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(width: 4),
+        ],
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/widgets/custom_card.dart';
@@ -194,6 +195,7 @@ class TasksScreenState extends State<TasksScreen>
   }
 
   Future<void> _toggleComplete(TaskModel task) async {
+    HapticFeedback.mediumImpact();
     final newStatus = !task.isCompleted;
     if (task.id != null) {
       if (newStatus) {
@@ -267,6 +269,7 @@ class TasksScreenState extends State<TasksScreen>
   }
 
   Future<void> _incrementGoal(LearningGoal goal) async {
+    HapticFeedback.lightImpact();
     await _repository.incrementGoal(goal.id!);
     _loadData();
   }
@@ -345,11 +348,19 @@ class TasksScreenState extends State<TasksScreen>
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(color: AppColors.brightAccent))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 80),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+          : RefreshIndicator(
+              color: AppColors.primaryPurple,
+              backgroundColor: AppColors.cardBackground,
+              onRefresh: () async {
+                HapticFeedback.lightImpact();
+                await _loadData();
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: 80),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   // Learning Goals Section (Collapsible / Carousel style)
                   if (_learningGoals.isNotEmpty ||
                       _tabController.index == 0) ...[
@@ -475,6 +486,7 @@ class TasksScreenState extends State<TasksScreen>
                 ],
               ),
             ),
+          ),
     );
   }
 
