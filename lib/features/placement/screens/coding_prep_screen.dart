@@ -9,7 +9,8 @@ import '../../../repositories/placement_repository.dart';
 import 'add_edit_topic_dialog.dart';
 
 class CodingPrepScreen extends StatefulWidget {
-  const CodingPrepScreen({super.key});
+  final VoidCallback? onTopicsChanged;
+  const CodingPrepScreen({super.key, this.onTopicsChanged});
 
   @override
   State<CodingPrepScreen> createState() => _CodingPrepScreenState();
@@ -33,6 +34,7 @@ class _CodingPrepScreenState extends State<CodingPrepScreen> {
       _topics = results;
       _isLoading = false;
     });
+    widget.onTopicsChanged?.call();
   }
 
   Future<void> _addTopic() async {
@@ -86,6 +88,78 @@ class _CodingPrepScreenState extends State<CodingPrepScreen> {
     _loadTopics();
   }
 
+  Future<void> _loadStandardDsaTopics() async {
+    final standardTopics = [
+      {
+        'topic': 'Arrays & Two Pointers',
+        'solved': 0,
+        'att': 0,
+        'diff': 'Easy',
+        'link': 'https://leetcode.com/tag/array/'
+      },
+      {
+        'topic': 'Strings & Sliding Window',
+        'solved': 0,
+        'att': 0,
+        'diff': 'Medium',
+        'link': 'https://leetcode.com/tag/sliding-window/'
+      },
+      {
+        'topic': 'Linked Lists & Fast-Slow Pointers',
+        'solved': 0,
+        'att': 0,
+        'diff': 'Easy',
+        'link': 'https://leetcode.com/tag/linked-list/'
+      },
+      {
+        'topic': 'Binary Trees & Traversals (BFS/DFS)',
+        'solved': 0,
+        'att': 0,
+        'diff': 'Medium',
+        'link': 'https://leetcode.com/tag/tree/'
+      },
+      {
+        'topic': 'Dynamic Programming (1D & 2D)',
+        'solved': 0,
+        'att': 0,
+        'diff': 'Hard',
+        'link': 'https://leetcode.com/tag/dynamic-programming/'
+      },
+      {
+        'topic': 'Graph Algorithms (Dijkstra, BFS/DFS)',
+        'solved': 0,
+        'att': 0,
+        'diff': 'Hard',
+        'link': 'https://leetcode.com/tag/graph/'
+      },
+    ];
+
+    for (final t in standardTopics) {
+      await _repository.addPlacementTopic(
+        PlacementTopic(
+          track: 'Coding',
+          topicName: t['topic'] as String,
+          category: 'DSA',
+          problemsSolved: t['solved'] as int,
+          problemsAttempted: t['att'] as int,
+          practiceLinks: t['link'] as String,
+          notes: 'Standard SDE sheet topic for technical placement interviews.',
+          difficultyLevel: t['diff'] as String,
+          completionStatus: 'Not Started',
+        ),
+      );
+    }
+    await _loadTopics();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Standard DSA topics added to your tracker! 🚀'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
+  }
+
   Future<void> _launchUrl(String url) async {
     final uri = Uri.tryParse(url);
     if (uri != null && await canLaunchUrl(uri)) {
@@ -121,21 +195,35 @@ class _CodingPrepScreenState extends State<CodingPrepScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Summary Header Card
+            // Summary Header Card (Clean, high-contrast Bento style)
             CustomCard(
-              gradient: AppColors.elevatedGradient,
-              padding: const EdgeInsets.all(16),
+              backgroundColor: AppColors.cardBackground,
+              borderRadius: 18,
+              border: Border.all(color: AppColors.border, width: 1),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildHeaderMetric(
-                      'Total Solved', '$totalSolved', AppColors.success),
+                    'Total Solved',
+                    '$totalSolved',
+                    const Color(0xFF10B981),
+                    Icons.check_circle_outline_rounded,
+                  ),
                   Container(width: 1, height: 36, color: AppColors.border),
                   _buildHeaderMetric(
-                      'Attempted', '$totalAttempted', AppColors.info),
+                    'Attempted',
+                    '$totalAttempted',
+                    const Color(0xFF3B82F6),
+                    Icons.pending_actions_rounded,
+                  ),
                   Container(width: 1, height: 36, color: AppColors.border),
-                  _buildHeaderMetric('Topics Tracked', '${_topics.length}',
-                      AppColors.brightAccent),
+                  _buildHeaderMetric(
+                    'Topics Tracked',
+                    '${_topics.length}',
+                    AppColors.primaryPurple,
+                    Icons.auto_stories_rounded,
+                  ),
                 ],
               ),
             ),
@@ -153,13 +241,61 @@ class _CodingPrepScreenState extends State<CodingPrepScreen> {
 
             if (_topics.isEmpty)
               CustomCard(
-                padding: const EdgeInsets.all(24),
-                child: const Center(
-                  child: Text(
-                    'No DSA topics recorded. Tap "Add DSA Topic" or load demo data in Settings.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.mutedText, fontSize: 13),
-                  ),
+                padding: const EdgeInsets.all(22),
+                borderRadius: 18,
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryPurple.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.code_rounded,
+                        color: AppColors.primaryPurple,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'No DSA Topics Tracked Yet',
+                      style: TextStyle(
+                        color: AppColors.primaryText,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Track your progress on Striver/NeetCode SDE sheet patterns (Arrays, Two Pointers, Trees, Dynamic Programming).',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: AppColors.secondaryText,
+                        fontSize: 12,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryPurple,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.bolt_rounded, size: 18),
+                      label: const Text(
+                        'Load Standard DSA Topics',
+                        style: TextStyle(
+                            fontSize: 12.5, fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: _loadStandardDsaTopics,
+                    ),
+                  ],
                 ),
               )
             else
@@ -178,18 +314,33 @@ class _CodingPrepScreenState extends State<CodingPrepScreen> {
     );
   }
 
-  Widget _buildHeaderMetric(String label, String value, Color color) {
+  Widget _buildHeaderMetric(
+      String label, String value, Color color, IconData icon) {
     return Column(
       children: [
-        Text(
-          value,
-          style: TextStyle(
-              color: color, fontSize: 20, fontWeight: FontWeight.bold),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: color),
+            const SizedBox(width: 5),
+            Text(
+              value,
+              style: TextStyle(
+                color: color,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 3),
         Text(
           label,
-          style: const TextStyle(color: AppColors.secondaryText, fontSize: 11),
+          style: const TextStyle(
+            color: AppColors.secondaryText,
+            fontSize: 11.5,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );

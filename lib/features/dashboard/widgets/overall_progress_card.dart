@@ -67,16 +67,19 @@ class OverallProgressCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    const Flexible(
-                      child: Text(
-                        'Career Preparation Score',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.1,
+                    const Expanded(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Career Preparation Score',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.1,
+                          ),
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -269,20 +272,23 @@ class OverallProgressCard extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          flex: 5,
-          child: Text(
-            label,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.9),
-              fontSize: 11.5,
-              fontWeight: FontWeight.w400,
+          flex: 6,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.95),
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-            overflow: TextOverflow.ellipsis,
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
-          flex: 6,
+          flex: 5,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: Container(

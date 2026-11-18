@@ -8,7 +8,8 @@ import '../../../repositories/placement_repository.dart';
 import 'add_edit_topic_dialog.dart';
 
 class AptitudePrepScreen extends StatefulWidget {
-  const AptitudePrepScreen({super.key});
+  final VoidCallback? onTopicsChanged;
+  const AptitudePrepScreen({super.key, this.onTopicsChanged});
 
   @override
   State<AptitudePrepScreen> createState() => _AptitudePrepScreenState();
@@ -32,6 +33,7 @@ class _AptitudePrepScreenState extends State<AptitudePrepScreen> {
       _topics = results;
       _isLoading = false;
     });
+    widget.onTopicsChanged?.call();
   }
 
   Future<void> _addTopic() async {
@@ -121,6 +123,64 @@ class _AptitudePrepScreenState extends State<AptitudePrepScreen> {
     }
   }
 
+  Future<void> _loadStandardAptitudeSections() async {
+    final standardAptitude = [
+      {
+        'topic': 'Quantitative Aptitude (Percentages & Ratios)',
+        'solved': 0,
+        'att': 0,
+        'diff': 'Easy',
+        'link': 'https://www.indiabix.com/aptitude/questions-and-answers/'
+      },
+      {
+        'topic': 'Logical Reasoning & Blood Relations',
+        'solved': 0,
+        'att': 0,
+        'diff': 'Medium',
+        'link': 'https://www.indiabix.com/logical-reasoning/questions-and-answers/'
+      },
+      {
+        'topic': 'Data Interpretation (Charts & Tables)',
+        'solved': 0,
+        'att': 0,
+        'diff': 'Medium',
+        'link': 'https://www.indiabix.com/data-interpretation/questions-and-answers/'
+      },
+      {
+        'topic': 'Verbal Ability & Sentence Correction',
+        'solved': 0,
+        'att': 0,
+        'diff': 'Easy',
+        'link': 'https://www.indiabix.com/verbal-ability/questions-and-answers/'
+      },
+    ];
+
+    for (final t in standardAptitude) {
+      await _repository.addPlacementTopic(
+        PlacementTopic(
+          track: 'Aptitude',
+          topicName: t['topic'] as String,
+          category: 'Aptitude',
+          problemsSolved: t['solved'] as int,
+          problemsAttempted: t['att'] as int,
+          practiceLinks: t['link'] as String,
+          notes: 'Standard campus placement aptitude drill section.',
+          difficultyLevel: t['diff'] as String,
+          completionStatus: 'Not Started',
+        ),
+      );
+    }
+    await _loadTopics();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Standard Aptitude practice drills added! 🎯'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -151,20 +211,35 @@ class _AptitudePrepScreenState extends State<AptitudePrepScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Accuracy Header Card
+            // Accuracy Header Card (Clean, high-contrast Bento style)
             CustomCard(
-              gradient: AppColors.elevatedGradient,
-              padding: const EdgeInsets.all(16),
+              backgroundColor: AppColors.cardBackground,
+              borderRadius: 18,
+              border: Border.all(color: AppColors.border, width: 1),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildMetric(
-                      'Questions Solved', '$totalSolved', AppColors.success),
+                    'Questions Solved',
+                    '$totalSolved',
+                    const Color(0xFF10B981),
+                    Icons.check_circle_outline_rounded,
+                  ),
                   Container(width: 1, height: 36, color: AppColors.border),
-                  _buildMetric('Attempted', '$totalAttempted', AppColors.info),
+                  _buildMetric(
+                    'Attempted',
+                    '$totalAttempted',
+                    const Color(0xFF3B82F6),
+                    Icons.pending_actions_rounded,
+                  ),
                   Container(width: 1, height: 36, color: AppColors.border),
-                  _buildMetric('Accuracy', '${accuracy.toStringAsFixed(0)}%',
-                      AppColors.brightAccent),
+                  _buildMetric(
+                    'Accuracy',
+                    '${accuracy.toStringAsFixed(0)}%',
+                    AppColors.primaryPurple,
+                    Icons.track_changes_rounded,
+                  ),
                 ],
               ),
             ),
@@ -182,13 +257,61 @@ class _AptitudePrepScreenState extends State<AptitudePrepScreen> {
 
             if (_topics.isEmpty)
               CustomCard(
-                padding: const EdgeInsets.all(24),
-                child: const Center(
-                  child: Text(
-                    'No aptitude practice logged yet. Add Quant, Reasoning, or Verbal drills.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.mutedText, fontSize: 13),
-                  ),
+                padding: const EdgeInsets.all(22),
+                borderRadius: 18,
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryPurple.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.calculate_rounded,
+                        color: AppColors.primaryPurple,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'No Aptitude Practice Logged',
+                      style: TextStyle(
+                        color: AppColors.primaryText,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Track Quantitative Aptitude, Logical Reasoning, and Verbal Ability tests for company placements.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: AppColors.secondaryText,
+                        fontSize: 12,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryPurple,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.bolt_rounded, size: 18),
+                      label: const Text(
+                        'Load Standard Aptitude Drills',
+                        style: TextStyle(
+                            fontSize: 12.5, fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: _loadStandardAptitudeSections,
+                    ),
+                  ],
                 ),
               )
             else
@@ -207,18 +330,32 @@ class _AptitudePrepScreenState extends State<AptitudePrepScreen> {
     );
   }
 
-  Widget _buildMetric(String label, String value, Color color) {
+  Widget _buildMetric(String label, String value, Color color, IconData icon) {
     return Column(
       children: [
-        Text(
-          value,
-          style: TextStyle(
-              color: color, fontSize: 19, fontWeight: FontWeight.bold),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: color),
+            const SizedBox(width: 5),
+            Text(
+              value,
+              style: TextStyle(
+                color: color,
+                fontSize: 19,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 3),
         Text(
           label,
-          style: const TextStyle(color: AppColors.secondaryText, fontSize: 11),
+          style: const TextStyle(
+            color: AppColors.secondaryText,
+            fontSize: 11.5,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );

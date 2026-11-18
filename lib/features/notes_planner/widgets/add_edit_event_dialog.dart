@@ -134,17 +134,6 @@ class _AddEditEventDialogState extends State<AddEditEventDialog>
       initialDate: initial,
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now().add(const Duration(days: 730)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppColors.primaryPurple,
-              surface: AppColors.cardBackground,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null) {
@@ -158,17 +147,6 @@ class _AddEditEventDialogState extends State<AddEditEventDialog>
     final picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppColors.primaryPurple,
-              surface: AppColors.cardBackground,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null) {

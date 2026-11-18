@@ -49,5 +49,42 @@ void main() {
       await tester.tap(find.text('View All'));
       expect(actionTriggered, isTrue);
     });
+
+    testWidgets('Task metadata badges wrap gracefully on narrow screen widths without overflow',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(320 * 2.0, 600 * 2.0);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 280,
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: const [
+                  Text('⚡ Med'),
+                  Text('Coding Practice'),
+                  Text('🔔 15 mins early'),
+                  Text('⚠️ Overdue by 4 hours'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('⚡ Med'), findsOneWidget);
+      expect(find.text('Coding Practice'), findsOneWidget);
+      expect(find.text('🔔 15 mins early'), findsOneWidget);
+      expect(find.text('⚠️ Overdue by 4 hours'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
   });
 }

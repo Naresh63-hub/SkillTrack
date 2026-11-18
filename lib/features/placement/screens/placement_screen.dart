@@ -143,6 +143,7 @@ class PlacementScreenState extends State<PlacementScreen>
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
+          tabAlignment: TabAlignment.start,
           indicatorColor: AppColors.brightAccent,
           labelColor: AppColors.brightAccent,
           unselectedLabelColor: AppColors.mutedText,
@@ -152,9 +153,7 @@ class PlacementScreenState extends State<PlacementScreen>
             Tab(icon: Icon(Icons.code, size: 18), text: 'Coding DSA'),
             Tab(icon: Icon(Icons.memory, size: 18), text: 'Core CS'),
             Tab(icon: Icon(Icons.calculate, size: 18), text: 'Aptitude'),
-            Tab(
-                icon: Icon(Icons.question_answer, size: 18),
-                text: 'Interview QA'),
+            Tab(icon: Icon(Icons.question_answer, size: 18), text: 'Interview'),
             Tab(
                 icon: Icon(Icons.business_center, size: 18),
                 text: 'Applications'),
@@ -358,12 +357,12 @@ class PlacementScreenState extends State<PlacementScreen>
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: const [
-                CodingPrepScreen(),
-                CoreCsScreen(),
-                AptitudePrepScreen(),
-                InterviewPrepScreen(),
-                JobApplicationsScreen(),
+              children: [
+                CodingPrepScreen(onTopicsChanged: _loadMetrics),
+                CoreCsScreen(onTopicsChanged: _loadMetrics),
+                AptitudePrepScreen(onTopicsChanged: _loadMetrics),
+                const InterviewPrepScreen(),
+                const JobApplicationsScreen(),
               ],
             ),
           ),

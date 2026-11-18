@@ -8,7 +8,8 @@ import '../../../repositories/placement_repository.dart';
 import 'add_edit_topic_dialog.dart';
 
 class CoreCsScreen extends StatefulWidget {
-  const CoreCsScreen({super.key});
+  final VoidCallback? onTopicsChanged;
+  const CoreCsScreen({super.key, this.onTopicsChanged});
 
   @override
   State<CoreCsScreen> createState() => _CoreCsScreenState();
@@ -32,6 +33,7 @@ class _CoreCsScreenState extends State<CoreCsScreen> {
       _topics = results;
       _isLoading = false;
     });
+    widget.onTopicsChanged?.call();
   }
 
   Future<void> _addTopic() async {
@@ -93,6 +95,61 @@ class _CoreCsScreenState extends State<CoreCsScreen> {
     _loadTopics();
   }
 
+  Future<void> _loadStandardCoreCsTopics() async {
+    final standardCoreCs = [
+      {
+        'topic': 'Database Management Systems (DBMS)',
+        'notes': 'SQL queries, Normalization (1NF to BCNF), Indexing, ACID properties.',
+        'link': 'https://www.geeksforgeeks.org/dbms/'
+      },
+      {
+        'topic': 'Operating Systems (OS)',
+        'notes': 'Process scheduling, Concurrency, Deadlocks, Virtual memory & Paging.',
+        'link': 'https://www.geeksforgeeks.org/operating-systems/'
+      },
+      {
+        'topic': 'Computer Networks (CN)',
+        'notes': 'OSI & TCP/IP models, DNS, IP addressing, Socket programming, HTTP/HTTPS.',
+        'link': 'https://www.geeksforgeeks.org/computer-network-tutorials/'
+      },
+      {
+        'topic': 'Object-Oriented Programming (OOPs)',
+        'notes': '4 Pillars of OOPs, SOLID design principles, Design patterns.',
+        'link': 'https://www.geeksforgeeks.org/object-oriented-programming-oops-concept-in-java/'
+      },
+      {
+        'topic': 'System Design & Distributed Basics',
+        'notes': 'Scalability, Load Balancing, Caching, Sharding, Microservices basics.',
+        'link': 'https://github.com/donnemartin/system-design-primer'
+      },
+    ];
+
+    for (final t in standardCoreCs) {
+      await _repository.addPlacementTopic(
+        PlacementTopic(
+          track: 'CoreCS',
+          topicName: t['topic'] as String,
+          category: 'Core CS',
+          problemsSolved: 0,
+          problemsAttempted: 0,
+          practiceLinks: t['link'] as String,
+          notes: t['notes'] as String,
+          difficultyLevel: 'Medium',
+          completionStatus: 'Not Started',
+        ),
+      );
+    }
+    await _loadTopics();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Standard Core CS subjects added! 💻'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -121,9 +178,11 @@ class _CoreCsScreenState extends State<CoreCsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Progress Header
+            // Progress Header (Clean, high-contrast Bento style)
             CustomCard(
-              gradient: AppColors.elevatedGradient,
+              backgroundColor: AppColors.cardBackground,
+              borderRadius: 18,
+              border: Border.all(color: AppColors.border, width: 1),
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,19 +190,28 @@ class _CoreCsScreenState extends State<CoreCsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Core CS Mastery',
-                        style: TextStyle(
-                            color: AppColors.secondaryText,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold),
+                      const Row(
+                        children: [
+                          Icon(Icons.memory_rounded,
+                              size: 17, color: AppColors.primaryPurple),
+                          SizedBox(width: 6),
+                          Text(
+                            'Core CS Mastery',
+                            style: TextStyle(
+                              color: AppColors.primaryText,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                       Text(
                         '$completedCount / ${_topics.length} Subjects Revised',
                         style: const TextStyle(
-                            color: AppColors.brightAccent,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold),
+                          color: AppColors.primaryPurple,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -166,13 +234,61 @@ class _CoreCsScreenState extends State<CoreCsScreen> {
 
             if (_topics.isEmpty)
               CustomCard(
-                padding: const EdgeInsets.all(24),
-                child: const Center(
-                  child: Text(
-                    'No CS subjects tracked. Add DBMS, OS, Computer Networks, etc.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.mutedText, fontSize: 13),
-                  ),
+                padding: const EdgeInsets.all(22),
+                borderRadius: 18,
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryPurple.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.memory_rounded,
+                        color: AppColors.primaryPurple,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'No Core CS Subjects Tracked Yet',
+                      style: TextStyle(
+                        color: AppColors.primaryText,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Track essential technical interview subjects (DBMS, OS, Computer Networks, OOPs, System Design).',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: AppColors.secondaryText,
+                        fontSize: 12,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryPurple,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.bolt_rounded, size: 18),
+                      label: const Text(
+                        'Load Standard Core CS Subjects',
+                        style: TextStyle(
+                            fontSize: 12.5, fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: _loadStandardCoreCsTopics,
+                    ),
+                  ],
                 ),
               )
             else

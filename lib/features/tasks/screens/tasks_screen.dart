@@ -329,6 +329,8 @@ class TasksScreenState extends State<TasksScreen>
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          labelPadding: const EdgeInsets.symmetric(horizontal: 10),
           indicatorColor: AppColors.brightAccent,
           labelColor: AppColors.brightAccent,
           unselectedLabelColor: AppColors.mutedText,
@@ -764,29 +766,35 @@ class TasksScreenState extends State<TasksScreen>
                   ),
                 ],
                 const SizedBox(height: 6),
-                Row(
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     _buildVisualPriorityBadge(task.priority),
-                    const SizedBox(width: 8),
-                    if (task.category == 'Call / Meeting') ...[
-                      const Icon(Icons.phone_in_talk,
-                          size: 11, color: AppColors.brightAccent),
-                      const SizedBox(width: 3),
-                    ],
-                    Text(
-                      task.category,
-                      style: TextStyle(
-                        color: task.category == 'Call / Meeting'
-                            ? AppColors.brightAccent
-                            : AppColors.mutedText,
-                        fontSize: 11,
-                        fontWeight: task.category == 'Call / Meeting'
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (task.category == 'Call / Meeting') ...[
+                          const Icon(Icons.phone_in_talk,
+                              size: 11, color: AppColors.brightAccent),
+                          const SizedBox(width: 3),
+                        ],
+                        Text(
+                          task.category,
+                          style: TextStyle(
+                            color: task.category == 'Call / Meeting'
+                                ? AppColors.brightAccent
+                                : AppColors.mutedText,
+                            fontSize: 11,
+                            fontWeight: task.category == 'Call / Meeting'
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                          ),
+                        ),
+                      ],
                     ),
-                    if (task.earlyReminderLabel != null) ...[
-                      const SizedBox(width: 6),
+                    if (task.earlyReminderLabel != null)
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 5, vertical: 1.5),
@@ -817,24 +825,27 @@ class TasksScreenState extends State<TasksScreen>
                           ],
                         ),
                       ),
-                    ],
-                    const Spacer(),
-                    Icon(
-                      isOverdue ? Icons.warning : Icons.schedule,
-                      size: 13,
-                      color: isOverdue ? AppColors.error : AppColors.mutedText,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      DateFormatter.relativeDueString(task.dueDate),
-                      style: TextStyle(
-                        color: isOverdue
-                            ? AppColors.error
-                            : AppColors.secondaryText,
-                        fontSize: 11,
-                        fontWeight:
-                            isOverdue ? FontWeight.bold : FontWeight.normal,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isOverdue ? Icons.warning : Icons.schedule,
+                          size: 13,
+                          color: isOverdue ? AppColors.error : AppColors.mutedText,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          DateFormatter.relativeDueString(task.dueDate),
+                          style: TextStyle(
+                            color: isOverdue
+                                ? AppColors.error
+                                : AppColors.secondaryText,
+                            fontSize: 11,
+                            fontWeight:
+                                isOverdue ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

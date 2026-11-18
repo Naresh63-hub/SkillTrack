@@ -207,6 +207,87 @@ class AppTheme {
         ),
         behavior: SnackBarBehavior.floating,
       ),
+      datePickerTheme: DatePickerThemeData(
+        backgroundColor: AppColors.cardBackground,
+        surfaceTintColor: Colors.transparent,
+        headerBackgroundColor: AppColors.primaryPurple,
+        headerForegroundColor: Colors.white,
+        headerHeadlineStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+        ),
+        headerHelpStyle: const TextStyle(
+          color: Color(0xFFE9D5FF),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        weekdayStyle: const TextStyle(
+          color: AppColors.secondaryText,
+          fontWeight: FontWeight.w700,
+          fontSize: 12.5,
+        ),
+        dayStyle: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+        dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return Colors.white;
+          }
+          if (states.contains(WidgetState.disabled)) {
+            return AppColors.mutedText.withValues(alpha: 0.4);
+          }
+          return AppColors.primaryText;
+        }),
+        dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.primaryPurple;
+          }
+          return Colors.transparent;
+        }),
+        todayForegroundColor:
+            const WidgetStatePropertyAll(AppColors.primaryPurple),
+        todayBorder:
+            const BorderSide(color: AppColors.primaryPurple, width: 1.5),
+        yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return Colors.white;
+          }
+          return AppColors.primaryText;
+        }),
+        yearBackgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.primaryPurple;
+          }
+          return Colors.transparent;
+        }),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(color: AppColors.border, width: 1),
+        ),
+        dividerColor: AppColors.border,
+      ),
+      timePickerTheme: TimePickerThemeData(
+        backgroundColor: AppColors.cardBackground,
+        hourMinuteColor: AppColors.secondaryCard,
+        hourMinuteTextColor: AppColors.primaryText,
+        dayPeriodColor: AppColors.secondaryCard,
+        dayPeriodTextColor: AppColors.primaryText,
+        dialBackgroundColor: AppColors.secondaryCard,
+        dialHandColor: AppColors.primaryPurple,
+        dialTextColor: AppColors.primaryText,
+        entryModeIconColor: AppColors.primaryPurple,
+        helpTextStyle: const TextStyle(
+          color: AppColors.secondaryText,
+          fontSize: 12.5,
+          fontWeight: FontWeight.w600,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(color: AppColors.border, width: 1),
+        ),
+      ),
     );
   }
 
@@ -339,6 +420,87 @@ class AppTheme {
         color: Color(0xFF493653),
         thickness: 1,
         space: 24,
+      ),
+      datePickerTheme: DatePickerThemeData(
+        backgroundColor: const Color(0xFF1C1722),
+        surfaceTintColor: Colors.transparent,
+        headerBackgroundColor: const Color(0xFF8B5CF6),
+        headerForegroundColor: Colors.white,
+        headerHeadlineStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+        ),
+        headerHelpStyle: const TextStyle(
+          color: Color(0xFFDDD6FE),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        weekdayStyle: const TextStyle(
+          color: Color(0xFFA78BFA),
+          fontWeight: FontWeight.w700,
+          fontSize: 12.5,
+        ),
+        dayStyle: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+        dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return Colors.white;
+          }
+          if (states.contains(WidgetState.disabled)) {
+            return const Color(0xFF82798D).withValues(alpha: 0.4);
+          }
+          return Colors.white;
+        }),
+        dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const Color(0xFF8B5CF6);
+          }
+          return Colors.transparent;
+        }),
+        todayForegroundColor:
+            const WidgetStatePropertyAll(Color(0xFFA78BFA)),
+        todayBorder:
+            const BorderSide(color: Color(0xFF8B5CF6), width: 1.5),
+        yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return Colors.white;
+          }
+          return Colors.white;
+        }),
+        yearBackgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const Color(0xFF8B5CF6);
+          }
+          return Colors.transparent;
+        }),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(color: Color(0xFF493653), width: 1),
+        ),
+        dividerColor: const Color(0xFF493653),
+      ),
+      timePickerTheme: TimePickerThemeData(
+        backgroundColor: const Color(0xFF1C1722),
+        hourMinuteColor: const Color(0xFF261B32),
+        hourMinuteTextColor: Colors.white,
+        dayPeriodColor: const Color(0xFF261B32),
+        dayPeriodTextColor: Colors.white,
+        dialBackgroundColor: const Color(0xFF261B32),
+        dialHandColor: const Color(0xFF8B5CF6),
+        dialTextColor: Colors.white,
+        entryModeIconColor: const Color(0xFF8B5CF6),
+        helpTextStyle: const TextStyle(
+          color: Color(0xFF82798D),
+          fontSize: 12.5,
+          fontWeight: FontWeight.w600,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(color: Color(0xFF493653), width: 1),
+        ),
       ),
     );
   }
